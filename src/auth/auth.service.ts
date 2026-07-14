@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   OnModuleInit,
@@ -11,6 +12,7 @@ import * as argon2 from 'argon2';
 import { createHash, randomBytes } from 'node:crypto';
 import { SafeUser, toSafeUser } from '../common/utils/safe-user';
 import { Env } from '../config/env';
+import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
@@ -35,6 +37,7 @@ export class AuthService implements OnModuleInit {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService<Env, true>,
+    private readonly mailService: MailService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -119,6 +122,68 @@ export class AuthService implements OnModuleInit {
       this.prisma.user.update({ where: { id: userId }, data: { passwordHash } }),
       this.prisma.refreshToken.updateMany({
         where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
+  }
+
+  /**
+   * Always succeeds silently — never reveals whether the email exists.
+   * Requesting a new reset invalidates any previous outstanding token.
+   */
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.trim().toLowerCase() },
+      include: { masjid: true },
+    });
+    if (!user || !user.isActive) {
+      return;
+    }
+    if (user.masjid && user.masjid.status !== MasjidStatus.ACTIVE) {
+      return;
+    }
+
+    const token = randomBytes(48).toString('base64url');
+    const ttlMinutes = this.configService.get('PASSWORD_RESET_TTL_MINUTES', { infer: true });
+    await this.prisma.$transaction([
+      // One outstanding token per user; also purge anything already expired.
+      this.prisma.passwordResetToken.deleteMany({
+        where: { OR: [{ userId: user.id }, { expiresAt: { lt: new Date() } }] },
+      }),
+      this.prisma.passwordResetToken.create({
+        data: {
+          tokenHash: AuthService.hashToken(token),
+          userId: user.id,
+          expiresAt: new Date(Date.now() + ttlMinutes * 60_000),
+        },
+      }),
+    ]);
+
+    const baseUrl = this.configService.get('APP_BASE_URL', { infer: true });
+    const resetUrl = `${baseUrl.replace(/\/$/, '')}/reset-password?token=${token}`;
+    await this.mailService.sendPasswordResetEmail(user.email, resetUrl, ttlMinutes);
+  }
+
+  /** Single-use: consuming the token revokes it and every session of the user. */
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const record = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash: AuthService.hashToken(token) },
+      include: { user: { include: { masjid: true } } },
+    });
+    if (!record || record.usedAt || record.expiresAt < new Date()) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+    this.assertUserMayAuthenticate(record.user);
+
+    const passwordHash = await AuthService.hashPassword(newPassword);
+    await this.prisma.$transaction([
+      this.prisma.user.update({ where: { id: record.userId }, data: { passwordHash } }),
+      this.prisma.passwordResetToken.update({
+        where: { id: record.id },
+        data: { usedAt: new Date() },
+      }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId: record.userId, revokedAt: null },
         data: { revokedAt: new Date() },
       }),
     ]);

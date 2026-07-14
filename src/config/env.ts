@@ -14,6 +14,12 @@ export const envSchema = z.object({
     .enum(['true', 'false'])
     .default('false')
     .transform((value) => value === 'true'),
+  /** Base URL of the frontend, used to build password-reset links. */
+  APP_BASE_URL: z.string().url().default('http://localhost:3000'),
+  /** SMTP connection URL (smtp[s]://user:pass@host:port). Unset = log emails instead. */
+  SMTP_URL: z.string().optional(),
+  MAIL_FROM: z.string().default('MasjidHub <no-reply@masjidhub.local>'),
+  PASSWORD_RESET_TTL_MINUTES: z.coerce.number().int().positive().default(60),
 });
 
 export type Env = z.infer<typeof envSchema>;
