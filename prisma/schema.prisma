@@ -31,6 +31,27 @@ enum EventStatus {
   CANCELLED
 }
 
+/// Fajr/Isha angle conventions; maps to the adhan library's named methods.
+enum CalculationMethod {
+  MUSLIM_WORLD_LEAGUE
+  ISNA
+  EGYPTIAN
+  UMM_AL_QURA
+  KARACHI
+  DUBAI
+  KUWAIT
+  QATAR
+  SINGAPORE
+  TURKEY
+  MOON_SIGHTING_COMMITTEE
+}
+
+/// Juristic method for Asr: STANDARD (Shafi'i/Maliki/Hanbali) or HANAFI.
+enum AsrMethod {
+  STANDARD
+  HANAFI
+}
+
 model Masjid {
   id           String       @id @default(uuid()) @db.Uuid
   name         String
@@ -45,6 +66,10 @@ model Masjid {
   postalCode   String?      @map("postal_code")
   country      String?
   timezone     String       @default("UTC")
+  latitude     Float?
+  longitude    Float?
+  calculationMethod CalculationMethod @default(MUSLIM_WORLD_LEAGUE) @map("calculation_method")
+  asrMethod    AsrMethod    @default(STANDARD) @map("asr_method")
   status       MasjidStatus @default(ACTIVE)
   users        User[]
   prayerTimes  PrayerTimetableEntry[]

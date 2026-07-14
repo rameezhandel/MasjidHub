@@ -1,14 +1,19 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { AsrMethod, CalculationMethod } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsEmail,
+  IsEnum,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   IsTimeZone,
   IsUrl,
   Matches,
+  Max,
   MaxLength,
+  Min,
   MinLength,
   ValidateNested,
 } from 'class-validator';
@@ -112,6 +117,33 @@ export class CreateMasjidDto {
   @IsOptional()
   @IsTimeZone()
   timezone?: string;
+
+  @ApiPropertyOptional({
+    example: 43.6532,
+    description: 'Required (with longitude) for prayer-time auto-calculation',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  latitude?: number;
+
+  @ApiPropertyOptional({ example: -79.3832 })
+  @IsOptional()
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  longitude?: number;
+
+  @ApiPropertyOptional({ enum: CalculationMethod, default: CalculationMethod.MUSLIM_WORLD_LEAGUE })
+  @IsOptional()
+  @IsEnum(CalculationMethod)
+  calculationMethod?: CalculationMethod;
+
+  @ApiPropertyOptional({ enum: AsrMethod, default: AsrMethod.STANDARD })
+  @IsOptional()
+  @IsEnum(AsrMethod)
+  asrMethod?: AsrMethod;
 
   @ApiProperty({ type: CreateMasjidAdminDto, description: 'Initial admin for the masjid' })
   @ValidateNested()

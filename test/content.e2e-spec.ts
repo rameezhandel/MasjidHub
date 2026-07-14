@@ -194,6 +194,88 @@ describe('Content & public API (e2e)', () => {
     });
   });
 
+  describe('prayer time auto-calculation', () => {
+    it('refuses to generate before coordinates are set', async () => {
+      await request(http)
+        .post(`/api/v1/masjids/${masjidAId}/prayer-times/generate`)
+        .set('Authorization', `Bearer ${maintainerToken}`)
+        .send({ from: '2099-09-01', to: '2099-09-07' })
+        .expect(409);
+    });
+
+    it('generates a week from coordinates with iqamah offsets and jumuah', async () => {
+      const adminAToken = await login(ADMIN_A);
+      await request(http)
+        .patch(`/api/v1/masjids/${masjidAId}`)
+        .set('Authorization', `Bearer ${adminAToken}`)
+        .send({ latitude: 43.6532, longitude: -79.3832, calculationMethod: 'ISNA' })
+        .expect(200);
+
+      // 2099-09-04 is a Friday.
+      const res = await request(http)
+        .post(`/api/v1/masjids/${masjidAId}/prayer-times/generate`)
+        .set('Authorization', `Bearer ${maintainerToken}`)
+        .send({
+          from: '2099-09-01',
+          to: '2099-09-07',
+          iqamahOffsets: { fajr: 20, isha: 10 },
+          jumuah1: '13:30',
+        })
+        .expect(200);
+      expect(res.body).toEqual({ generated: 7, skipped: 0 });
+
+      const list = await request(http)
+        .get(`/api/v1/masjids/${masjidAId}/prayer-times?from=2099-09-01&to=2099-09-07`)
+        .set('Authorization', `Bearer ${maintainerToken}`)
+        .expect(200);
+      expect(list.body).toHaveLength(7);
+
+      const friday = list.body.find((e: { date: string }) => e.date === '2099-09-04');
+      const saturday = list.body.find((e: { date: string }) => e.date === '2099-09-05');
+      expect(friday.jumuah1).toBe('13:30');
+      expect(saturday.jumuah1).toBeNull();
+      expect(friday.fajr).toMatch(/^([01]\d|2[0-3]):[0-5]\d$/);
+      expect(friday.fajrIqamah).not.toBeNull();
+      expect(friday.dhuhrIqamah).toBeNull();
+    });
+
+    it('keeps existing entries unless overwrite is set', async () => {
+      const again = await request(http)
+        .post(`/api/v1/masjids/${masjidAId}/prayer-times/generate`)
+        .set('Authorization', `Bearer ${maintainerToken}`)
+        .send({ from: '2099-09-01', to: '2099-09-08' })
+        .expect(200);
+      expect(again.body).toEqual({ generated: 1, skipped: 7 });
+
+      const overwrite = await request(http)
+        .post(`/api/v1/masjids/${masjidAId}/prayer-times/generate`)
+        .set('Authorization', `Bearer ${maintainerToken}`)
+        .send({ from: '2099-09-01', to: '2099-09-08', overwrite: true })
+        .expect(200);
+      expect(overwrite.body).toEqual({ generated: 8, skipped: 0 });
+    });
+
+    it('rejects inverted and oversized ranges, and cross-tenant generation', async () => {
+      await request(http)
+        .post(`/api/v1/masjids/${masjidAId}/prayer-times/generate`)
+        .set('Authorization', `Bearer ${maintainerToken}`)
+        .send({ from: '2099-09-07', to: '2099-09-01' })
+        .expect(400);
+
+      await request(http)
+        .post(`/api/v1/masjids/${masjidAId}/prayer-times/generate`)
+        .set('Authorization', `Bearer ${maintainerToken}`)
+        .send({ from: '2099-01-01', to: '2100-06-01' })
+        .expect(400);
+
+      await request(http)
+        .post(`/api/v1/masjids/${masjidAId}/prayer-times/generate`)
+        .set('Authorization', `Bearer ${adminBToken}`)
+        .send({ from: '2099-09-01', to: '2099-09-07' })
+        .expect(403);
+    });
+  });
+
   describe('announcements', () => {
     it('maintainer creates a draft, invisible publicly, then publishes', async () => {
       const created = await request(http)

@@ -55,6 +55,7 @@ GET    /masjids/:masjidId/users        list/filter/paginate             [platfor
 GET    /masjids/:masjidId/users/:id
 PATCH  /masjids/:masjidId/users/:id    name / role / isActive
 
+POST   /masjids/:masjidId/prayer-times/generate auto-calculate from coordinates (adhan library)
 PUT    /masjids/:masjidId/prayer-times          bulk upsert timetable (≤366 entries, keyed by date)
 GET    /masjids/:masjidId/prayer-times          list, optional ?from&to (YYYY-MM-DD)
 DELETE /masjids/:masjidId/prayer-times/:date
@@ -81,6 +82,8 @@ GET    /health/liveness                liveness
 ```
 
 Content rules: prayer times, announcements and events are managed by any member of the masjid (admin or maintainer) and are scoped by `masjid_id` like everything else. The `/public/*` namespace requires no authentication and only ever exposes **ACTIVE** masjids and **PUBLISHED** content — suspended masjids disappear from it entirely. All prayer times are wall-clock `HH:MM` strings in the masjid's own timezone.
+
+Prayer-time auto-calculation: set the masjid's `latitude`/`longitude`, `calculationMethod` (MUSLIM_WORLD_LEAGUE, ISNA, EGYPTIAN, UMM_AL_QURA, KARACHI, DUBAI, KUWAIT, QATAR, SINGAPORE, TURKEY, MOON_SIGHTING_COMMITTEE) and `asrMethod` (STANDARD | HANAFI), then `POST …/prayer-times/generate` with a date range (≤366 days), optional per-prayer iqamah offsets, and fixed jumu'ah times for Fridays. Astronomy comes from the [adhan](https://github.com/batoulapps/adhan-js) library; times are rendered in the masjid's timezone. Existing (e.g. manually uploaded) dates are preserved unless `overwrite: true` — manual data wins by default.
 
 ## Getting started
 

@@ -28,6 +28,8 @@ export type PublicMasjidProfile = Pick<
   | 'postalCode'
   | 'country'
   | 'timezone'
+  | 'latitude'
+  | 'longitude'
 >;
 
 const PUBLIC_MASJID_SELECT = {
@@ -44,6 +46,8 @@ const PUBLIC_MASJID_SELECT = {
   postalCode: true,
   country: true,
   timezone: true,
+  latitude: true,
+  longitude: true,
 } as const;
 
 @Injectable()

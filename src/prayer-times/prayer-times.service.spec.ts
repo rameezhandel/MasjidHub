@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { MasjidStatus, UserRole } from '@prisma/client';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { PrismaService } from '../prisma/prisma.service';
+import { PrayerCalculationService } from './prayer-calculation.service';
 import { PrayerTimesService, toEntryView } from './prayer-times.service';
 
 describe('PrayerTimesService', () => {
@@ -37,7 +38,11 @@ describe('PrayerTimesService', () => {
   beforeEach(async () => {
     jest.resetAllMocks();
     const moduleRef = await Test.createTestingModule({
-      providers: [PrayerTimesService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        PrayerTimesService,
+        PrayerCalculationService,
+        { provide: PrismaService, useValue: prisma },
+      ],
     }).compile();
     service = moduleRef.get(PrayerTimesService);
   });

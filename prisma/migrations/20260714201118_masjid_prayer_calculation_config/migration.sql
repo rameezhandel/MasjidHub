@@ -1,0 +1,11 @@
+-- CreateEnum
+CREATE TYPE "CalculationMethod" AS ENUM ('MUSLIM_WORLD_LEAGUE', 'ISNA', 'EGYPTIAN', 'UMM_AL_QURA', 'KARACHI', 'DUBAI', 'KUWAIT', 'QATAR', 'SINGAPORE', 'TURKEY', 'MOON_SIGHTING_COMMITTEE');
+
+-- CreateEnum
+CREATE TYPE "AsrMethod" AS ENUM ('STANDARD', 'HANAFI');
+
+-- AlterTable
+ALTER TABLE "masjids" ADD COLUMN     "asr_method" "AsrMethod" NOT NULL DEFAULT 'STANDARD',
+ADD COLUMN     "calculation_method" "CalculationMethod" NOT NULL DEFAULT 'MUSLIM_WORLD_LEAGUE',
+ADD COLUMN     "latitude" DOUBLE PRECISION,
+ADD COLUMN     "longitude" DOUBLE PRECISION;

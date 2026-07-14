@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Param,
   ParseUUIDPipe,
+  Post,
   Put,
   Query,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { DatePathPipe } from './date-path.pipe';
+import { GeneratePrayerTimesDto } from './dto/generate-prayer-times.dto';
 import { QueryPrayerTimesDto, UpsertPrayerTimesDto } from './dto/prayer-times.dto';
 import { PrayerTimesService, PrayerTimetableEntryView } from './prayer-times.service';
 
@@ -31,6 +33,21 @@ export class PrayerTimesController {
     @Body() dto: UpsertPrayerTimesDto,
   ): Promise<{ count: number }> {
     return this.prayerTimesService.upsertMany(user, masjidId, dto.entries);
+  }
+
+  @Post('generate')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      "Auto-calculate the timetable from the masjid's coordinates and calculation method " +
+      '(existing dates are kept unless overwrite=true)',
+  })
+  generate(
+    @CurrentUser() user: AuthUser,
+    @Param('masjidId', ParseUUIDPipe) masjidId: string,
+    @Body() dto: GeneratePrayerTimesDto,
+  ): Promise<{ generated: number; skipped: number }> {
+    return this.prayerTimesService.generate(user, masjidId, dto);
   }
 
   @Get()
