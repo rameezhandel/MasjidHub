@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PLATFORM_ADMIN
+  MASJID_ADMIN
+  MASJID_MAINTAINER
+}
+
+enum MasjidStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+model Masjid {
+  id           String       @id @default(uuid()) @db.Uuid
+  name         String
+  slug         String       @unique
+  email        String?
+  phone        String?
+  website      String?
+  addressLine1 String?      @map("address_line1")
+  addressLine2 String?      @map("address_line2")
+  city         String?
+  state        String?
+  postalCode   String?      @map("postal_code")
+  country      String?
+  timezone     String       @default("UTC")
+  status       MasjidStatus @default(ACTIVE)
+  users        User[]
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@map("masjids")
+}
+
+model User {
+  id            String         @id @default(uuid()) @db.Uuid
+  email         String         @unique
+  passwordHash  String         @map("password_hash")
+  firstName     String         @map("first_name")
+  lastName      String         @map("last_name")
+  role          UserRole
+  isActive      Boolean        @default(true) @map("is_active")
+  masjid        Masjid?        @relation(fields: [masjidId], references: [id], onDelete: Restrict)
+  masjidId      String?        @map("masjid_id") @db.Uuid
+  refreshTokens RefreshToken[]
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  @@index([masjidId])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String    @map("user_id") @db.Uuid
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
