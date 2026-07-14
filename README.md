@@ -21,7 +21,7 @@ Multi-tenant platform for masjids: **one application, one database, many masjids
 |---|---|---|
 | `PLATFORM_ADMIN` | global (no masjid) | Onboard/list/update any masjid, suspend/activate/archive, manage any masjid's users |
 | `MASJID_ADMIN` | their masjid | Update their masjid profile, manage its admins/maintainers |
-| `MASJID_MAINTAINER` | their masjid | Read their masjid (more capabilities to come) |
+| `MASJID_MAINTAINER` | their masjid | Read their masjid; manage its prayer times, announcements and events |
 
 The single platform admin is created by the seed script (`npm run db:seed`) from `PLATFORM_ADMIN_*` env vars — there is no public sign-up.
 
@@ -55,9 +55,32 @@ GET    /masjids/:masjidId/users        list/filter/paginate             [platfor
 GET    /masjids/:masjidId/users/:id
 PATCH  /masjids/:masjidId/users/:id    name / role / isActive
 
+PUT    /masjids/:masjidId/prayer-times          bulk upsert timetable (≤366 entries, keyed by date)
+GET    /masjids/:masjidId/prayer-times          list, optional ?from&to (YYYY-MM-DD)
+DELETE /masjids/:masjidId/prayer-times/:date
+
+POST   /masjids/:masjidId/announcements         create (draft by default)
+GET    /masjids/:masjidId/announcements         list/filter/paginate (all statuses)
+GET    /masjids/:masjidId/announcements/:id
+PATCH  /masjids/:masjidId/announcements/:id     edit; status: DRAFT|PUBLISHED|ARCHIVED
+DELETE /masjids/:masjidId/announcements/:id     hard delete             [admins only]
+
+POST   /masjids/:masjidId/events                create (draft by default)
+GET    /masjids/:masjidId/events                list; ?upcoming&from&to&status
+GET    /masjids/:masjidId/events/:id
+PATCH  /masjids/:masjidId/events/:id            edit; status: DRAFT|PUBLISHED|CANCELLED
+DELETE /masjids/:masjidId/events/:id            hard delete             [admins only]
+
+GET    /public/masjids/:slug                    public masjid profile        [no auth]
+GET    /public/masjids/:slug/prayer-times       timetable (default: today→)  [no auth]
+GET    /public/masjids/:slug/announcements      published only               [no auth]
+GET    /public/masjids/:slug/events             published upcoming only      [no auth]
+
 GET    /health                         readiness (DB ping)
 GET    /health/liveness                liveness
 ```
+
+Content rules: prayer times, announcements and events are managed by any member of the masjid (admin or maintainer) and are scoped by `masjid_id` like everything else. The `/public/*` namespace requires no authentication and only ever exposes **ACTIVE** masjids and **PUBLISHED** content — suspended masjids disappear from it entirely. All prayer times are wall-clock `HH:MM` strings in the masjid's own timezone.
 
 ## Getting started
 
