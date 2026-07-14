@@ -19,6 +19,18 @@ enum MasjidStatus {
   ARCHIVED
 }
 
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+}
+
 model Masjid {
   id           String       @id @default(uuid()) @db.Uuid
   name         String
@@ -35,6 +47,9 @@ model Masjid {
   timezone     String       @default("UTC")
   status       MasjidStatus @default(ACTIVE)
   users        User[]
+  prayerTimes  PrayerTimetableEntry[]
+  announcements Announcement[]
+  events       Event[]
   createdAt    DateTime     @default(now()) @map("created_at")
   updatedAt    DateTime     @updatedAt @map("updated_at")
 
@@ -53,11 +68,76 @@ model User {
   masjid        Masjid?        @relation(fields: [masjidId], references: [id], onDelete: Restrict)
   masjidId      String?        @map("masjid_id") @db.Uuid
   refreshTokens RefreshToken[]
+  announcements Announcement[]
+  events        Event[]
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
 
   @@index([masjidId])
   @@map("users")
+}
+
+model PrayerTimetableEntry {
+  id            String   @id @default(uuid()) @db.Uuid
+  masjid        Masjid   @relation(fields: [masjidId], references: [id], onDelete: Cascade)
+  masjidId      String   @map("masjid_id") @db.Uuid
+  /// Calendar date in the masjid's local timezone.
+  date          DateTime @db.Date
+  /// All times are local wall-clock "HH:MM" strings in the masjid's timezone.
+  fajr          String
+  fajrIqamah    String?  @map("fajr_iqamah")
+  dhuhr         String
+  dhuhrIqamah   String?  @map("dhuhr_iqamah")
+  asr           String
+  asrIqamah     String?  @map("asr_iqamah")
+  maghrib       String
+  maghribIqamah String?  @map("maghrib_iqamah")
+  isha          String
+  ishaIqamah    String?  @map("isha_iqamah")
+  jumuah1       String?
+  jumuah2       String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@unique([masjidId, date])
+  @@map("prayer_timetable_entries")
+}
+
+model Announcement {
+  id          String        @id @default(uuid()) @db.Uuid
+  masjid      Masjid        @relation(fields: [masjidId], references: [id], onDelete: Cascade)
+  masjidId    String        @map("masjid_id") @db.Uuid
+  title       String
+  body        String
+  status      ContentStatus @default(DRAFT)
+  publishedAt DateTime?     @map("published_at")
+  createdBy   User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById String?       @map("created_by_id") @db.Uuid
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@index([masjidId, status])
+  @@map("announcements")
+}
+
+model Event {
+  id          String      @id @default(uuid()) @db.Uuid
+  masjid      Masjid      @relation(fields: [masjidId], references: [id], onDelete: Cascade)
+  masjidId    String      @map("masjid_id") @db.Uuid
+  title       String
+  description String?
+  location    String?
+  startsAt    DateTime    @map("starts_at")
+  endsAt      DateTime?   @map("ends_at")
+  status      EventStatus @default(DRAFT)
+  createdBy   User?       @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById String?     @map("created_by_id") @db.Uuid
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  @@index([masjidId, startsAt])
+  @@index([masjidId, status])
+  @@map("events")
 }
 
 model RefreshToken {

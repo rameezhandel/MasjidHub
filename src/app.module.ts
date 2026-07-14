@@ -5,8 +5,12 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { randomUUID } from 'node:crypto';
 import { IncomingMessage, ServerResponse } from 'node:http';
 import { LoggerModule } from 'nestjs-pino';
+import { AnnouncementsModule } from './announcements/announcements.module';
 import { AuthModule } from './auth/auth.module';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
+import { EventsModule } from './events/events.module';
+import { PrayerTimesModule } from './prayer-times/prayer-times.module';
+import { PublicModule } from './public/public.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { Env, validateEnv } from './config/env';
@@ -62,6 +66,10 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     MasjidsModule,
     UsersModule,
+    PrayerTimesModule,
+    AnnouncementsModule,
+    EventsModule,
+    PublicModule,
     HealthModule,
   ],
   providers: [
