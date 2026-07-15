@@ -1,0 +1,16 @@
+/** Sensitive actions recorded in the audit log. */
+export const AuditAction = {
+  MASJID_CREATED: 'MASJID_CREATED',
+  MASJID_STATUS_CHANGED: 'MASJID_STATUS_CHANGED',
+  USER_CREATED: 'USER_CREATED',
+  USER_UPDATED: 'USER_UPDATED',
+  INVITATION_CREATED: 'INVITATION_CREATED',
+  INVITATION_REVOKED: 'INVITATION_REVOKED',
+  INVITATION_ACCEPTED: 'INVITATION_ACCEPTED',
+  PASSWORD_CHANGED: 'PASSWORD_CHANGED',
+  PASSWORD_RESET: 'PASSWORD_RESET',
+} as const;
+
+export type AuditAction = (typeof AuditAction)[keyof typeof AuditAction];
+
+export const AUDIT_ACTIONS = Object.values(AuditAction);

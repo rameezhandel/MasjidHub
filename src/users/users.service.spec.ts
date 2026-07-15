@@ -1,6 +1,7 @@
 import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { MasjidStatus, UserRole } from '@prisma/client';
+import { AuditService } from '../audit/audit.service';
 import { AuthService } from '../auth/auth.service';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { PrismaService } from '../prisma/prisma.service';
@@ -61,6 +62,7 @@ describe('UsersService', () => {
         UsersService,
         { provide: PrismaService, useValue: prisma },
         { provide: AuthService, useValue: authService },
+        { provide: AuditService, useValue: { record: jest.fn() } },
       ],
     }).compile();
     service = moduleRef.get(UsersService);

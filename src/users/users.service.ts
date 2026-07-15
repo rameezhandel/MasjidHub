@@ -5,6 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { MasjidStatus, Prisma, UserRole } from '@prisma/client';
+import { AuditAction } from '../audit/audit-actions';
+import { AuditService } from '../audit/audit.service';
 import { AuthService } from '../auth/auth.service';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { PaginatedResult, paginated } from '../common/dto/pagination.dto';
@@ -19,6 +21,7 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly authService: AuthService,
+    private readonly auditService: AuditService,
   ) {}
 
   async create(actor: AuthUser, masjidId: string, dto: CreateMasjidUserDto): Promise<SafeUser> {
@@ -44,6 +47,15 @@ export class UsersService {
         role: dto.role,
         masjidId,
       },
+    });
+    await this.auditService.record({
+      action: AuditAction.USER_CREATED,
+      actorId: actor.id,
+      actorEmail: actor.email,
+      masjidId,
+      targetType: 'user',
+      targetId: user.id,
+      metadata: { email, role: dto.role },
     });
     return toSafeUser(user);
   }
@@ -130,6 +142,15 @@ export class UsersService {
     if (demoting || deactivating) {
       await this.authService.revokeAllSessions(userId);
     }
+    await this.auditService.record({
+      action: AuditAction.USER_UPDATED,
+      actorId: actor.id,
+      actorEmail: actor.email,
+      masjidId,
+      targetType: 'user',
+      targetId: userId,
+      metadata: { changes: dto as Record<string, unknown> } as Prisma.InputJsonValue,
+    });
     return toSafeUser(updated);
   }
 

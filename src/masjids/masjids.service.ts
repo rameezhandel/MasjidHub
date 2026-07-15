@@ -5,6 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Masjid, MasjidStatus, Prisma, UserRole } from '@prisma/client';
+import { AuditAction } from '../audit/audit-actions';
+import { AuditService } from '../audit/audit.service';
 import { AuthService } from '../auth/auth.service';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { PaginatedResult, paginated } from '../common/dto/pagination.dto';
@@ -19,10 +21,13 @@ export type MasjidWithUserCount = Masjid & { _count: { users: number } };
 
 @Injectable()
 export class MasjidsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditService: AuditService,
+  ) {}
 
   /** Platform admin onboards a masjid together with its initial admin. */
-  async create(dto: CreateMasjidDto): Promise<Masjid & { admin: SafeUser }> {
+  async create(dto: CreateMasjidDto, actor: AuthUser): Promise<Masjid & { admin: SafeUser }> {
     const adminEmail = dto.admin.email.trim().toLowerCase();
     const existingUser = await this.prisma.user.findUnique({ where: { email: adminEmail } });
     if (existingUser) {
@@ -61,6 +66,15 @@ export class MasjidsService {
     });
 
     const { users, ...rest } = masjid;
+    await this.auditService.record({
+      action: AuditAction.MASJID_CREATED,
+      actorId: actor.id,
+      actorEmail: actor.email,
+      masjidId: masjid.id,
+      targetType: 'masjid',
+      targetId: masjid.id,
+      metadata: { name: masjid.name, slug: masjid.slug, adminEmail: adminEmail },
+    });
     return { ...rest, admin: toSafeUser(users[0]) };
   }
 
@@ -128,7 +142,7 @@ export class MasjidsService {
    * Platform admin activates/suspends/archives a masjid. Leaving ACTIVE
    * immediately revokes every session of the masjid's users.
    */
-  async setStatus(id: string, status: MasjidStatus): Promise<Masjid> {
+  async setStatus(id: string, status: MasjidStatus, actor: AuthUser): Promise<Masjid> {
     const masjid = await this.prisma.masjid.findUnique({ where: { id } });
     if (!masjid) {
       throw new NotFoundException('Masjid not found');
@@ -148,6 +162,15 @@ export class MasjidsService {
           ]
         : []),
     ]);
+    await this.auditService.record({
+      action: AuditAction.MASJID_STATUS_CHANGED,
+      actorId: actor.id,
+      actorEmail: actor.email,
+      masjidId: id,
+      targetType: 'masjid',
+      targetId: id,
+      metadata: { from: masjid.status, to: status },
+    });
     return updated;
   }
 

@@ -10,6 +10,8 @@ import { JwtService } from '@nestjs/jwt';
 import { Masjid, MasjidStatus, User } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { createHash, randomBytes } from 'node:crypto';
+import { AuditAction } from '../audit/audit-actions';
+import { AuditService } from '../audit/audit.service';
 import { SafeUser, toSafeUser } from '../common/utils/safe-user';
 import { Env } from '../config/env';
 import { MailService } from '../mail/mail.service';
@@ -38,6 +40,7 @@ export class AuthService implements OnModuleInit {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService<Env, true>,
     private readonly mailService: MailService,
+    private readonly auditService: AuditService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -125,6 +128,14 @@ export class AuthService implements OnModuleInit {
         data: { revokedAt: new Date() },
       }),
     ]);
+    await this.auditService.record({
+      action: AuditAction.PASSWORD_CHANGED,
+      actorId: user.id,
+      actorEmail: user.email,
+      masjidId: user.masjidId,
+      targetType: 'user',
+      targetId: user.id,
+    });
   }
 
   /**
@@ -187,6 +198,14 @@ export class AuthService implements OnModuleInit {
         data: { revokedAt: new Date() },
       }),
     ]);
+    await this.auditService.record({
+      action: AuditAction.PASSWORD_RESET,
+      actorId: record.user.id,
+      actorEmail: record.user.email,
+      masjidId: record.user.masjidId,
+      targetType: 'user',
+      targetId: record.user.id,
+    });
   }
 
   async getProfile(userId: string): Promise<SafeUser & { masjid: Masjid | null }> {
@@ -195,6 +214,16 @@ export class AuthService implements OnModuleInit {
       include: { masjid: true },
     });
     return { ...toSafeUser(user), masjid: user.masjid };
+  }
+
+  /** Issues a fresh token pair for a user (e.g. right after accepting an invitation). */
+  async sessionFor(userId: string): Promise<AuthTokens> {
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      include: { masjid: true },
+    });
+    this.assertUserMayAuthenticate(user);
+    return this.issueTokens(user);
   }
 
   async revokeAllSessions(userId: string): Promise<void> {

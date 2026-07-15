@@ -5,8 +5,12 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { randomUUID } from 'node:crypto';
 import { IncomingMessage, ServerResponse } from 'node:http';
 import { LoggerModule } from 'nestjs-pino';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AnnouncementsModule } from './announcements/announcements.module';
+import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
+import { InvitationsModule } from './invitations/invitations.module';
+import { MaintenanceModule } from './maintenance/maintenance.module';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 import { EventsModule } from './events/events.module';
 import { PrayerTimesModule } from './prayer-times/prayer-times.module';
@@ -63,15 +67,19 @@ import { UsersModule } from './users/users.module';
         skipIf: () => configService.get('NODE_ENV', { infer: true }) === 'test',
       }),
     }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     MailModule,
+    AuditModule,
     AuthModule,
     MasjidsModule,
     UsersModule,
+    InvitationsModule,
     PrayerTimesModule,
     AnnouncementsModule,
     EventsModule,
     PublicModule,
+    MaintenanceModule,
     HealthModule,
   ],
   providers: [

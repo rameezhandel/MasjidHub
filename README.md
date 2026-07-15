@@ -52,6 +52,13 @@ GET    /masjids/:id                    platform admin: any; members: own
 PATCH  /masjids/:id                    platform admin: any; masjid admin: own
 PATCH  /masjids/:id/status             ACTIVE | SUSPENDED | ARCHIVED    [platform admin]
 
+POST   /masjids/:masjidId/invitations  invite staff by email (they set their own password)
+GET    /masjids/:masjidId/invitations  list invitations with status
+DELETE /masjids/:masjidId/invitations/:id  revoke a pending invitation
+POST   /invitations/accept             set password + auto-login        [public, from emailed link]
+
+GET    /audit-logs                     sensitive-action audit trail     [platform admin]
+
 POST   /masjids/:masjidId/users        add admin/maintainer             [platform admin, own masjid admin]
 GET    /masjids/:masjidId/users        list/filter/paginate             [platform admin, own masjid admin]
 GET    /masjids/:masjidId/users/:id
@@ -138,3 +145,5 @@ test/              e2e suite
 - **Why opaque refresh tokens (hashed at rest)?** A DB leak exposes no usable tokens; rotation with reuse detection catches stolen refresh tokens.
 - **JWTs re-validate the user on every request**, so deactivation/suspension takes effect immediately rather than at token expiry.
 - **Password reset** is enumeration-safe (always 204), stores only SHA-256 hashes of single-use tokens (60 min TTL, one outstanding per user), and revokes every session on success. Email goes out via SMTP (`SMTP_URL` — point it at SES/Resend/Postmark/anything); without SMTP configured, links are logged instead, which is intended for development only.
+- **Staff invitations** are the recommended way to add users: the invitee receives an emailed link (default 7-day TTL, `INVITATION_TTL_DAYS`), sets their own password, and is logged in immediately — no password ever travels through another person's hands. Tokens are single-use, hashed at rest, and re-inviting an email replaces the previous link.
+- **Audit log**: masjid creation/status changes, user creation/updates, invitations, and password changes/resets are recorded (actor, target, metadata) and queryable by the platform admin at `/audit-logs`. A daily job (03:17) prunes expired refresh/reset tokens and stale invitations.

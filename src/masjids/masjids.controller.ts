@@ -20,8 +20,11 @@ export class MasjidsController {
   @Post()
   @Roles(UserRole.PLATFORM_ADMIN)
   @ApiOperation({ summary: 'Onboard a new masjid with its initial admin (platform admin only)' })
-  create(@Body() dto: CreateMasjidDto): ReturnType<MasjidsService['create']> {
-    return this.masjidsService.create(dto);
+  create(
+    @Body() dto: CreateMasjidDto,
+    @CurrentUser() user: AuthUser,
+  ): ReturnType<MasjidsService['create']> {
+    return this.masjidsService.create(dto, user);
   }
 
   @Get()
@@ -57,7 +60,8 @@ export class MasjidsController {
   setStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateMasjidStatusDto,
+    @CurrentUser() user: AuthUser,
   ): Promise<Masjid> {
-    return this.masjidsService.setStatus(id, dto.status);
+    return this.masjidsService.setStatus(id, dto.status, user);
   }
 }

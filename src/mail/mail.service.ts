@@ -44,6 +44,32 @@ export class MailService {
     await this.send(to, subject, text, html);
   }
 
+  async sendInvitationEmail(
+    to: string,
+    inviteUrl: string,
+    masjidName: string,
+    ttlDays: number,
+  ): Promise<void> {
+    const subject = `You've been invited to join ${masjidName} on MasjidHub`;
+    const text = [
+      'As-salamu alaykum,',
+      '',
+      `You have been invited to help manage ${masjidName} on MasjidHub.`,
+      `Open this link to choose your password and activate your account (valid for ${ttlDays} days):`,
+      '',
+      inviteUrl,
+      '',
+      'If you were not expecting this invitation, you can safely ignore this email.',
+    ].join('\n');
+    const html = `
+      <p>As-salamu alaykum,</p>
+      <p>You have been invited to help manage <strong>${masjidName}</strong> on MasjidHub.</p>
+      <p><a href="${inviteUrl}">Choose your password and activate your account</a> (valid for ${ttlDays} days).</p>
+      <p>If you were not expecting this invitation, you can safely ignore this email.</p>
+    `;
+    await this.send(to, subject, text, html);
+  }
+
   private async send(to: string, subject: string, text: string, html: string): Promise<void> {
     if (!this.transporter) {
       this.logger.warn(`SMTP not configured — email suppressed. To: ${to} | ${subject}\n${text}`);

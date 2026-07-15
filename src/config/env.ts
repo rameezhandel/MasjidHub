@@ -20,6 +20,7 @@ export const envSchema = z.object({
   SMTP_URL: z.string().optional(),
   MAIL_FROM: z.string().default('MasjidHub <no-reply@masjidhub.local>'),
   PASSWORD_RESET_TTL_MINUTES: z.coerce.number().int().positive().default(60),
+  INVITATION_TTL_DAYS: z.coerce.number().int().positive().default(7),
 });
 
 export type Env = z.infer<typeof envSchema>;
