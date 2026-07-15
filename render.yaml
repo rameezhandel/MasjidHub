@@ -1,0 +1,39 @@
+# Render Blueprint — deploys the MasjidHub API on the free plan.
+# Database: bring your own DATABASE_URL (we use Neon's free Postgres —
+# Render's own free database is deleted after 30 days).
+# See DEPLOYMENT.md for the step-by-step guide.
+services:
+  - type: web
+    name: masjidhub-api
+    runtime: node
+    plan: free
+    region: oregon # pick the region closest to your Neon project
+    branch: main
+    autoDeploy: true # every merge to main deploys automatically
+    # Dev deps are needed to build (nest CLI, TypeScript) even though
+    # NODE_ENV=production; --include=dev overrides npm's default skip.
+    buildCommand: npm ci --include=dev && npx prisma generate && npm run build
+    # Single free instance, so running migrations at startup cannot race.
+    startCommand: npx prisma migrate deploy && node dist/main.js
+    # Liveness (not readiness) on purpose: readiness pings the database on
+    # every check, which would keep the autosuspending Neon free tier awake.
+    healthCheckPath: /api/v1/health/liveness
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false # paste your Neon connection string in the dashboard
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SWAGGER_ENABLED
+        value: 'true' # turn off once a real frontend exists
+      - key: CORS_ORIGINS
+        value: ''
+      - key: APP_BASE_URL
+        value: https://masjidhub-api.onrender.com # update when the frontend ships
+      - key: SMTP_URL
+        sync: false # optional — set to enable real emails (resets/invites)
+      - key: MAIL_FROM
+        value: 'MasjidHub <no-reply@masjidhub.app>'
