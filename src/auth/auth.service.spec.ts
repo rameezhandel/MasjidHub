@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import { MasjidStatus, UserRole } from '@prisma/client';
+import { AuditService } from '../audit/audit.service';
 import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
@@ -33,6 +34,7 @@ describe('AuthService', () => {
     $transaction: jest.fn(),
   };
   const mailService = { sendPasswordResetEmail: jest.fn() };
+  const auditService = { record: jest.fn() };
 
   const baseUser = () => ({
     id: 'user-1',
@@ -74,6 +76,7 @@ describe('AuthService', () => {
           },
         },
         { provide: MailService, useValue: mailService },
+        { provide: AuditService, useValue: auditService },
       ],
     }).compile();
     service = moduleRef.get(AuthService);

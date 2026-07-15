@@ -1,6 +1,7 @@
 import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { MasjidStatus, UserRole } from '@prisma/client';
+import { AuditService } from '../audit/audit.service';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { PrismaService } from '../prisma/prisma.service';
 import { MasjidsService } from './masjids.service';
@@ -49,7 +50,11 @@ describe('MasjidsService', () => {
   beforeEach(async () => {
     jest.resetAllMocks();
     const moduleRef = await Test.createTestingModule({
-      providers: [MasjidsService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        MasjidsService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: AuditService, useValue: { record: jest.fn() } },
+      ],
     }).compile();
     service = moduleRef.get(MasjidsService);
   });
@@ -106,7 +111,7 @@ describe('MasjidsService', () => {
         }),
       );
 
-      const result = await service.create(dto);
+      const result = await service.create(dto, platformAdmin);
 
       expect(result.slug).toBe('masjid-al-noor');
       expect(result.admin.email).toBe('imam@al-noor.org');
@@ -138,19 +143,21 @@ describe('MasjidsService', () => {
         }),
       );
 
-      const result = await service.create({ ...dto, admin: { ...dto.admin } });
+      const result = await service.create({ ...dto, admin: { ...dto.admin } }, platformAdmin);
       expect(result.slug).toBe('masjid-al-noor-2');
     });
 
     it('rejects when the admin email is already in use', async () => {
       prisma.user.findUnique.mockResolvedValue({ id: 'existing' });
-      await expect(service.create(dto)).rejects.toThrow(ConflictException);
+      await expect(service.create(dto, platformAdmin)).rejects.toThrow(ConflictException);
     });
 
     it('rejects an explicitly taken slug', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
       prisma.masjid.findUnique.mockResolvedValue(masjid());
-      await expect(service.create({ ...dto, slug: 'masjid-a' })).rejects.toThrow(ConflictException);
+      await expect(service.create({ ...dto, slug: 'masjid-a' }, platformAdmin)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -159,7 +166,7 @@ describe('MasjidsService', () => {
       prisma.masjid.findUnique.mockResolvedValue(masjid());
       prisma.$transaction.mockResolvedValue([masjid({ status: MasjidStatus.SUSPENDED })]);
 
-      const result = await service.setStatus('masjid-a', MasjidStatus.SUSPENDED);
+      const result = await service.setStatus('masjid-a', MasjidStatus.SUSPENDED, platformAdmin);
 
       expect(result.status).toBe(MasjidStatus.SUSPENDED);
       expect(prisma.$transaction).toHaveBeenCalled();
@@ -172,7 +179,7 @@ describe('MasjidsService', () => {
 
     it('is a no-op when the status is unchanged', async () => {
       prisma.masjid.findUnique.mockResolvedValue(masjid());
-      const result = await service.setStatus('masjid-a', MasjidStatus.ACTIVE);
+      const result = await service.setStatus('masjid-a', MasjidStatus.ACTIVE, platformAdmin);
       expect(result.status).toBe(MasjidStatus.ACTIVE);
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
