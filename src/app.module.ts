@@ -15,6 +15,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { Env, validateEnv } from './config/env';
 import { HealthModule } from './health/health.module';
+import { MailModule } from './mail/mail.module';
 import { MasjidsModule } from './masjids/masjids.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
@@ -63,6 +64,7 @@ import { UsersModule } from './users/users.module';
       }),
     }),
     PrismaModule,
+    MailModule,
     AuthModule,
     MasjidsModule,
     UsersModule,

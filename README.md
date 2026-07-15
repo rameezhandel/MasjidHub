@@ -42,6 +42,8 @@ POST   /auth/login                     credentials -> access + refresh tokens
 POST   /auth/refresh                   rotate refresh token (reuse => all sessions revoked)
 POST   /auth/logout                    revoke a refresh token
 POST   /auth/change-password           revokes all sessions
+POST   /auth/forgot-password           emails a reset link (never reveals if the email exists)
+POST   /auth/reset-password            set new password with token (single-use, revokes sessions)
 GET    /auth/me                        current profile incl. masjid
 
 POST   /masjids                        onboard masjid + initial admin   [platform admin]
@@ -135,3 +137,4 @@ test/              e2e suite
 - **Why shared-schema multi-tenancy?** Hundreds of masjids on one platform: cheapest to operate, one migration for all tenants, trivially supports platform-wide admin views. Isolation is enforced consistently in the service layer and verified by e2e tests.
 - **Why opaque refresh tokens (hashed at rest)?** A DB leak exposes no usable tokens; rotation with reuse detection catches stolen refresh tokens.
 - **JWTs re-validate the user on every request**, so deactivation/suspension takes effect immediately rather than at token expiry.
+- **Password reset** is enumeration-safe (always 204), stores only SHA-256 hashes of single-use tokens (60 min TTL, one outstanding per user), and revokes every session on success. Email goes out via SMTP (`SMTP_URL` — point it at SES/Resend/Postmark/anything); without SMTP configured, links are logged instead, which is intended for development only.
