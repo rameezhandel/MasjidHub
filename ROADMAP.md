@@ -13,6 +13,7 @@ native mobile app.
 | Content: prayer times (manual bulk upload), announcements & events with draft→publish lifecycle, public API by masjid slug | #2 |
 | Prayer-time auto-calculation from coordinates (11 methods, Hanafi/standard Asr, iqamah offsets, jumu'ah) | #3 |
 | Forgot/reset password + provider-agnostic SMTP mailer | #4 |
+| **M5** — Staff invitations (invitee sets own password), audit log, scheduled token cleanup | #6 |
 
 103 automated tests (unit + e2e against real PostgreSQL) run in CI on every PR.
 Swagger try-it page at `/api/docs`. Docker + docker-compose deployment ready.
@@ -33,16 +34,7 @@ Swagger try-it page at `/api/docs`. Docker + docker-compose deployment ready.
 
 ## Upcoming milestones
 
-### M5 — Staff invites & account hygiene *(backend, next up)*
-Replace "admin types a password for the new user" with proper invites.
-- Invite flow: platform/masjid admin invites by email → invitee opens a link, sets their
-  own password (reuses the reset-token + mailer machinery)
-- Scheduled cleanup of expired refresh/reset tokens (`@nestjs/schedule`)
-- Audit log of sensitive actions (masjid suspended, user deactivated, role changed) —
-  platform admin can query it
-- **Exit criteria:** no password ever travels through another person's hands
-
-### M6 — Deploy to the internet 🌍
+### M6 — Deploy to the internet 🌍 *(next up — config ready, needs account creation)*
 Get a real URL early — everything after this gets exercised in production.
 - Neon Postgres (free) + Render web service (free) wired via `render.yaml`
 - CI deploy on merge to `main`; `prisma migrate deploy` release step

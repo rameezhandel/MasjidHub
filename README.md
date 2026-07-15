@@ -115,6 +115,10 @@ JWT_SECRET=$(openssl rand -base64 48) docker compose up --build
 
 This starts Postgres, applies migrations (dedicated `migrate` service, so API replicas never race), then the API on port 3000.
 
+### Deploy to the internet (free)
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) — Render free web service + Neon free Postgres, driven by [`render.yaml`](./render.yaml). Auto-deploys on every merge to `main`.
+
 ### Tests
 
 ```bash
