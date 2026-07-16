@@ -171,6 +171,14 @@ export interface HouseholdSummary {
   members: number;
 }
 
+export interface HouseholdImportResult {
+  dryRun: boolean;
+  imported: boolean;
+  households: number;
+  members: number;
+  errors: { row: number; message: string }[];
+}
+
 export interface Invitation {
   id: string;
   email: string;

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { Badge, Button, Card, Empty, ErrorText, Input, Label, Select, Textarea } from '@/components/ui';
+import { HouseholdImport } from '@/components/HouseholdImport';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Gender, Household, HouseholdSummary, Paginated } from '@/lib/types';
@@ -31,6 +32,7 @@ export default function HouseholdsPage() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -110,10 +112,25 @@ export default function HouseholdsPage() {
     <div className="max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Households</h1>
-        <Button onClick={() => setShowForm((v) => !v)}>
-          {showForm ? 'Close' : '+ Register household'}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => setShowImport((v) => !v)}>
+            {showImport ? 'Close' : 'Import Excel'}
+          </Button>
+          <Button onClick={() => setShowForm((v) => !v)}>
+            {showForm ? 'Close' : '+ Register household'}
+          </Button>
+        </div>
       </div>
+
+      {showImport && masjidId && (
+        <HouseholdImport
+          masjidId={masjidId}
+          onImported={() => {
+            void load();
+            setShowImport(false);
+          }}
+        />
+      )}
 
       {summary && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">

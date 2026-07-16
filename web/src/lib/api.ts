@@ -103,6 +103,45 @@ export async function api<T>(
   return (await res.json()) as T;
 }
 
+/** Authenticated multipart upload (a file plus optional query params). */
+export async function apiUpload<T>(
+  path: string,
+  file: File,
+  query?: Record<string, string>,
+): Promise<T> {
+  const qs = query ? `?${new URLSearchParams(query).toString()}` : '';
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${API_BASE}${path}${qs}`, {
+    method: 'POST',
+    headers: session.accessToken() ? { authorization: `Bearer ${session.accessToken()}` } : {},
+    body: form,
+  });
+  if (res.status === 401) {
+    session.clear();
+    if (typeof window !== 'undefined') window.location.href = '/login';
+  }
+  if (!res.ok) throw await parseError(res);
+  return res.status === 204 ? (undefined as T) : ((await res.json()) as T);
+}
+
+/** Authenticated binary download that triggers a browser save dialog. */
+export async function apiDownload(path: string, filename: string): Promise<void> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: session.accessToken() ? { authorization: `Bearer ${session.accessToken()}` } : {},
+  });
+  if (!res.ok) throw await parseError(res);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 /** Unauthenticated fetch (login, public flows). */
 export async function apiPublic<T>(
   path: string,

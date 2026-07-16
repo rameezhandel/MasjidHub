@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   Param,
@@ -10,8 +11,12 @@ import {
   Patch,
   Post,
   Query,
+  StreamableFile,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -19,13 +24,17 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { PaginatedResult } from '../common/dto/pagination.dto';
 import { CreateHouseholdMemberDto, UpdateHouseholdMemberDto } from './dto/household-member.dto';
 import { CreateHouseholdDto, QueryHouseholdsDto, UpdateHouseholdDto } from './dto/household.dto';
+import { HouseholdImportService, ImportResult } from './household-import.service';
 import { HouseholdMemberView, HouseholdView, HouseholdsService } from './households.service';
 
 @ApiTags('households')
 @ApiBearerAuth()
 @Controller({ path: 'masjids/:masjidId/households', version: '1' })
 export class HouseholdsController {
-  constructor(private readonly householdsService: HouseholdsService) {}
+  constructor(
+    private readonly householdsService: HouseholdsService,
+    private readonly importService: HouseholdImportService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Register a household (optionally with initial members)' })
@@ -35,6 +44,32 @@ export class HouseholdsController {
     @Body() dto: CreateHouseholdDto,
   ): Promise<HouseholdView> {
     return this.householdsService.create(user, masjidId, dto);
+  }
+
+  @Get('import/template')
+  @Header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+  @Header('Content-Disposition', 'attachment; filename="households-import-template.xlsx"')
+  @ApiOperation({ summary: 'Download the Excel import template' })
+  async template(
+    @CurrentUser() user: AuthUser,
+    @Param('masjidId', ParseUUIDPipe) masjidId: string,
+  ): Promise<StreamableFile> {
+    return new StreamableFile(await this.importService.buildTemplate(user, masjidId));
+  }
+
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Import households from an Excel .xlsx file (pass ?dryRun=true to preview)',
+  })
+  importFile(
+    @CurrentUser() user: AuthUser,
+    @Param('masjidId', ParseUUIDPipe) masjidId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Query('dryRun') dryRun?: string,
+  ): Promise<ImportResult> {
+    return this.importService.import(user, masjidId, file, dryRun === 'true');
   }
 
   @Get()
