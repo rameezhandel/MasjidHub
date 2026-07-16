@@ -2,6 +2,14 @@
 
 Multi-tenant platform for masjids: **one application, one database, many masjids**. Each masjid is a tenant (a row in the `masjids` table); all tenant-owned data carries a `masjid_id` and every request is scoped to the caller's masjid at the API layer.
 
+This repo contains the **API** (repo root, NestJS) and the **web app** (`web/`, Next.js): public masjid pages at `/m/{slug}`, the staff dashboard, and the platform admin console.
+
+```bash
+# API on :3000 (see Getting started below), then:
+cd web && npm ci && npm run dev   # web on :3001
+# set CORS_ORIGINS=http://localhost:3001 in the API .env
+```
+
 ## Stack
 
 | Concern | Choice |
