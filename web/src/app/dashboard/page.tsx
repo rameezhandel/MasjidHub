@@ -68,11 +68,12 @@ export default function DashboardHome() {
               /m/{masjid.slug}
             </Link>
           </p>
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
             {[
               { href: '/dashboard/prayer-times', label: '🕐 Prayer times' },
               { href: '/dashboard/announcements', label: '📢 Announcements' },
               { href: '/dashboard/events', label: '📅 Events' },
+              { href: '/dashboard/households', label: '🏠 Households' },
               { href: '/dashboard/staff', label: '👥 Staff' },
             ].map((item) => (
               <Link

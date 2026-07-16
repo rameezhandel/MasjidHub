@@ -97,6 +97,8 @@ const badgeStyles: Record<string, string> = {
   CANCELLED: 'bg-red-100 text-red-800',
   EXPIRED: 'bg-red-100 text-red-800',
   ARCHIVED: 'bg-slate-200 text-slate-600',
+  INACTIVE: 'bg-amber-100 text-amber-800',
+  MOVED_OUT: 'bg-slate-200 text-slate-600',
 };
 
 export function Badge({ value }: { value: string }) {

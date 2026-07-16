@@ -125,6 +125,52 @@ export interface MasjidEvent {
   updatedAt: string;
 }
 
+export type HouseholdStatus = 'ACTIVE' | 'INACTIVE' | 'MOVED_OUT';
+export type Gender = 'MALE' | 'FEMALE';
+
+export interface HouseholdMember {
+  id: string;
+  householdId: string;
+  firstName: string;
+  lastName: string;
+  relationship: string | null;
+  gender: Gender | null;
+  dateOfBirth: string | null;
+  phone: string | null;
+  email: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Household {
+  id: string;
+  masjidId: string;
+  familyName: string;
+  headName: string;
+  phone: string | null;
+  email: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  state: string | null;
+  postalCode: string | null;
+  country: string | null;
+  notes: string | null;
+  status: HouseholdStatus;
+  members?: HouseholdMember[];
+  _count?: { members: number };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HouseholdSummary {
+  total: number;
+  active: number;
+  inactive: number;
+  movedOut: number;
+  members: number;
+}
+
 export interface Invitation {
   id: string;
   email: string;

@@ -89,6 +89,16 @@ GET    /masjids/:masjidId/events/:id
 PATCH  /masjids/:masjidId/events/:id            edit; status: DRAFT|PUBLISHED|CANCELLED
 DELETE /masjids/:masjidId/events/:id            hard delete             [admins only]
 
+POST   /masjids/:masjidId/households            register a household (+ members)
+GET    /masjids/:masjidId/households            list/search/filter (with member counts)
+GET    /masjids/:masjidId/households/summary    census totals
+GET    /masjids/:masjidId/households/:id        household with members
+PATCH  /masjids/:masjidId/households/:id        edit household (incl. status)
+DELETE /masjids/:masjidId/households/:id        delete household            [admins only]
+POST   /masjids/:masjidId/households/:id/members            add member
+PATCH  /masjids/:masjidId/households/:id/members/:memberId  edit member
+DELETE /masjids/:masjidId/households/:id/members/:memberId  remove member
+
 GET    /public/masjids/:slug                    public masjid profile        [no auth]
 GET    /public/masjids/:slug/prayer-times       timetable (default: today→)  [no auth]
 GET    /public/masjids/:slug/announcements      published only               [no auth]
@@ -97,6 +107,8 @@ GET    /public/masjids/:slug/events             published upcoming only      [no
 GET    /health                         readiness (DB ping)
 GET    /health/liveness                liveness
 ```
+
+Households: a private per-masjid registry of families/households and their individual members (community census). Managed by any masjid staff member; only admins can delete a household. Never exposed on the public API — it is resident PII.
 
 Content rules: prayer times, announcements and events are managed by any member of the masjid (admin or maintainer) and are scoped by `masjid_id` like everything else. The `/public/*` namespace requires no authentication and only ever exposes **ACTIVE** masjids and **PUBLISHED** content — suspended masjids disappear from it entirely. All prayer times are wall-clock `HH:MM` strings in the masjid's own timezone.
 

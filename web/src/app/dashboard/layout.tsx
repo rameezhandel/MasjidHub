@@ -11,6 +11,7 @@ const STAFF_LINKS = [
   { href: '/dashboard/prayer-times', label: 'Prayer times' },
   { href: '/dashboard/announcements', label: 'Announcements' },
   { href: '/dashboard/events', label: 'Events' },
+  { href: '/dashboard/households', label: 'Households' },
   { href: '/dashboard/staff', label: 'Staff' },
   { href: '/dashboard/settings', label: 'Masjid settings' },
 ];

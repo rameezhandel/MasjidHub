@@ -14,6 +14,8 @@ native mobile app.
 | Prayer-time auto-calculation from coordinates (11 methods, Hanafi/standard Asr, iqamah offsets, jumu'ah) | #3 |
 | Forgot/reset password + provider-agnostic SMTP mailer | #4 |
 | **M5** — Staff invitations (invitee sets own password), audit log, scheduled token cleanup | #6 |
+| **M9** — Web frontend (public masjid pages, staff dashboard, platform console) | #8 |
+| **Households** — per-masjid registry of families + members (community census) | this PR |
 
 103 automated tests (unit + e2e against real PostgreSQL) run in CI on every PR.
 Swagger try-it page at `/api/docs`. Docker + docker-compose deployment ready.

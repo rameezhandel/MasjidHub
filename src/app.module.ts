@@ -13,6 +13,7 @@ import { InvitationsModule } from './invitations/invitations.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 import { EventsModule } from './events/events.module';
+import { HouseholdsModule } from './households/households.module';
 import { PrayerTimesModule } from './prayer-times/prayer-times.module';
 import { PublicModule } from './public/public.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -78,6 +79,7 @@ import { UsersModule } from './users/users.module';
     PrayerTimesModule,
     AnnouncementsModule,
     EventsModule,
+    HouseholdsModule,
     PublicModule,
     MaintenanceModule,
     HealthModule,
