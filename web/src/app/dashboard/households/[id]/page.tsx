@@ -127,11 +127,16 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
             {household.familyName} <Badge value={household.status} />
           </h1>
         </div>
-        {isAdmin && (
-          <Button variant="danger" onClick={deleteHousehold}>
-            Delete household
-          </Button>
-        )}
+        <div className="flex gap-2">
+          <Link href={`/dashboard/households/${id}/tree`}>
+            <Button variant="secondary">Family tree</Button>
+          </Link>
+          {isAdmin && (
+            <Button variant="danger" onClick={deleteHousehold}>
+              Delete household
+            </Button>
+          )}
+        </div>
       </div>
 
       <Card title="Household details">

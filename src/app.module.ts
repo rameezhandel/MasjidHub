@@ -16,6 +16,7 @@ import { EventsModule } from './events/events.module';
 import { HouseholdsModule } from './households/households.module';
 import { PrayerTimesModule } from './prayer-times/prayer-times.module';
 import { PublicModule } from './public/public.module';
+import { RelationshipsModule } from './relationships/relationships.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { Env, validateEnv } from './config/env';
@@ -80,6 +81,7 @@ import { UsersModule } from './users/users.module';
     AnnouncementsModule,
     EventsModule,
     HouseholdsModule,
+    RelationshipsModule,
     PublicModule,
     MaintenanceModule,
     HealthModule,

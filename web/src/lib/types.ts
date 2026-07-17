@@ -163,6 +163,40 @@ export interface Household {
   updatedAt: string;
 }
 
+export type RelationshipType = 'PARENT' | 'SPOUSE';
+
+export interface MemberRelationship {
+  id: string;
+  masjidId: string;
+  type: RelationshipType;
+  fromMemberId: string;
+  toMemberId: string;
+  createdAt: string;
+}
+
+export interface FamilyTreeNode {
+  id: string;
+  firstName: string;
+  lastName: string;
+  gender: Gender | null;
+  householdId: string;
+  householdName: string;
+}
+
+export interface FamilyTreeEdge {
+  id: string;
+  type: RelationshipType;
+  fromMemberId: string;
+  toMemberId: string;
+}
+
+export interface FamilyTree {
+  rootHouseholdId: string;
+  nodes: FamilyTreeNode[];
+  edges: FamilyTreeEdge[];
+  truncated: boolean;
+}
+
 export interface HouseholdSummary {
   total: number;
   active: number;
