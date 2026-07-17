@@ -21,6 +21,7 @@ describe('HouseholdsService', () => {
     householdMember: {
       create: jest.fn(),
       findFirst: jest.fn(),
+      findMany: jest.fn(),
       update: jest.fn(),
       deleteMany: jest.fn(),
       count: jest.fn(),
@@ -162,6 +163,58 @@ describe('HouseholdsService', () => {
       await expect(
         service.updateMember(maintainer, 'masjid-a', 'hh-1', 'm-x', { firstName: 'X' }),
       ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('searchMembers', () => {
+    it('returns matching members with household context', async () => {
+      prisma.masjid.findUnique.mockResolvedValue({ status: MasjidStatus.ACTIVE });
+      prisma.$transaction.mockResolvedValue([
+        [
+          {
+            id: 'm-1',
+            householdId: 'hh-1',
+            firstName: 'Rameez',
+            lastName: 'Handel',
+            relationship: 'Head',
+            gender: Gender.MALE,
+            dateOfBirth: new Date('1985-01-02'),
+            phone: '555',
+            email: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            household: {
+              id: 'hh-1',
+              familyName: 'Handel Family',
+              headName: 'Rameez Handel',
+              status: HouseholdStatus.ACTIVE,
+            },
+          },
+        ],
+        1,
+      ]);
+
+      const result = await service.searchMembers(maintainer, 'masjid-a', {
+        page: 1,
+        pageSize: 20,
+        skip: 0,
+        search: 'Rameez Handel',
+      });
+
+      expect(result.meta.total).toBe(1);
+      expect(result.data[0].dateOfBirth).toBe('1985-01-02');
+      expect(result.data[0].household.familyName).toBe('Handel Family');
+      // Each token becomes its own AND clause (so "Rameez Handel" narrows).
+      const where = prisma.householdMember.findMany.mock.calls[0][0].where;
+      expect(where.AND).toHaveLength(2);
+      expect(where.household).toEqual({ masjidId: 'masjid-a' });
+    });
+
+    it("blocks searching another tenant's members", async () => {
+      await expect(
+        service.searchMembers(maintainer, 'masjid-b', { page: 1, pageSize: 20, skip: 0 }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(prisma.householdMember.findMany).not.toHaveBeenCalled();
     });
   });
 
