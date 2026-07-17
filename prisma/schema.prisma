@@ -52,6 +52,18 @@ enum AsrMethod {
   HANAFI
 }
 
+/// Lifecycle of a household registered under a masjid.
+enum HouseholdStatus {
+  ACTIVE
+  INACTIVE
+  MOVED_OUT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
 model Masjid {
   id           String       @id @default(uuid()) @db.Uuid
   name         String
@@ -76,6 +88,7 @@ model Masjid {
   prayerTimes  PrayerTimetableEntry[]
   announcements Announcement[]
   events       Event[]
+  households   Household[]
   createdAt    DateTime     @default(now()) @map("created_at")
   updatedAt    DateTime     @updatedAt @map("updated_at")
 
@@ -99,11 +112,59 @@ model User {
   auditLogs     AuditLog[]     @relation("AuditActor")
   announcements Announcement[]
   events        Event[]
+  households    Household[]
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
 
   @@index([masjidId])
   @@map("users")
+}
+
+model Household {
+  id           String            @id @default(uuid()) @db.Uuid
+  masjid       Masjid            @relation(fields: [masjidId], references: [id], onDelete: Cascade)
+  masjidId     String            @map("masjid_id") @db.Uuid
+  /// Display label for the household, e.g. "Handel Family".
+  familyName   String            @map("family_name")
+  headName     String            @map("head_name")
+  phone        String?
+  email        String?
+  addressLine1 String?           @map("address_line1")
+  addressLine2 String?           @map("address_line2")
+  city         String?
+  state        String?
+  postalCode   String?           @map("postal_code")
+  country      String?
+  notes        String?
+  status       HouseholdStatus   @default(ACTIVE)
+  members      HouseholdMember[]
+  createdBy    User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById  String?           @map("created_by_id") @db.Uuid
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  @@index([masjidId, status])
+  @@index([masjidId, familyName])
+  @@map("households")
+}
+
+model HouseholdMember {
+  id           String    @id @default(uuid()) @db.Uuid
+  household    Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  householdId  String    @map("household_id") @db.Uuid
+  firstName    String    @map("first_name")
+  lastName     String    @map("last_name")
+  /// Free-text relationship to the head, e.g. "Spouse", "Son", "Daughter".
+  relationship String?
+  gender       Gender?
+  dateOfBirth  DateTime? @map("date_of_birth") @db.Date
+  phone        String?
+  email        String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@index([householdId])
+  @@map("household_members")
 }
 
 model PrayerTimetableEntry {
