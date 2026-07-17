@@ -1,7 +1,13 @@
-# Render Blueprint — deploys the MasjidHub API on the free plan.
+# Render Blueprint — deploys the MasjidHub API + web app on the free plan.
 # Database: bring your own DATABASE_URL (we use Neon's free Postgres —
 # Render's own free database is deleted after 30 days).
 # See DEPLOYMENT.md for the step-by-step guide.
+#
+# The two services get predictable URLs from their names:
+#   API  -> https://masjidhub-api.onrender.com
+#   Web  -> https://masjidhub-web.onrender.com
+# If either name is already taken in your account, Render appends a random
+# suffix — update the three cross-referencing URLs below to match.
 services:
   - type: web
     name: masjidhub-api
@@ -28,12 +34,36 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: SWAGGER_ENABLED
-        value: 'true' # turn off once a real frontend exists
+        value: 'true' # /api/docs — set to 'false' to hide it in production
+      # Browser origin allowed to call the API — the web service below.
       - key: CORS_ORIGINS
-        value: ''
+        value: https://masjidhub-web.onrender.com
+      # Password-reset / invite links open in the browser, so point them at
+      # the web app (its /reset-password and /accept-invite routes).
       - key: APP_BASE_URL
-        value: https://masjidhub-api.onrender.com # update when the frontend ships
+        value: https://masjidhub-web.onrender.com
       - key: SMTP_URL
         sync: false # optional — set to enable real emails (resets/invites)
       - key: MAIL_FROM
         value: 'MasjidHub <no-reply@masjidhub.app>'
+
+  - type: web
+    name: masjidhub-web
+    runtime: node
+    plan: free
+    region: oregon # keep in the same region as the API to minimise latency
+    branch: main
+    autoDeploy: true
+    rootDir: web # build/run the Next.js app from web/
+    buildCommand: npm ci && npm run build
+    # The package.json "start" pins port 3001; Render injects its own $PORT,
+    # so start Next on that instead.
+    startCommand: npx next start -p $PORT
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+      # Public API origin. NEXT_PUBLIC_* is inlined into the bundle at BUILD
+      # time, so this must be set before the build — the blueprint handles that.
+      - key: NEXT_PUBLIC_API_URL
+        value: https://masjidhub-api.onrender.com

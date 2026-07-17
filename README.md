@@ -147,7 +147,7 @@ This starts Postgres, applies migrations (dedicated `migrate` service, so API re
 
 ### Deploy to the internet (free)
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) — Render free web service + Neon free Postgres, driven by [`render.yaml`](./render.yaml). Auto-deploys on every merge to `main`.
+See [DEPLOYMENT.md](./DEPLOYMENT.md) — API **and** web app on Render free web services + Neon free Postgres, all driven by one [`render.yaml`](./render.yaml) Blueprint. Auto-deploys on every merge to `main`.
 
 ### Tests
 
