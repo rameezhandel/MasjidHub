@@ -100,6 +100,9 @@ PATCH  /masjids/:masjidId/households/:id/members/:memberId  edit member
 DELETE /masjids/:masjidId/households/:id/members/:memberId  remove member
 GET    /masjids/:masjidId/households/import/template  download the Excel .xlsx template
 POST   /masjids/:masjidId/households/import           bulk import from .xlsx (?dryRun=true to preview)
+POST   /masjids/:masjidId/member-relationships        link two members (PARENT or SPOUSE)
+DELETE /masjids/:masjidId/member-relationships/:id     remove a member link
+GET    /masjids/:masjidId/households/:id/tree          family graph reachable from a household
 
 GET    /public/masjids/:slug                    public masjid profile        [no auth]
 GET    /public/masjids/:slug/prayer-times       timetable (default: today→)  [no auth]
@@ -110,7 +113,9 @@ GET    /health                         readiness (DB ping)
 GET    /health/liveness                liveness
 ```
 
-Households: a private per-masjid registry of families/households and their individual members (community census). Managed by any masjid staff member; only admins can delete a household. Never exposed on the public API — it is resident PII. Members carry a free-text `relationship` (Head, Spouse, Son, …) for future family-graph views. Bulk onboarding is supported via Excel: download the `.xlsx` template, fill one row per person (rows sharing a family + head become one household), and upload — `?dryRun=true` returns a preview with row-level validation errors before anything is written.
+Households: a private per-masjid registry of families/households and their individual members (community census). Managed by any masjid staff member; only admins can delete a household. Never exposed on the public API — it is resident PII. Members carry a free-text `relationship` (Head, Spouse, Son, …) label. Bulk onboarding is supported via Excel: download the `.xlsx` template, fill one row per person (rows sharing a family + head become one household), and upload — `?dryRun=true` returns a preview with row-level validation errors before anything is written.
+
+Family tree: members can be joined with **structured, masjid-scoped links** — `PARENT` (directed parent → child) and `SPOUSE` (undirected, stored canonically). The service rejects self-links, cross-masjid members, and any `PARENT` link that would introduce a cycle. `GET …/households/:id/tree` walks these links outward from a household's members — undirected across both link types — so relatives living in *other* households are pulled into one connected graph (capped at 200 nodes, `truncated` flags the clip). The dashboard renders it with [React Flow](https://reactflow.dev) laid out top-down via [dagre](https://github.com/dagrejs/dagre): parents above children, spouses on the same rank, colour-coded by gender with the current household highlighted.
 
 Content rules: prayer times, announcements and events are managed by any member of the masjid (admin or maintainer) and are scoped by `masjid_id` like everything else. The `/public/*` namespace requires no authentication and only ever exposes **ACTIVE** masjids and **PUBLISHED** content — suspended masjids disappear from it entirely. All prayer times are wall-clock `HH:MM` strings in the masjid's own timezone.
 

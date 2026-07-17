@@ -64,6 +64,14 @@ enum Gender {
   FEMALE
 }
 
+/// Structured link between two household members for the family tree.
+enum RelationshipType {
+  /// Directed: fromMember is a parent of toMember.
+  PARENT
+  /// Undirected: the two members are spouses (stored once, ids sorted).
+  SPOUSE
+}
+
 model Masjid {
   id           String       @id @default(uuid()) @db.Uuid
   name         String
@@ -89,6 +97,7 @@ model Masjid {
   announcements Announcement[]
   events       Event[]
   households   Household[]
+  memberRelationships MemberRelationship[]
   createdAt    DateTime     @default(now()) @map("created_at")
   updatedAt    DateTime     @updatedAt @map("updated_at")
 
@@ -160,11 +169,33 @@ model HouseholdMember {
   dateOfBirth  DateTime? @map("date_of_birth") @db.Date
   phone        String?
   email        String?
+  relationshipsFrom MemberRelationship[] @relation("RelFrom")
+  relationshipsTo   MemberRelationship[] @relation("RelTo")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
   @@index([householdId])
   @@map("household_members")
+}
+
+model MemberRelationship {
+  id           String           @id @default(uuid()) @db.Uuid
+  masjid       Masjid           @relation(fields: [masjidId], references: [id], onDelete: Cascade)
+  masjidId     String           @map("masjid_id") @db.Uuid
+  type         RelationshipType
+  /// For PARENT this is the parent; for SPOUSE this is the lower-sorted member id.
+  fromMember   HouseholdMember  @relation("RelFrom", fields: [fromMemberId], references: [id], onDelete: Cascade)
+  fromMemberId String           @map("from_member_id") @db.Uuid
+  /// For PARENT this is the child; for SPOUSE this is the higher-sorted member id.
+  toMember     HouseholdMember  @relation("RelTo", fields: [toMemberId], references: [id], onDelete: Cascade)
+  toMemberId   String           @map("to_member_id") @db.Uuid
+  createdAt    DateTime         @default(now()) @map("created_at")
+
+  @@unique([fromMemberId, toMemberId, type])
+  @@index([masjidId])
+  @@index([fromMemberId])
+  @@index([toMemberId])
+  @@map("member_relationships")
 }
 
 model PrayerTimetableEntry {
