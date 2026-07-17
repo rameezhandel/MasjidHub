@@ -197,6 +197,10 @@ export interface FamilyTree {
   truncated: boolean;
 }
 
+export interface MemberSearchResult extends HouseholdMember {
+  household: { id: string; familyName: string; headName: string; status: HouseholdStatus };
+}
+
 export interface HouseholdSummary {
   total: number;
   active: number;

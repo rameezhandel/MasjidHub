@@ -1,15 +1,21 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Household, HouseholdMember, MasjidStatus, Prisma } from '@prisma/client';
+import { Household, HouseholdMember, HouseholdStatus, MasjidStatus, Prisma } from '@prisma/client';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { PaginatedResult, paginated } from '../common/dto/pagination.dto';
 import { assertMasjidMember } from '../common/utils/tenant-access';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateHouseholdMemberDto, UpdateHouseholdMemberDto } from './dto/household-member.dto';
 import { CreateHouseholdDto, QueryHouseholdsDto, UpdateHouseholdDto } from './dto/household.dto';
+import { QueryMembersDto } from './dto/member-search.dto';
 
 /** API shape: dateOfBirth is a plain YYYY-MM-DD string, not a timestamp. */
 export type HouseholdMemberView = Omit<HouseholdMember, 'dateOfBirth'> & {
   dateOfBirth: string | null;
+};
+
+/** A member paired with just enough of its household to link back to it. */
+export type MemberSearchView = HouseholdMemberView & {
+  household: { id: string; familyName: string; headName: string; status: HouseholdStatus };
 };
 export type HouseholdView = Household & {
   members?: HouseholdMemberView[];
@@ -206,6 +212,56 @@ export class HouseholdsService {
       this.prisma.householdMember.count({ where: { household: { masjidId } } }),
     ]);
     return { total, active, inactive, movedOut, members };
+  }
+
+  /**
+   * Search individuals across every household in the masjid. Each whitespace token
+   * must match one of name/phone/email, so "Rameez Handel" narrows to that person.
+   */
+  async searchMembers(
+    actor: AuthUser,
+    masjidId: string,
+    query: QueryMembersDto,
+  ): Promise<PaginatedResult<MemberSearchView>> {
+    assertMasjidMember(actor, masjidId);
+    await this.assertMasjidExists(masjidId);
+
+    const tokens = query.search?.trim().split(/\s+/).filter(Boolean) ?? [];
+    const where: Prisma.HouseholdMemberWhereInput = {
+      household: { masjidId },
+      ...(query.gender ? { gender: query.gender } : {}),
+      ...(tokens.length
+        ? {
+            AND: tokens.map((token) => ({
+              OR: [
+                { firstName: { contains: token, mode: 'insensitive' as const } },
+                { lastName: { contains: token, mode: 'insensitive' as const } },
+                { phone: { contains: token, mode: 'insensitive' as const } },
+                { email: { contains: token, mode: 'insensitive' as const } },
+              ],
+            })),
+          }
+        : {}),
+    };
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.householdMember.findMany({
+        where,
+        skip: query.skip,
+        take: query.pageSize,
+        orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+        include: {
+          household: { select: { id: true, familyName: true, headName: true, status: true } },
+        },
+      }),
+      this.prisma.householdMember.count({ where }),
+    ]);
+
+    const view = data.map(({ household, ...member }) => ({
+      ...toMemberView(member),
+      household,
+    }));
+    return paginated(view, total, query);
   }
 
   private async getHouseholdOrThrow(masjidId: string, id: string): Promise<Household> {

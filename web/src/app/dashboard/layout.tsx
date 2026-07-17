@@ -12,6 +12,7 @@ const STAFF_LINKS = [
   { href: '/dashboard/announcements', label: 'Announcements' },
   { href: '/dashboard/events', label: 'Events' },
   { href: '/dashboard/households', label: 'Households' },
+  { href: '/dashboard/members', label: 'Members' },
   { href: '/dashboard/staff', label: 'Staff' },
   { href: '/dashboard/settings', label: 'Masjid settings' },
 ];

@@ -95,6 +95,7 @@ GET    /masjids/:masjidId/households/summary    census totals
 GET    /masjids/:masjidId/households/:id        household with members
 PATCH  /masjids/:masjidId/households/:id        edit household (incl. status)
 DELETE /masjids/:masjidId/households/:id        delete household            [admins only]
+GET    /masjids/:masjidId/members                     search people across households (name/phone/email)
 POST   /masjids/:masjidId/households/:id/members            add member
 PATCH  /masjids/:masjidId/households/:id/members/:memberId  edit member
 DELETE /masjids/:masjidId/households/:id/members/:memberId  remove member
@@ -114,6 +115,8 @@ GET    /health/liveness                liveness
 ```
 
 Households: a private per-masjid registry of families/households and their individual members (community census). Managed by any masjid staff member; only admins can delete a household. Never exposed on the public API — it is resident PII. Members carry a free-text `relationship` (Head, Spouse, Son, …) label. Bulk onboarding is supported via Excel: download the `.xlsx` template, fill one row per person (rows sharing a family + head become one household), and upload — `?dryRun=true` returns a preview with row-level validation errors before anything is written.
+
+Member search: `GET …/members` looks an individual up across every household in the masjid — each whitespace-separated token must match one of first name, last name, phone or email (so `Rameez Handel` narrows to that person), with an optional `gender` filter. Results are paginated and carry the household each person belongs to. Surfaced in the dashboard as a dedicated **Members** page.
 
 Family tree: members can be joined with **structured, masjid-scoped links** — `PARENT` (directed parent → child) and `SPOUSE` (undirected, stored canonically). The service rejects self-links, cross-masjid members, and any `PARENT` link that would introduce a cycle. `GET …/households/:id/tree` walks these links outward from a household's members — undirected across both link types — so relatives living in *other* households are pulled into one connected graph (capped at 200 nodes, `truncated` flags the clip). The dashboard renders it with [React Flow](https://reactflow.dev) laid out top-down via [dagre](https://github.com/dagrejs/dagre): parents above children, spouses on the same rank, colour-coded by gender with the current household highlighted.
 
