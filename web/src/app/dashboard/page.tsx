@@ -30,16 +30,16 @@ export default function DashboardHome() {
       <div className="max-w-3xl space-y-6">
         <h1 className="text-2xl font-bold">As-salamu alaykum, {user.firstName}</h1>
         <Card title="Platform">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted-foreground">
             {masjidCount === null ? '…' : masjidCount} masjid{masjidCount === 1 ? '' : 's'} on the
             platform.
           </p>
           <div className="mt-4 flex gap-3">
-            <Link className="text-sm font-medium text-emerald-700 underline" href="/dashboard/platform">
+            <Link className="text-sm font-medium text-primary underline" href="/dashboard/platform">
               Manage masjids →
             </Link>
             <Link
-              className="text-sm font-medium text-emerald-700 underline"
+              className="text-sm font-medium text-primary underline"
               href="/dashboard/platform/audit"
             >
               Audit log →
@@ -58,13 +58,13 @@ export default function DashboardHome() {
           title={masjid.name}
           actions={<Badge value={masjid.status} />}
         >
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted-foreground">
             {[masjid.city, masjid.country].filter(Boolean).join(', ') || 'No address yet'} ·
             timezone {masjid.timezone} · {masjid._count?.users ?? '—'} staff
           </p>
           <p className="mt-2 text-sm">
             Public page:{' '}
-            <Link className="text-emerald-700 underline" href={`/m/${masjid.slug}`}>
+            <Link className="text-primary underline" href={`/m/${masjid.slug}`}>
               /m/{masjid.slug}
             </Link>
           </p>
@@ -79,7 +79,7 @@ export default function DashboardHome() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-lg border border-slate-200 p-3 text-center text-sm font-medium hover:border-emerald-300 hover:bg-emerald-50"
+                className="rounded-lg border border-border p-3 text-center text-sm font-medium hover:border-emerald-300 hover:bg-accent"
               >
                 {item.label}
               </Link>

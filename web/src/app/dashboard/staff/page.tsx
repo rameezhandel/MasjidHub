@@ -106,7 +106,7 @@ export default function StaffPage() {
             </div>
             <div className="sm:col-span-2">
               <ErrorText>{error}</ErrorText>
-              {notice && <p className="text-sm text-emerald-700">{notice}</p>}
+              {notice && <p className="text-sm text-primary">{notice}</p>}
             </div>
           </form>
         </Card>
@@ -116,15 +116,15 @@ export default function StaffPage() {
         {staff.length === 0 ? (
           <Empty>No staff yet.</Empty>
         ) : (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-border">
             {staff.map((member) => (
               <li key={member.id} className="flex items-center justify-between gap-4 py-3">
                 <div>
                   <p className="font-medium">
                     {member.firstName} {member.lastName}{' '}
-                    <span className="text-xs text-slate-400">({member.email})</span>
+                    <span className="text-xs text-muted-foreground">({member.email})</span>
                   </p>
-                  <p className="mt-0.5 text-xs text-slate-500">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     {member.role === 'MASJID_ADMIN' ? 'Admin' : 'Maintainer'}
                     {!member.isActive && <span className="text-red-600"> · deactivated</span>}
                   </p>
@@ -145,14 +145,14 @@ export default function StaffPage() {
 
       {isAdmin && invitations.length > 0 && (
         <Card title="Invitations">
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-border">
             {invitations.map((invite) => (
               <li key={invite.id} className="flex items-center justify-between gap-4 py-3">
                 <div>
                   <p className="font-medium">
                     {invite.email} <Badge value={invite.status} />
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     {invite.firstName} {invite.lastName} ·{' '}
                     {invite.role === 'MASJID_ADMIN' ? 'Admin' : 'Maintainer'} · expires{' '}
                     {new Date(invite.expiresAt).toLocaleDateString()}

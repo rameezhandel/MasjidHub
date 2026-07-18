@@ -117,14 +117,14 @@ export default function EventsPage() {
         {items.length === 0 ? (
           <Empty>No events yet.</Empty>
         ) : (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-border">
             {items.map((item) => (
               <li key={item.id} className="flex items-start justify-between gap-4 py-3">
                 <div className="min-w-0">
                   <p className="font-medium">
                     {item.title} <Badge value={item.status} />
                   </p>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     {new Date(item.startsAt).toLocaleString()}
                     {item.location ? ` · ${item.location}` : ''}
                   </p>

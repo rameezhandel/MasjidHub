@@ -75,7 +75,7 @@ export default function SettingsPage() {
     <div className="max-w-3xl space-y-6">
       <h1 className="text-2xl font-bold">Masjid settings</h1>
       {!canEdit && (
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">
           Only masjid admins can change settings — shown read-only.
         </p>
       )}
@@ -148,7 +148,7 @@ export default function SettingsPage() {
         {canEdit && (
           <div>
             <ErrorText>{error}</ErrorText>
-            {notice && <p className="mb-2 text-sm text-emerald-700">{notice}</p>}
+            {notice && <p className="mb-2 text-sm text-primary">{notice}</p>}
             <Button type="submit" disabled={busy}>
               {busy ? 'Saving…' : 'Save settings'}
             </Button>

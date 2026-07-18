@@ -130,7 +130,7 @@ export default function PlatformMasjidsPage() {
           </div>
           <div className="sm:col-span-3">
             <ErrorText>{error}</ErrorText>
-            {notice && <p className="text-sm text-emerald-700">{notice}</p>}
+            {notice && <p className="text-sm text-primary">{notice}</p>}
           </div>
         </form>
       </Card>
@@ -149,14 +149,14 @@ export default function PlatformMasjidsPage() {
         {masjids.length === 0 ? (
           <Empty>No masjids found.</Empty>
         ) : (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-border">
             {masjids.map((masjid) => (
               <li key={masjid.id} className="flex items-center justify-between gap-4 py-3">
                 <div>
                   <p className="font-medium">
                     {masjid.name} <Badge value={masjid.status} />
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     <Link className="underline" href={`/m/${masjid.slug}`}>
                       /m/{masjid.slug}
                     </Link>{' '}

@@ -38,7 +38,7 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <p className="text-center text-sm text-slate-500">
+      <p className="text-center text-sm text-muted-foreground">
         This link is incomplete — open the link from your email, or{' '}
         <Link className="underline" href="/forgot-password">
           request a new one
@@ -51,7 +51,7 @@ function ResetPasswordForm() {
   return (
     <form
       onSubmit={submit}
-      className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+      className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm"
     >
       <div>
         <Label>New password (12+ characters)</Label>

@@ -107,16 +107,16 @@ export default function AccountPage() {
               <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
             </div>
           </div>
-          <div className="grid gap-3 text-sm text-slate-500 sm:grid-cols-2">
+          <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
             <p>
-              <span className="text-slate-400">Email:</span> {user.email}
+              <span className="text-muted-foreground">Email:</span> {user.email}
             </p>
             <p>
-              <span className="text-slate-400">Role:</span> {roleLabel}
+              <span className="text-muted-foreground">Role:</span> {roleLabel}
             </p>
           </div>
           <ErrorText>{profileError}</ErrorText>
-          {profileNotice && <p className="text-sm text-emerald-700">{profileNotice}</p>}
+          {profileNotice && <p className="text-sm text-primary">{profileNotice}</p>}
           <Button type="submit" disabled={profileBusy}>
             {profileBusy ? 'Saving…' : 'Save name'}
           </Button>
@@ -157,7 +157,7 @@ export default function AccountPage() {
               />
             </div>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-muted-foreground">
             At least {MIN_PASSWORD} characters. Changing your password signs you out of all
             sessions — you&apos;ll log back in with the new one.
           </p>

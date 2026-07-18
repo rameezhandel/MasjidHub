@@ -60,7 +60,7 @@ export default function MembersPage() {
     <div className="max-w-4xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Members</h1>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">
           Search everyone across your registered households by name, phone or email.
         </p>
       </div>
@@ -82,7 +82,7 @@ export default function MembersPage() {
           <option value="MALE">Male</option>
           <option value="FEMALE">Female</option>
         </Select>
-        <span className="text-sm text-slate-400">
+        <span className="text-sm text-muted-foreground">
           {loading ? 'Searching…' : `${total} ${total === 1 ? 'person' : 'people'}`}
         </span>
       </div>
@@ -93,19 +93,19 @@ export default function MembersPage() {
         {results.length === 0 ? (
           <Empty>{search.trim() ? 'No members match your search.' : 'No members yet.'}</Empty>
         ) : (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-border">
             {results.map((member) => (
               <li key={member.id} className="flex items-center justify-between gap-4 py-3">
                 <div className="min-w-0">
                   <p className="font-medium">
                     {member.firstName} {member.lastName}
                     {member.relationship ? (
-                      <span className="ml-2 text-xs font-normal text-slate-400">
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">
                         {member.relationship}
                       </span>
                     ) : null}
                   </p>
-                  <p className="truncate text-xs text-slate-500">
+                  <p className="truncate text-xs text-muted-foreground">
                     <Link
                       className="hover:underline"
                       href={`/dashboard/households/${member.household.id}`}
@@ -119,7 +119,7 @@ export default function MembersPage() {
                 </div>
                 <Link
                   href={`/dashboard/households/${member.household.id}`}
-                  className="shrink-0 text-sm font-medium text-emerald-700 hover:underline"
+                  className="shrink-0 text-sm font-medium text-primary hover:underline"
                 >
                   Open →
                 </Link>
@@ -131,17 +131,17 @@ export default function MembersPage() {
         {totalPages > 1 && (
           <div className="mt-4 flex items-center justify-between text-sm">
             <button
-              className="text-emerald-700 disabled:text-slate-300"
+              className="text-primary disabled:text-muted-foreground"
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
               ← Previous
             </button>
-            <span className="text-slate-400">
+            <span className="text-muted-foreground">
               Page {page} of {totalPages}
             </span>
             <button
-              className="text-emerald-700 disabled:text-slate-300"
+              className="text-primary disabled:text-muted-foreground"
               disabled={page >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             >

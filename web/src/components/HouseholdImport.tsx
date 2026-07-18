@@ -92,7 +92,7 @@ export function HouseholdImport({
         </Button>
       }
     >
-      <p className="mb-3 text-sm text-slate-500">
+      <p className="mb-3 text-sm text-muted-foreground">
         One row per person; rows with the same family &amp; head become one household. Download the
         template for the exact format.
       </p>
@@ -102,16 +102,16 @@ export function HouseholdImport({
         type="file"
         accept=".xlsx"
         onChange={onPick}
-        className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-emerald-800 hover:file:bg-emerald-100"
+        className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-accent file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary hover:file:bg-accent"
       />
 
-      {busy && !preview && <p className="mt-3 text-sm text-slate-400">Reading {fileName}…</p>}
+      {busy && !preview && <p className="mt-3 text-sm text-muted-foreground">Reading {fileName}…</p>}
       <ErrorText>{error}</ErrorText>
-      {notice && <p className="mt-3 text-sm text-emerald-700">{notice}</p>}
+      {notice && <p className="mt-3 text-sm text-primary">{notice}</p>}
 
       {preview && !hasErrors && (
-        <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-          <p className="text-sm text-emerald-900">
+        <div className="mt-4 rounded-lg border border-emerald-200 bg-accent p-4">
+          <p className="text-sm text-accent-foreground">
             Ready to import <strong>{preview.households}</strong> household(s) and{' '}
             <strong>{preview.members}</strong> people from {fileName}.
           </p>

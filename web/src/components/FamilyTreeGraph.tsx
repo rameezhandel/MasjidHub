@@ -108,7 +108,7 @@ export function FamilyTreeGraph({ tree }: { tree: FamilyTree }) {
   const edges = useMemo(() => toEdges(tree), [tree]);
 
   return (
-    <div className="h-[600px] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+    <div className="h-[600px] w-full overflow-hidden rounded-xl border border-border bg-muted">
       <ReactFlow
         nodes={nodes}
         edges={edges}

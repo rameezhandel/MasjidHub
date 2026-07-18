@@ -5,6 +5,7 @@ import { MenuIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 
@@ -78,9 +79,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {user.firstName} {user.lastName}
       </p>
       <p className="truncate">{user.email}</p>
-      <button onClick={signOut} className="mt-2 text-destructive underline">
-        Sign out
-      </button>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <button onClick={signOut} className="text-destructive underline">
+          Sign out
+        </button>
+        <ThemeToggle />
+      </div>
     </div>
   );
 

@@ -41,7 +41,7 @@ function AcceptInviteForm() {
 
   if (!token) {
     return (
-      <p className="text-center text-sm text-slate-500">
+      <p className="text-center text-sm text-muted-foreground">
         This link is incomplete — open the invitation link from your email.
       </p>
     );
@@ -50,9 +50,9 @@ function AcceptInviteForm() {
   return (
     <form
       onSubmit={submit}
-      className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+      className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm"
     >
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-muted-foreground">
         Welcome! Choose a password to activate your MasjidHub account.
       </p>
       <div>

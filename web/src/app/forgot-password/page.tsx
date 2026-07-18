@@ -29,14 +29,14 @@ export default function ForgotPasswordPage() {
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
       <h1 className="mb-6 text-center text-xl font-bold">Reset your password</h1>
       {sent ? (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center text-sm text-emerald-900">
+        <div className="rounded-xl border border-emerald-200 bg-accent p-6 text-center text-sm text-accent-foreground">
           If an account exists for <strong>{email}</strong>, a reset link is on its way. Check your
           inbox.
         </div>
       ) : (
         <form
           onSubmit={submit}
-          className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+          className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm"
         >
           <div>
             <Label>Email</Label>
@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
           </Button>
         </form>
       )}
-      <p className="mt-4 text-center text-xs text-slate-500">
+      <p className="mt-4 text-center text-xs text-muted-foreground">
         <Link className="underline" href="/login">
           Back to sign in
         </Link>
