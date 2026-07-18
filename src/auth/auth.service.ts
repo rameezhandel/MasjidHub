@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { Masjid, MasjidStatus, User } from '@prisma/client';
+import { Masjid, MasjidStatus, Prisma, User } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { createHash, randomBytes } from 'node:crypto';
 import { AuditAction } from '../audit/audit-actions';
@@ -18,6 +18,7 @@ import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 export interface AuthTokens {
   tokenType: 'Bearer';
@@ -211,6 +212,22 @@ export class AuthService implements OnModuleInit {
   async getProfile(userId: string): Promise<SafeUser & { masjid: Masjid | null }> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
+      include: { masjid: true },
+    });
+    return { ...toSafeUser(user), masjid: user.masjid };
+  }
+
+  /** Update the caller's own profile (name only — email and role are managed elsewhere). */
+  async updateProfile(
+    userId: string,
+    dto: UpdateProfileDto,
+  ): Promise<SafeUser & { masjid: Masjid | null }> {
+    const data: Prisma.UserUpdateInput = {};
+    if (dto.firstName !== undefined) data.firstName = dto.firstName;
+    if (dto.lastName !== undefined) data.lastName = dto.lastName;
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data,
       include: { masjid: true },
     });
     return { ...toSafeUser(user), masjid: user.masjid };

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -9,6 +9,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { AuthUser } from './interfaces/auth-user.interface';
 
 @ApiTags('auth')
@@ -78,5 +79,15 @@ export class AuthController {
   @ApiOperation({ summary: 'Current authenticated user profile' })
   me(@CurrentUser() user: AuthUser): ReturnType<AuthService['getProfile']> {
     return this.authService.getProfile(user.id);
+  }
+
+  @Patch('me')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update own profile (name)' })
+  updateProfile(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: UpdateProfileDto,
+  ): ReturnType<AuthService['updateProfile']> {
+    return this.authService.updateProfile(user.id, dto);
   }
 }

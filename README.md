@@ -53,6 +53,7 @@ POST   /auth/change-password           revokes all sessions
 POST   /auth/forgot-password           emails a reset link (never reveals if the email exists)
 POST   /auth/reset-password            set new password with token (single-use, revokes sessions)
 GET    /auth/me                        current profile incl. masjid
+PATCH  /auth/me                        update own profile (name)
 
 POST   /masjids                        onboard masjid + initial admin   [platform admin]
 GET    /masjids                        list/search/paginate             [platform admin]

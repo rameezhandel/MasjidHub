@@ -13,6 +13,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [passwordChanged] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const flagged = sessionStorage.getItem('mh.passwordChanged') === '1';
+    if (flagged) sessionStorage.removeItem('mh.passwordChanged');
+    return flagged;
+  });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +38,11 @@ export default function LoginPage() {
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
       <h1 className="text-center text-2xl font-bold">🕌 MasjidHub</h1>
       <p className="mb-6 mt-1 text-center text-sm text-slate-500">Staff sign in</p>
+      {passwordChanged && (
+        <p className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-center text-sm text-emerald-800">
+          Password changed. Please sign in with your new password.
+        </p>
+      )}
       <form onSubmit={submit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div>
           <Label>Email</Label>

@@ -33,6 +33,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<SafeUser>;
   logout: () => Promise<void>;
   adopt: (tokens: AuthTokens) => void;
+  setUser: (user: SafeUser) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -80,9 +81,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     notifySessionChanged();
   }, []);
 
+  // Persist an updated profile (e.g. after a rename) so the whole app re-renders.
+  const setUser = useCallback((next: SafeUser): void => {
+    localStorage.setItem('mh.user', JSON.stringify(next));
+    notifySessionChanged();
+  }, []);
+
   const value = useMemo(
-    () => ({ user, loading: !hydrated, login, logout, adopt }),
-    [user, hydrated, login, logout, adopt],
+    () => ({ user, loading: !hydrated, login, logout, adopt, setUser }),
+    [user, hydrated, login, logout, adopt, setUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
