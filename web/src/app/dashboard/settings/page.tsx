@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { LocationPicker, type Place } from '@/components/LocationPicker';
 import { Button, Card, Empty, ErrorText, Input, Label, Select } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -29,6 +30,8 @@ export default function SettingsPage() {
   const [asrMethod, setAsrMethod] = useState('STANDARD');
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
+  // Captured once on load so the map's initial pin doesn't jump as fields are edited.
+  const [initialCoords, setInitialCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
@@ -44,11 +47,25 @@ export default function SettingsPage() {
         setAsrMethod(masjid.asrMethod);
         setLatitude(masjid.latitude?.toString() ?? '');
         setLongitude(masjid.longitude?.toString() ?? '');
+        if (masjid.latitude != null && masjid.longitude != null) {
+          setInitialCoords({ lat: masjid.latitude, lng: masjid.longitude });
+        }
       })
       .catch(() => {});
   }, [masjidId]);
 
   if (!masjidId) return <Empty>Settings are managed per masjid.</Empty>;
+
+  const onPlace = (place: Place) => {
+    setLatitude(place.latitude.toString());
+    setLongitude(place.longitude.toString());
+    setForm((prev) => ({
+      ...prev,
+      city: place.city || prev.city,
+      ...(place.state ? { state: place.state } : {}),
+      ...(place.country ? { country: place.country } : {}),
+    }));
+  };
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,6 +113,18 @@ export default function SettingsPage() {
         </Card>
 
         <Card title="Prayer time calculation">
+          {canEdit && (
+            <div className="mb-4">
+              <Label>Location (drives prayer-time auto-calculation)</Label>
+              <LocationPicker
+                city={form.city ?? ''}
+                onCityChange={(c) => setForm((prev) => ({ ...prev, city: c }))}
+                onSelect={onPlace}
+                initialLat={initialCoords?.lat}
+                initialLng={initialCoords?.lng}
+              />
+            </div>
+          )}
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label>Latitude</Label>
