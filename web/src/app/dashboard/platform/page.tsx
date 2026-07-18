@@ -2,10 +2,41 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { Badge, Button, Card, Empty, ErrorText, Input, Label } from '@/components/ui';
+import { LocationPicker, type Place } from '@/components/LocationPicker';
+import { Badge, Button, Card, Empty, ErrorText, Input, Label, Select } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Masjid, Paginated } from '@/lib/types';
+
+/** Full IANA timezone list where supported, with a small fallback. */
+function timezoneList(): string[] {
+  try {
+    const fn = (Intl as unknown as { supportedValuesOf?: (k: string) => string[] })
+      .supportedValuesOf;
+    if (typeof fn === 'function') {
+      const list = fn('timeZone');
+      return list.includes('UTC') ? list : ['UTC', ...list];
+    }
+  } catch {
+    // fall through
+  }
+  return [
+    'UTC',
+    'America/New_York',
+    'America/Chicago',
+    'America/Denver',
+    'America/Los_Angeles',
+    'Europe/London',
+    'Asia/Karachi',
+    'Asia/Dubai',
+    'Asia/Riyadh',
+    'Asia/Kolkata',
+    'Asia/Singapore',
+    'Australia/Sydney',
+  ];
+}
+
+const TIMEZONES = timezoneList();
 
 export default function PlatformMasjidsPage() {
   const { user } = useAuth();
@@ -17,11 +48,30 @@ export default function PlatformMasjidsPage() {
 
   const [name, setName] = useState('');
   const [city, setCity] = useState('');
+  const [country, setCountry] = useState('');
+  const [region, setRegion] = useState('');
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [timezone, setTimezone] = useState('UTC');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminFirst, setAdminFirst] = useState('');
   const [adminLast, setAdminLast] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
+
+  // Default the timezone to the browser's zone (after mount, to avoid an SSR mismatch).
+  useEffect(() => {
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz && TIMEZONES.includes(tz)) setTimezone(tz);
+    } catch {
+      // keep UTC
+    }
+  }, []);
+
+  const onPlace = (place: Place) => {
+    setCountry(place.country ?? '');
+    setRegion(place.state ?? '');
+    setCoords({ lat: place.latitude, lon: place.longitude });
+  };
 
   const load = useCallback(async () => {
     const res = await api<Paginated<Masjid>>(
@@ -49,6 +99,9 @@ export default function PlatformMasjidsPage() {
         body: {
           name,
           ...(city ? { city } : {}),
+          ...(region ? { state: region } : {}),
+          ...(country ? { country } : {}),
+          ...(coords ? { latitude: coords.lat, longitude: coords.lon } : {}),
           timezone,
           admin: {
             email: adminEmail,
@@ -61,6 +114,9 @@ export default function PlatformMasjidsPage() {
       setNotice(`Created ${masjid.name} (/m/${masjid.slug}) with admin ${adminEmail}.`);
       setName('');
       setCity('');
+      setCountry('');
+      setRegion('');
+      setCoords(null);
       setAdminEmail('');
       setAdminFirst('');
       setAdminLast('');
@@ -83,54 +139,85 @@ export default function PlatformMasjidsPage() {
       <h1 className="text-2xl font-bold">Masjids</h1>
 
       <Card title="Onboard a new masjid">
-        <form onSubmit={create} className="grid gap-3 sm:grid-cols-3">
+        <form onSubmit={create} className="space-y-5">
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Masjid details
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <Label>Name</Label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  minLength={2}
+                />
+              </div>
+              <div>
+                <Label>Location</Label>
+                <LocationPicker city={city} onCityChange={setCity} onSelect={onPlace} />
+              </div>
+              <div>
+                <Label>Timezone</Label>
+                <Select value={timezone} onChange={(e) => setTimezone(e.target.value)} required>
+                  {TIMEZONES.map((tz) => (
+                    <option key={tz} value={tz}>
+                      {tz}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+            {coords && (
+              <p className="text-xs text-muted-foreground">
+                Pinned {[city, region, country].filter(Boolean).join(', ')} · {coords.lat.toFixed(4)}
+                , {coords.lon.toFixed(4)} — enables prayer-time auto-calculation.
+              </p>
+            )}
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Masjid Admin
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={adminEmail}
+                  onChange={(e) => setAdminEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <Label>First name</Label>
+                <Input value={adminFirst} onChange={(e) => setAdminFirst(e.target.value)} required />
+              </div>
+              <div>
+                <Label>Last name</Label>
+                <Input value={adminLast} onChange={(e) => setAdminLast(e.target.value)} required />
+              </div>
+              <div className="sm:col-span-3">
+                <Label>Initial password (12+ chars — they can change it later)</Label>
+                <Input
+                  type="password"
+                  minLength={12}
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+          </section>
+
           <div>
-            <Label>Name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} required minLength={2} />
-          </div>
-          <div>
-            <Label>City</Label>
-            <Input value={city} onChange={(e) => setCity(e.target.value)} />
-          </div>
-          <div>
-            <Label>Timezone (IANA)</Label>
-            <Input value={timezone} onChange={(e) => setTimezone(e.target.value)} required />
-          </div>
-          <div>
-            <Label>Admin email</Label>
-            <Input
-              type="email"
-              value={adminEmail}
-              onChange={(e) => setAdminEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <Label>Admin first name</Label>
-            <Input value={adminFirst} onChange={(e) => setAdminFirst(e.target.value)} required />
-          </div>
-          <div>
-            <Label>Admin last name</Label>
-            <Input value={adminLast} onChange={(e) => setAdminLast(e.target.value)} required />
-          </div>
-          <div className="sm:col-span-2">
-            <Label>Admin initial password (12+ chars — they can change it later)</Label>
-            <Input
-              type="password"
-              minLength={12}
-              value={adminPassword}
-              onChange={(e) => setAdminPassword(e.target.value)}
-              required
-            />
-          </div>
-          <div className="flex items-end">
             <Button type="submit" disabled={busy}>
               {busy ? 'Creating…' : 'Create masjid'}
             </Button>
-          </div>
-          <div className="sm:col-span-3">
             <ErrorText>{error}</ErrorText>
-            {notice && <p className="text-sm text-emerald-700">{notice}</p>}
+            {notice && <p className="mt-2 text-sm text-primary">{notice}</p>}
           </div>
         </form>
       </Card>
@@ -149,14 +236,14 @@ export default function PlatformMasjidsPage() {
         {masjids.length === 0 ? (
           <Empty>No masjids found.</Empty>
         ) : (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-border">
             {masjids.map((masjid) => (
               <li key={masjid.id} className="flex items-center justify-between gap-4 py-3">
                 <div>
                   <p className="font-medium">
                     {masjid.name} <Badge value={masjid.status} />
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     <Link className="underline" href={`/m/${masjid.slug}`}>
                       /m/{masjid.slug}
                     </Link>{' '}

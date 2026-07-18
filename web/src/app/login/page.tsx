@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button, ErrorText, Input, Label } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 
@@ -36,14 +37,17 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
       <h1 className="text-center text-2xl font-bold">🕌 MasjidHub</h1>
-      <p className="mb-6 mt-1 text-center text-sm text-slate-500">Staff sign in</p>
+      <p className="mb-6 mt-1 text-center text-sm text-muted-foreground">Staff sign in</p>
       {passwordChanged && (
-        <p className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-center text-sm text-emerald-800">
+        <p className="mb-4 rounded-lg border border-emerald-200 bg-accent p-3 text-center text-sm text-primary">
           Password changed. Please sign in with your new password.
         </p>
       )}
-      <form onSubmit={submit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <form onSubmit={submit} className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
         <div>
           <Label>Email</Label>
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
@@ -61,7 +65,7 @@ export default function LoginPage() {
         <Button type="submit" disabled={busy} className="w-full">
           {busy ? 'Signing in…' : 'Sign in'}
         </Button>
-        <p className="text-center text-xs text-slate-500">
+        <p className="text-center text-xs text-muted-foreground">
           <Link className="underline" href="/forgot-password">
             Forgot your password?
           </Link>

@@ -141,9 +141,9 @@ export default function HouseholdsPage() {
             ['Moved out', summary.movedOut],
             ['People', summary.members],
           ].map(([label, value]) => (
-            <div key={label as string} className="rounded-xl border border-slate-200 bg-white p-4">
+            <div key={label as string} className="rounded-xl border border-border bg-card p-4">
               <p className="text-2xl font-bold">{value as number}</p>
-              <p className="text-xs uppercase tracking-wide text-slate-400">{label as string}</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">{label as string}</p>
             </div>
           ))}
         </div>
@@ -262,7 +262,7 @@ export default function HouseholdsPage() {
         {items.length === 0 ? (
           <Empty>No households registered yet.</Empty>
         ) : (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-border">
             {items.map((household) => (
               <li key={household.id} className="flex items-center justify-between gap-4 py-3">
                 <div>
@@ -272,7 +272,7 @@ export default function HouseholdsPage() {
                     </Link>{' '}
                     <Badge value={household.status} />
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     {household.headName}
                     {household.city ? ` · ${household.city}` : ''} ·{' '}
                     {household._count?.members ?? 0} member
@@ -282,7 +282,7 @@ export default function HouseholdsPage() {
                 </div>
                 <Link
                   href={`/dashboard/households/${household.id}`}
-                  className="text-sm font-medium text-emerald-700 hover:underline"
+                  className="text-sm font-medium text-primary hover:underline"
                 >
                   Open →
                 </Link>

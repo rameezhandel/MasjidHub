@@ -116,7 +116,7 @@ export default function PrayerTimesPage() {
               checked={overwrite}
               onChange={(e) => setOverwrite(e.target.checked)}
             />
-            <label htmlFor="overwrite" className="text-sm text-slate-600">
+            <label htmlFor="overwrite" className="text-sm text-muted-foreground">
               Overwrite existing days
             </label>
           </div>
@@ -148,9 +148,9 @@ export default function PrayerTimesPage() {
             <Button type="submit" disabled={busy}>
               {busy ? 'Generating…' : 'Generate timetable'}
             </Button>
-            {notice && <span className="ml-3 text-sm text-emerald-700">{notice}</span>}
+            {notice && <span className="ml-3 text-sm text-primary">{notice}</span>}
             <ErrorText>{error}</ErrorText>
-            <p className="mt-2 text-xs text-slate-400">
+            <p className="mt-2 text-xs text-muted-foreground">
               Requires the masjid&apos;s coordinates and calculation method — set them under Masjid
               settings.
             </p>
@@ -168,7 +168,7 @@ export default function PrayerTimesPage() {
               onChange={(e) => setFrom(e.target.value)}
               className="w-36"
             />
-            <span className="text-xs text-slate-400">to</span>
+            <span className="text-xs text-muted-foreground">to</span>
             <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-36" />
           </div>
         }
@@ -179,7 +179,7 @@ export default function PrayerTimesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-400">
+                <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
                   <th className="py-2 pr-3">Date</th>
                   <th className="py-2 pr-3">Fajr</th>
                   <th className="py-2 pr-3">Dhuhr</th>
@@ -192,13 +192,13 @@ export default function PrayerTimesPage() {
               </thead>
               <tbody>
                 {entries.map((entry) => (
-                  <tr key={entry.id} className="border-b border-slate-50">
+                  <tr key={entry.id} className="border-b border-border">
                     <td className="py-1.5 pr-3 font-medium">{entry.date}</td>
                     {(['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const).map((prayer) => (
                       <td key={prayer} className="py-1.5 pr-3">
                         {entry[prayer]}
                         {entry[`${prayer}Iqamah`] && (
-                          <span className="text-xs text-slate-400"> / {entry[`${prayer}Iqamah`]}</span>
+                          <span className="text-xs text-muted-foreground"> / {entry[`${prayer}Iqamah`]}</span>
                         )}
                       </td>
                     ))}
@@ -220,7 +220,7 @@ export default function PrayerTimesPage() {
                 ))}
               </tbody>
             </table>
-            <p className="mt-2 text-xs text-slate-400">Times shown as adhan / iqamah.</p>
+            <p className="mt-2 text-xs text-muted-foreground">Times shown as adhan / iqamah.</p>
           </div>
         )}
       </Card>

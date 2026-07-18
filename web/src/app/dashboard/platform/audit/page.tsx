@@ -60,7 +60,7 @@ export default function AuditLogPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-400">
+                <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
                   <th className="py-2 pr-3">When</th>
                   <th className="py-2 pr-3">Action</th>
                   <th className="py-2 pr-3">Actor</th>
@@ -69,13 +69,13 @@ export default function AuditLogPage() {
               </thead>
               <tbody>
                 {entries.map((entry) => (
-                  <tr key={entry.id} className="border-b border-slate-50 align-top">
-                    <td className="whitespace-nowrap py-2 pr-3 text-slate-500">
+                  <tr key={entry.id} className="border-b border-border align-top">
+                    <td className="whitespace-nowrap py-2 pr-3 text-muted-foreground">
                       {new Date(entry.createdAt).toLocaleString()}
                     </td>
                     <td className="py-2 pr-3 font-medium">{entry.action.replaceAll('_', ' ')}</td>
                     <td className="py-2 pr-3">{entry.actorEmail ?? '—'}</td>
-                    <td className="py-2 text-xs text-slate-500">
+                    <td className="py-2 text-xs text-muted-foreground">
                       {entry.metadata ? JSON.stringify(entry.metadata) : '—'}
                     </td>
                   </tr>

@@ -58,7 +58,7 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
   }, [load]);
 
   if (!masjidId) return <Empty>Households are managed per masjid.</Empty>;
-  if (!household) return <p className="text-sm text-slate-400">Loading…</p>;
+  if (!household) return <p className="text-sm text-muted-foreground">Loading…</p>;
 
   const saveHousehold = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,7 +120,7 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
     <div className="max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <Link className="text-sm text-slate-500 hover:underline" href="/dashboard/households">
+          <Link className="text-sm text-muted-foreground hover:underline" href="/dashboard/households">
             ← Households
           </Link>
           <h1 className="text-2xl font-bold">
@@ -165,7 +165,7 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
             <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
           <ErrorText>{error}</ErrorText>
-          {notice && <p className="text-sm text-emerald-700">{notice}</p>}
+          {notice && <p className="text-sm text-primary">{notice}</p>}
           <Button type="submit" disabled={busy}>
             {busy ? 'Saving…' : 'Save details'}
           </Button>
@@ -174,14 +174,14 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
 
       <Card title={`Members (${household.members?.length ?? 0})`}>
         {household.members && household.members.length > 0 ? (
-          <ul className="mb-5 divide-y divide-slate-100">
+          <ul className="mb-5 divide-y divide-border">
             {household.members.map((member) => (
               <li key={member.id} className="flex items-center justify-between py-2">
                 <div>
                   <p className="font-medium">
                     {member.firstName} {member.lastName}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     {[
                       member.relationship,
                       member.gender === 'MALE' ? 'M' : member.gender === 'FEMALE' ? 'F' : null,
