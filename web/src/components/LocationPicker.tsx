@@ -62,14 +62,20 @@ export function LocationPicker({
   city,
   onCityChange,
   onSelect,
+  initialLat,
+  initialLng,
 }: {
   city: string;
   onCityChange: (city: string) => void;
   onSelect: (place: Place) => void;
+  /** Show a pin at these coordinates on load (e.g. a masjid's saved location). */
+  initialLat?: number | null;
+  initialLng?: number | null;
 }) {
   const [results, setResults] = useState<Place[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
   const justSelected = useRef(false);
   const boxRef = useRef<HTMLDivElement>(null);
 
@@ -124,33 +130,37 @@ export function LocationPicker({
     return () => document.removeEventListener('mousedown', onDocClick);
   }, []);
 
-  // Drop or move the pin, emit coordinates, and (optionally) reverse-geocode.
+  // Create or reposition the pin on the map (no side effects / no emit).
+  const moveMarker = (lat: number, lon: number, fly = false) => {
+    const L = leafletRef.current;
+    const map = mapRef.current;
+    if (!L || !map) return;
+    if (!markerRef.current) {
+      const icon = L.divIcon({
+        html: '📍',
+        className: 'text-2xl leading-none',
+        iconSize: [24, 24],
+        iconAnchor: [12, 24],
+      });
+      markerRef.current = L.marker([lat, lon], { draggable: true, icon }).addTo(map);
+      markerRef.current.on('dragend', () => {
+        const p = markerRef.current!.getLatLng();
+        void placePinRef.current(p.lat, p.lng, { reverse: true });
+      });
+    } else {
+      markerRef.current.setLatLng([lat, lon]);
+    }
+    if (fly) map.flyTo([lat, lon], 12);
+  };
+
+  // Drop or move the pin AND emit coordinates, optionally reverse-geocoding.
   // Kept in a ref so the map's (one-time) click handler always calls the latest.
   const placePin = async (
     lat: number,
     lon: number,
     opts: { reverse?: boolean; fly?: boolean } = {},
   ) => {
-    const L = leafletRef.current;
-    const map = mapRef.current;
-    if (L && map) {
-      if (!markerRef.current) {
-        const icon = L.divIcon({
-          html: '📍',
-          className: 'text-2xl leading-none',
-          iconSize: [24, 24],
-          iconAnchor: [12, 24],
-        });
-        markerRef.current = L.marker([lat, lon], { draggable: true, icon }).addTo(map);
-        markerRef.current.on('dragend', () => {
-          const p = markerRef.current!.getLatLng();
-          void placePinRef.current(p.lat, p.lng, { reverse: true });
-        });
-      } else {
-        markerRef.current.setLatLng([lat, lon]);
-      }
-      if (opts.fly) map.flyTo([lat, lon], 12);
-    }
+    moveMarker(lat, lon, opts.fly);
 
     let parts: { city?: string; state?: string; country?: string; displayName?: string } = {};
     if (opts.reverse) {
@@ -188,6 +198,7 @@ export function LocationPicker({
         void placePinRef.current(e.latlng.lat, e.latlng.lng, { reverse: true });
       });
       mapRef.current = map;
+      setMapReady(true);
       // Leaflet needs a size recalculation once it's laid out.
       setTimeout(() => map.invalidateSize(), 200);
     })();
@@ -195,8 +206,23 @@ export function LocationPicker({
       cancelled = true;
       mapRef.current?.remove();
       mapRef.current = null;
+      setMapReady(false);
     };
   }, []);
+
+  // Show the saved location as a pin once the map is ready (no emit).
+  useEffect(() => {
+    if (
+      mapReady &&
+      !markerRef.current &&
+      initialLat != null &&
+      initialLng != null &&
+      Number.isFinite(initialLat) &&
+      Number.isFinite(initialLng)
+    ) {
+      moveMarker(initialLat, initialLng, true);
+    }
+  }, [mapReady, initialLat, initialLng]);
 
   const pickSuggestion = (place: Place) => {
     justSelected.current = true;
