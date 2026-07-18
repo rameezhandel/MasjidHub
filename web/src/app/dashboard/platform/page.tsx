@@ -42,6 +42,7 @@ export default function PlatformMasjidsPage() {
   const { user } = useAuth();
   const [masjids, setMasjids] = useState<Masjid[]>([]);
   const [search, setSearch] = useState('');
+  const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
@@ -121,6 +122,7 @@ export default function PlatformMasjidsPage() {
       setAdminFirst('');
       setAdminLast('');
       setAdminPassword('');
+      setShowForm(false);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Creation failed');
@@ -136,91 +138,113 @@ export default function PlatformMasjidsPage() {
 
   return (
     <div className="max-w-5xl space-y-6">
-      <h1 className="text-2xl font-bold">Masjids</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Masjids</h1>
+        <Button onClick={() => setShowForm((v) => !v)}>
+          {showForm ? 'Close' : '+ Add masjid'}
+        </Button>
+      </div>
 
-      <Card title="Onboard a new masjid">
-        <form onSubmit={create} className="space-y-5">
-          <section className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Masjid details
-            </h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <Label>Name</Label>
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  minLength={2}
-                />
+      {notice && !showForm && (
+        <p className="rounded-lg border border-border bg-accent p-3 text-sm text-primary">
+          {notice}
+        </p>
+      )}
+
+      {showForm && (
+        <Card title="Onboard a new masjid">
+          <form onSubmit={create} className="space-y-5">
+            <section className="space-y-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Masjid details
+              </h3>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <Label>Name</Label>
+                  <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    minLength={2}
+                  />
+                </div>
+                <div>
+                  <Label>Timezone</Label>
+                  <Select value={timezone} onChange={(e) => setTimezone(e.target.value)} required>
+                    {TIMEZONES.map((tz) => (
+                      <option key={tz} value={tz}>
+                        {tz}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
               </div>
               <div>
-                <Label>Timezone</Label>
-                <Select value={timezone} onChange={(e) => setTimezone(e.target.value)} required>
-                  {TIMEZONES.map((tz) => (
-                    <option key={tz} value={tz}>
-                      {tz}
-                    </option>
-                  ))}
-                </Select>
+                <Label>Location</Label>
+                <LocationPicker city={city} onCityChange={setCity} onSelect={onPlace} />
               </div>
-            </div>
+              {coords && (
+                <p className="text-xs text-muted-foreground">
+                  Pinned {[city, region, country].filter(Boolean).join(', ')} ·{' '}
+                  {coords.lat.toFixed(4)}, {coords.lon.toFixed(4)} — enables prayer-time
+                  auto-calculation.
+                </p>
+              )}
+            </section>
+
+            <section className="space-y-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Masjid Admin
+              </h3>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div>
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    value={adminEmail}
+                    onChange={(e) => setAdminEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label>First name</Label>
+                  <Input
+                    value={adminFirst}
+                    onChange={(e) => setAdminFirst(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label>Last name</Label>
+                  <Input
+                    value={adminLast}
+                    onChange={(e) => setAdminLast(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="sm:col-span-3">
+                  <Label>Initial password (12+ chars — they can change it later)</Label>
+                  <Input
+                    type="password"
+                    minLength={12}
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+            </section>
+
             <div>
-              <Label>Location</Label>
-              <LocationPicker city={city} onCityChange={setCity} onSelect={onPlace} />
+              <Button type="submit" disabled={busy}>
+                {busy ? 'Creating…' : 'Create masjid'}
+              </Button>
+              <ErrorText>{error}</ErrorText>
+              {notice && <p className="mt-2 text-sm text-primary">{notice}</p>}
             </div>
-            {coords && (
-              <p className="text-xs text-muted-foreground">
-                Pinned {[city, region, country].filter(Boolean).join(', ')} · {coords.lat.toFixed(4)}
-                , {coords.lon.toFixed(4)} — enables prayer-time auto-calculation.
-              </p>
-            )}
-          </section>
-
-          <section className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Masjid Admin
-            </h3>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div>
-                <Label>Email</Label>
-                <Input
-                  type="email"
-                  value={adminEmail}
-                  onChange={(e) => setAdminEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <Label>First name</Label>
-                <Input value={adminFirst} onChange={(e) => setAdminFirst(e.target.value)} required />
-              </div>
-              <div>
-                <Label>Last name</Label>
-                <Input value={adminLast} onChange={(e) => setAdminLast(e.target.value)} required />
-              </div>
-              <div className="sm:col-span-3">
-                <Label>Initial password (12+ chars — they can change it later)</Label>
-                <Input
-                  type="password"
-                  minLength={12}
-                  value={adminPassword}
-                  onChange={(e) => setAdminPassword(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-          </section>
-
-          <div>
-            <Button type="submit" disabled={busy}>
-              {busy ? 'Creating…' : 'Create masjid'}
-            </Button>
-            <ErrorText>{error}</ErrorText>
-            {notice && <p className="mt-2 text-sm text-primary">{notice}</p>}
-          </div>
-        </form>
-      </Card>
+          </form>
+        </Card>
+      )}
 
       <Card
         title="All masjids"
