@@ -24,8 +24,15 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { PaginatedResult } from '../common/dto/pagination.dto';
 import { CreateHouseholdMemberDto, UpdateHouseholdMemberDto } from './dto/household-member.dto';
 import { CreateHouseholdDto, QueryHouseholdsDto, UpdateHouseholdDto } from './dto/household.dto';
+import { CreatePaymentDto } from './dto/payment.dto';
 import { HouseholdImportService, ImportResult } from './household-import.service';
-import { HouseholdMemberView, HouseholdView, HouseholdsService } from './households.service';
+import {
+  DuesView,
+  HouseholdMemberView,
+  HouseholdView,
+  HouseholdsService,
+  PaymentView,
+} from './households.service';
 
 @ApiTags('households')
 @ApiBearerAuth()
@@ -157,5 +164,38 @@ export class HouseholdsController {
     @Param('memberId', ParseUUIDPipe) memberId: string,
   ): Promise<void> {
     await this.householdsService.removeMember(user, masjidId, id, memberId);
+  }
+
+  @Get(':id/dues')
+  @ApiOperation({ summary: 'Fee status: expected, paid, balance and payment history' })
+  dues(
+    @CurrentUser() user: AuthUser,
+    @Param('masjidId', ParseUUIDPipe) masjidId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<DuesView> {
+    return this.householdsService.dues(user, masjidId, id);
+  }
+
+  @Post(':id/payments')
+  @ApiOperation({ summary: 'Record an offline fee payment for a household' })
+  addPayment(
+    @CurrentUser() user: AuthUser,
+    @Param('masjidId', ParseUUIDPipe) masjidId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreatePaymentDto,
+  ): Promise<PaymentView> {
+    return this.householdsService.addPayment(user, masjidId, id, dto);
+  }
+
+  @Delete(':id/payments/:paymentId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete a recorded payment' })
+  async removePayment(
+    @CurrentUser() user: AuthUser,
+    @Param('masjidId', ParseUUIDPipe) masjidId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('paymentId', ParseUUIDPipe) paymentId: string,
+  ): Promise<void> {
+    await this.householdsService.removePayment(user, masjidId, id, paymentId);
   }
 }

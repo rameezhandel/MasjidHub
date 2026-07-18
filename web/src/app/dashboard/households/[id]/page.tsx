@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { use, useCallback, useEffect, useState } from 'react';
 import { Badge, Button, Card, Empty, ErrorText, Input, Label, Select, Textarea } from '@/components/ui';
+import { HouseholdDues } from '@/components/HouseholdDues';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Gender, Household } from '@/lib/types';
@@ -219,6 +220,8 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
           </Button>
         </form>
       </Card>
+
+      <HouseholdDues masjidId={masjidId} householdId={id} />
     </div>
   );
 }

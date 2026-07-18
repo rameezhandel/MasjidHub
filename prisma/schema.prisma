@@ -59,6 +59,12 @@ enum HouseholdStatus {
   MOVED_OUT
 }
 
+/// How often a household's membership fee recurs.
+enum FeeFrequency {
+  MONTHLY
+  YEARLY
+}
+
 enum Gender {
   MALE
   FEMALE
@@ -122,6 +128,7 @@ model User {
   announcements Announcement[]
   events        Event[]
   households    Household[]
+  payments      HouseholdPayment[] @relation("PaymentRecordedBy")
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
 
@@ -146,7 +153,13 @@ model Household {
   country      String?
   notes        String?
   status       HouseholdStatus   @default(ACTIVE)
+  /// Membership fee the admin sets for this household, in minor units (cents).
+  feeAmountCents Int?            @map("fee_amount_cents")
+  feeFrequency FeeFrequency?     @map("fee_frequency")
+  /// Date from which the fee starts accruing (used to compute what's owed).
+  feeStartOn   DateTime?         @map("fee_start_on") @db.Date
   members      HouseholdMember[]
+  payments     HouseholdPayment[]
   createdBy    User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
   createdById  String?           @map("created_by_id") @db.Uuid
   createdAt    DateTime          @default(now()) @map("created_at")
@@ -155,6 +168,26 @@ model Household {
   @@index([masjidId, status])
   @@index([masjidId, familyName])
   @@map("households")
+}
+
+/// An offline fee payment recorded against a household (cash, cheque, transfer).
+model HouseholdPayment {
+  id          String    @id @default(uuid()) @db.Uuid
+  household   Household  @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  householdId String     @map("household_id") @db.Uuid
+  amountCents Int        @map("amount_cents")
+  paidOn      DateTime   @map("paid_on") @db.Date
+  /// Free-text payment method, e.g. "Cash", "Bank transfer".
+  method      String?
+  /// What period the payment covers, e.g. "Jan 2026" or "2026".
+  periodLabel String?    @map("period_label")
+  note        String?
+  recordedBy  User?      @relation("PaymentRecordedBy", fields: [recordedById], references: [id], onDelete: SetNull)
+  recordedById String?   @map("recorded_by_id") @db.Uuid
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  @@index([householdId, paidOn])
+  @@map("household_payments")
 }
 
 model HouseholdMember {
