@@ -15,12 +15,14 @@ const STAFF_LINKS = [
   { href: '/dashboard/members', label: 'Members' },
   { href: '/dashboard/staff', label: 'Staff' },
   { href: '/dashboard/settings', label: 'Masjid settings' },
+  { href: '/dashboard/account', label: 'Account' },
 ];
 
 const PLATFORM_LINKS = [
   { href: '/dashboard', label: 'Overview' },
   { href: '/dashboard/platform', label: 'Masjids' },
   { href: '/dashboard/platform/audit', label: 'Audit log' },
+  { href: '/dashboard/account', label: 'Account' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
