@@ -144,7 +144,7 @@ export default function PlatformMasjidsPage() {
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Masjid details
             </h3>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <Label>Name</Label>
                 <Input
@@ -153,10 +153,6 @@ export default function PlatformMasjidsPage() {
                   required
                   minLength={2}
                 />
-              </div>
-              <div>
-                <Label>Location</Label>
-                <LocationPicker city={city} onCityChange={setCity} onSelect={onPlace} />
               </div>
               <div>
                 <Label>Timezone</Label>
@@ -168,6 +164,10 @@ export default function PlatformMasjidsPage() {
                   ))}
                 </Select>
               </div>
+            </div>
+            <div>
+              <Label>Location</Label>
+              <LocationPicker city={city} onCityChange={setCity} onSelect={onPlace} />
             </div>
             {coords && (
               <p className="text-xs text-muted-foreground">
