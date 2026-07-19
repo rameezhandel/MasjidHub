@@ -118,6 +118,11 @@ export class CreateMasjidDto {
   @IsTimeZone()
   timezone?: string;
 
+  @ApiPropertyOptional({ example: 'INR', default: 'INR', description: 'ISO 4217 currency code' })
+  @IsOptional()
+  @Matches(/^[A-Z]{3}$/, { message: 'currency must be a 3-letter ISO 4217 code, e.g. INR' })
+  currency?: string;
+
   @ApiPropertyOptional({
     example: 43.6532,
     description: 'Required (with longitude) for prayer-time auto-calculation',

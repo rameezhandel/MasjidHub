@@ -5,6 +5,7 @@ import { LocationPicker, type Place } from '@/components/LocationPicker';
 import { Button, Card, Empty, ErrorText, Input, Label, Select } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { CURRENCIES } from '@/lib/currencies';
 import { CALCULATION_METHODS, type Masjid } from '@/lib/types';
 
 const FIELDS = [
@@ -28,6 +29,7 @@ export default function SettingsPage() {
   const [form, setForm] = useState<Record<string, string>>({});
   const [calculationMethod, setCalculationMethod] = useState('MUSLIM_WORLD_LEAGUE');
   const [asrMethod, setAsrMethod] = useState('STANDARD');
+  const [currency, setCurrency] = useState('INR');
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
   // Captured once on load so the map's initial pin doesn't jump as fields are edited.
@@ -45,6 +47,7 @@ export default function SettingsPage() {
         setForm(next);
         setCalculationMethod(masjid.calculationMethod);
         setAsrMethod(masjid.asrMethod);
+        setCurrency(masjid.currency);
         setLatitude(masjid.latitude?.toString() ?? '');
         setLongitude(masjid.longitude?.toString() ?? '');
         if (masjid.latitude != null && masjid.longitude != null) {
@@ -73,7 +76,7 @@ export default function SettingsPage() {
     setError('');
     setNotice('');
     try {
-      const body: Record<string, unknown> = { calculationMethod, asrMethod };
+      const body: Record<string, unknown> = { calculationMethod, asrMethod, currency };
       for (const [key] of FIELDS) {
         if (form[key] !== '') body[key] = form[key];
       }
@@ -109,6 +112,20 @@ export default function SettingsPage() {
                 />
               </div>
             ))}
+            <div>
+              <Label>Currency (for dues)</Label>
+              <Select
+                value={currency}
+                disabled={!canEdit}
+                onChange={(e) => setCurrency(e.target.value)}
+              >
+                {CURRENCIES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.code} — {c.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
           </div>
         </Card>
 

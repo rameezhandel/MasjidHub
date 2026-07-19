@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { LocationPicker, type Place } from '@/components/LocationPicker';
 import { Badge, Button, Card, Empty, ErrorText, Input, Label, Select } from '@/components/ui';
 import { api } from '@/lib/api';
+import { CURRENCIES } from '@/lib/currencies';
 import { useAuth } from '@/lib/auth';
 import type { Masjid, Paginated } from '@/lib/types';
 
@@ -53,6 +54,7 @@ export default function PlatformMasjidsPage() {
   const [region, setRegion] = useState('');
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [timezone, setTimezone] = useState('UTC');
+  const [currency, setCurrency] = useState('INR');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminFirst, setAdminFirst] = useState('');
   const [adminLast, setAdminLast] = useState('');
@@ -104,6 +106,7 @@ export default function PlatformMasjidsPage() {
           ...(country ? { country } : {}),
           ...(coords ? { latitude: coords.lat, longitude: coords.lon } : {}),
           timezone,
+          currency,
           admin: {
             email: adminEmail,
             firstName: adminFirst,
@@ -118,6 +121,7 @@ export default function PlatformMasjidsPage() {
       setCountry('');
       setRegion('');
       setCoords(null);
+      setCurrency('INR');
       setAdminEmail('');
       setAdminFirst('');
       setAdminLast('');
@@ -158,7 +162,7 @@ export default function PlatformMasjidsPage() {
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Masjid details
               </h3>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-3">
                 <div>
                   <Label>Name</Label>
                   <Input
@@ -174,6 +178,16 @@ export default function PlatformMasjidsPage() {
                     {TIMEZONES.map((tz) => (
                       <option key={tz} value={tz}>
                         {tz}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <div>
+                  <Label>Currency (for dues)</Label>
+                  <Select value={currency} onChange={(e) => setCurrency(e.target.value)} required>
+                    {CURRENCIES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.code} — {c.name}
                       </option>
                     ))}
                   </Select>

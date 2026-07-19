@@ -60,9 +60,14 @@ describe('Household dues (e2e)', () => {
     const masjidA = await request(http)
       .post('/api/v1/masjids')
       .set('Authorization', `Bearer ${platformToken}`)
-      .send({ name: 'Dues Masjid A', admin: { ...ADMIN_A, firstName: 'Ahmed', lastName: 'Khan' } })
+      .send({
+        name: 'Dues Masjid A',
+        currency: 'GBP',
+        admin: { ...ADMIN_A, firstName: 'Ahmed', lastName: 'Khan' },
+      })
       .expect(201);
     masjidAId = masjidA.body.id;
+    expect(masjidA.body.currency).toBe('GBP');
 
     await request(http)
       .post('/api/v1/masjids')
@@ -101,6 +106,7 @@ describe('Household dues (e2e)', () => {
       .get(`/api/v1/masjids/${masjidAId}/households/${householdId}/dues`)
       .set('Authorization', `Bearer ${adminAToken}`)
       .expect(200);
+    expect(res.body.currency).toBe('GBP');
     expect(res.body.feeAmountCents).toBe(5000);
     expect(res.body.paidCents).toBe(0);
     // Fee started in the past, so something is owed and equals the expected total.

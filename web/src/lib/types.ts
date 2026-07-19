@@ -46,6 +46,7 @@ export interface Masjid {
   postalCode: string | null;
   country: string | null;
   timezone: string;
+  currency: string;
   latitude: number | null;
   longitude: number | null;
   calculationMethod: CalculationMethod;
@@ -142,6 +143,7 @@ export interface HouseholdPayment {
 }
 
 export interface DuesSummary {
+  currency: string;
   feeAmountCents: number | null;
   feeFrequency: FeeFrequency | null;
   feeStartOn: string | null;

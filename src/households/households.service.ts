@@ -39,6 +39,8 @@ export type HouseholdView = Omit<Household, 'feeStartOn'> & {
 export type PaymentView = Omit<HouseholdPayment, 'paidOn'> & { paidOn: string };
 
 export interface DuesView {
+  /** ISO 4217 currency code of the masjid, for formatting amounts. */
+  currency: string;
   feeAmountCents: number | null;
   feeFrequency: FeeFrequency | null;
   feeStartOn: string | null;
@@ -336,6 +338,10 @@ export class HouseholdsService {
   async dues(actor: AuthUser, masjidId: string, householdId: string): Promise<DuesView> {
     assertMasjidMember(actor, masjidId);
     const household = await this.getHouseholdOrThrow(masjidId, householdId);
+    const masjid = await this.prisma.masjid.findUnique({
+      where: { id: masjidId },
+      select: { currency: true },
+    });
     const payments = await this.prisma.householdPayment.findMany({
       where: { householdId },
       orderBy: [{ paidOn: 'desc' }, { createdAt: 'desc' }],
@@ -349,6 +355,7 @@ export class HouseholdsService {
     }
 
     return {
+      currency: masjid?.currency ?? 'INR',
       feeAmountCents: household.feeAmountCents,
       feeFrequency: household.feeFrequency,
       feeStartOn: toDateStr(household.feeStartOn),
