@@ -127,6 +127,29 @@ export interface MasjidEvent {
 
 export type HouseholdStatus = 'ACTIVE' | 'INACTIVE' | 'MOVED_OUT';
 export type Gender = 'MALE' | 'FEMALE';
+export type FeeFrequency = 'MONTHLY' | 'YEARLY';
+
+export interface HouseholdPayment {
+  id: string;
+  householdId: string;
+  amountCents: number;
+  paidOn: string;
+  method: string | null;
+  periodLabel: string | null;
+  note: string | null;
+  recordedById: string | null;
+  createdAt: string;
+}
+
+export interface DuesSummary {
+  feeAmountCents: number | null;
+  feeFrequency: FeeFrequency | null;
+  feeStartOn: string | null;
+  expectedCents: number;
+  paidCents: number;
+  balanceCents: number;
+  payments: HouseholdPayment[];
+}
 
 export interface HouseholdMember {
   id: string;
@@ -157,6 +180,9 @@ export interface Household {
   country: string | null;
   notes: string | null;
   status: HouseholdStatus;
+  feeAmountCents: number | null;
+  feeFrequency: FeeFrequency | null;
+  feeStartOn: string | null;
   members?: HouseholdMember[];
   _count?: { members: number };
   createdAt: string;

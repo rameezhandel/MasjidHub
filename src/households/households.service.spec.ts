@@ -1,9 +1,9 @@
 import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { Gender, HouseholdStatus, MasjidStatus, UserRole } from '@prisma/client';
+import { FeeFrequency, Gender, HouseholdStatus, MasjidStatus, UserRole } from '@prisma/client';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { PrismaService } from '../prisma/prisma.service';
-import { HouseholdsService, toMemberView } from './households.service';
+import { HouseholdsService, periodsElapsed, toMemberView } from './households.service';
 
 describe('HouseholdsService', () => {
   let service: HouseholdsService;
@@ -25,6 +25,11 @@ describe('HouseholdsService', () => {
       update: jest.fn(),
       deleteMany: jest.fn(),
       count: jest.fn(),
+    },
+    householdPayment: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+      deleteMany: jest.fn(),
     },
     $transaction: jest.fn(),
   };
@@ -224,6 +229,90 @@ describe('HouseholdsService', () => {
       prisma.$transaction.mockResolvedValue([10, 8, 1, 1, 34]);
       const result = await service.summary(maintainer, 'masjid-a');
       expect(result).toEqual({ total: 10, active: 8, inactive: 1, movedOut: 1, members: 34 });
+    });
+  });
+
+  describe('dues', () => {
+    it('periodsElapsed counts inclusive months and years', () => {
+      expect(
+        periodsElapsed(new Date('2026-01-01'), new Date('2026-07-15'), FeeFrequency.MONTHLY),
+      ).toBe(7);
+      expect(
+        periodsElapsed(new Date('2026-01-01'), new Date('2026-01-01'), FeeFrequency.MONTHLY),
+      ).toBe(1);
+      expect(
+        periodsElapsed(new Date('2024-01-01'), new Date('2026-06-01'), FeeFrequency.YEARLY),
+      ).toBe(3);
+      // A future start date owes nothing yet.
+      expect(
+        periodsElapsed(new Date('2030-01-01'), new Date('2026-01-01'), FeeFrequency.MONTHLY),
+      ).toBe(0);
+    });
+
+    it('computes expected/paid/balance and lists payments', async () => {
+      prisma.household.findFirst.mockResolvedValue(
+        household({
+          feeAmountCents: 5000,
+          feeFrequency: FeeFrequency.MONTHLY,
+          feeStartOn: new Date('2026-01-01'),
+        }),
+      );
+      prisma.householdPayment.findMany.mockResolvedValue([
+        {
+          id: 'p1',
+          householdId: 'hh-1',
+          amountCents: 5000,
+          paidOn: new Date('2026-02-01'),
+          method: 'Cash',
+          periodLabel: null,
+          note: null,
+          recordedById: null,
+          createdAt: new Date(),
+        },
+        {
+          id: 'p2',
+          householdId: 'hh-1',
+          amountCents: 3000,
+          paidOn: new Date('2026-03-01'),
+          method: null,
+          periodLabel: null,
+          note: null,
+          recordedById: null,
+          createdAt: new Date(),
+        },
+      ]);
+      const result = await service.dues(maintainer, 'masjid-a', 'hh-1');
+      expect(result.paidCents).toBe(8000);
+      // expected = 5000 × months elapsed; balance = expected − 8000.
+      expect(result.expectedCents).toBe(result.balanceCents + 8000);
+      expect(result.payments).toHaveLength(2);
+      expect(result.payments[0].paidOn).toBe('2026-02-01');
+    });
+
+    it('reports zero expected when no fee is set', async () => {
+      prisma.household.findFirst.mockResolvedValue(household());
+      prisma.householdPayment.findMany.mockResolvedValue([]);
+      const result = await service.dues(maintainer, 'masjid-a', 'hh-1');
+      expect(result.expectedCents).toBe(0);
+      expect(result.balanceCents).toBe(0);
+    });
+
+    it("blocks recording a payment against another tenant's household", async () => {
+      await expect(
+        service.addPayment(maintainer, 'masjid-b', 'hh-1', {
+          amountCents: 5000,
+          paidOn: '2026-07-01',
+        }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('404s deleting a payment that does not exist', async () => {
+      prisma.masjid.findUnique.mockResolvedValue({ status: MasjidStatus.ACTIVE });
+      prisma.household.findFirst.mockResolvedValue(household());
+      prisma.householdPayment.deleteMany.mockResolvedValue({ count: 0 });
+      await expect(service.removePayment(maintainer, 'masjid-a', 'hh-1', 'nope')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

@@ -1,5 +1,13 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Household, HouseholdMember, HouseholdStatus, MasjidStatus, Prisma } from '@prisma/client';
+import {
+  FeeFrequency,
+  Household,
+  HouseholdMember,
+  HouseholdPayment,
+  HouseholdStatus,
+  MasjidStatus,
+  Prisma,
+} from '@prisma/client';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { PaginatedResult, paginated } from '../common/dto/pagination.dto';
 import { assertMasjidMember } from '../common/utils/tenant-access';
@@ -7,6 +15,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateHouseholdMemberDto, UpdateHouseholdMemberDto } from './dto/household-member.dto';
 import { CreateHouseholdDto, QueryHouseholdsDto, UpdateHouseholdDto } from './dto/household.dto';
 import { QueryMembersDto } from './dto/member-search.dto';
+import { CreatePaymentDto } from './dto/payment.dto';
+
+const toDateStr = (d: Date | null): string | null => d?.toISOString().slice(0, 10) ?? null;
 
 /** API shape: dateOfBirth is a plain YYYY-MM-DD string, not a timestamp. */
 export type HouseholdMemberView = Omit<HouseholdMember, 'dateOfBirth'> & {
@@ -17,13 +28,63 @@ export type HouseholdMemberView = Omit<HouseholdMember, 'dateOfBirth'> & {
 export type MemberSearchView = HouseholdMemberView & {
   household: { id: string; familyName: string; headName: string; status: HouseholdStatus };
 };
-export type HouseholdView = Household & {
+
+/** feeStartOn is serialized as YYYY-MM-DD, not a timestamp. */
+export type HouseholdView = Omit<Household, 'feeStartOn'> & {
+  feeStartOn: string | null;
   members?: HouseholdMemberView[];
   _count?: { members: number };
 };
 
+export type PaymentView = Omit<HouseholdPayment, 'paidOn'> & { paidOn: string };
+
+export interface DuesView {
+  feeAmountCents: number | null;
+  feeFrequency: FeeFrequency | null;
+  feeStartOn: string | null;
+  /** Fee × periods elapsed since feeStartOn (0 when no fee is set). */
+  expectedCents: number;
+  paidCents: number;
+  /** expectedCents − paidCents; positive means the household owes. */
+  balanceCents: number;
+  payments: PaymentView[];
+}
+
 export function toMemberView(member: HouseholdMember): HouseholdMemberView {
   return { ...member, dateOfBirth: member.dateOfBirth?.toISOString().slice(0, 10) ?? null };
+}
+
+export function toHouseholdView(
+  household: Household & { members?: HouseholdMember[]; _count?: { members: number } },
+): HouseholdView {
+  const { members, _count, ...rest } = household;
+  return {
+    ...rest,
+    feeStartOn: toDateStr(household.feeStartOn),
+    ...(members ? { members: members.map(toMemberView) } : {}),
+    ...(_count ? { _count } : {}),
+  };
+}
+
+function toPaymentView(payment: HouseholdPayment): PaymentView {
+  return { ...payment, paidOn: toDateStr(payment.paidOn)! };
+}
+
+/**
+ * Whole fee periods elapsed from `start` up to and including the current one.
+ * Monthly counts calendar months; yearly counts calendar years. 0 if start is
+ * in the future.
+ */
+export function periodsElapsed(start: Date, today: Date, frequency: FeeFrequency): number {
+  if (today < start) return 0;
+  if (frequency === FeeFrequency.YEARLY) {
+    return today.getUTCFullYear() - start.getUTCFullYear() + 1;
+  }
+  return (
+    (today.getUTCFullYear() - start.getUTCFullYear()) * 12 +
+    (today.getUTCMonth() - start.getUTCMonth()) +
+    1
+  );
 }
 
 function memberCreateData(dto: CreateHouseholdMemberDto) {
@@ -45,17 +106,18 @@ export class HouseholdsService {
   async create(actor: AuthUser, masjidId: string, dto: CreateHouseholdDto): Promise<HouseholdView> {
     assertMasjidMember(actor, masjidId);
     await this.assertMasjidWritable(masjidId);
-    const { members, ...household } = dto;
+    const { members, feeStartOn, ...household } = dto;
     const created = await this.prisma.household.create({
       data: {
         ...household,
+        ...(feeStartOn ? { feeStartOn: new Date(feeStartOn) } : {}),
         masjidId,
         createdById: actor.id,
         ...(members?.length ? { members: { create: members.map(memberCreateData) } } : {}),
       },
       include: { members: { orderBy: { createdAt: 'asc' } } },
     });
-    return { ...created, members: created.members.map(toMemberView) };
+    return toHouseholdView(created);
   }
 
   async findAll(
@@ -89,7 +151,7 @@ export class HouseholdsService {
       }),
       this.prisma.household.count({ where }),
     ]);
-    return paginated(data, total, query);
+    return paginated(data.map(toHouseholdView), total, query);
   }
 
   async findOne(actor: AuthUser, masjidId: string, id: string): Promise<HouseholdView> {
@@ -101,7 +163,7 @@ export class HouseholdsService {
     if (!household) {
       throw new NotFoundException('Household not found');
     }
-    return { ...household, members: household.members.map(toMemberView) };
+    return toHouseholdView(household);
   }
 
   async update(
@@ -113,12 +175,18 @@ export class HouseholdsService {
     assertMasjidMember(actor, masjidId);
     await this.assertMasjidWritable(masjidId);
     await this.getHouseholdOrThrow(masjidId, id);
+    const { feeStartOn, ...rest } = dto;
     const updated = await this.prisma.household.update({
       where: { id },
-      data: dto,
+      data: {
+        ...rest,
+        ...(feeStartOn !== undefined
+          ? { feeStartOn: feeStartOn ? new Date(feeStartOn) : null }
+          : {}),
+      },
       include: { members: { orderBy: { createdAt: 'asc' } } },
     });
-    return { ...updated, members: updated.members.map(toMemberView) };
+    return toHouseholdView(updated);
   }
 
   /** Hard delete (cascades members) — restricted to admins at the controller layer. */
@@ -262,6 +330,73 @@ export class HouseholdsService {
       household,
     }));
     return paginated(view, total, query);
+  }
+
+  /** Fee status for a household: expected (fee × periods), paid, balance, history. */
+  async dues(actor: AuthUser, masjidId: string, householdId: string): Promise<DuesView> {
+    assertMasjidMember(actor, masjidId);
+    const household = await this.getHouseholdOrThrow(masjidId, householdId);
+    const payments = await this.prisma.householdPayment.findMany({
+      where: { householdId },
+      orderBy: [{ paidOn: 'desc' }, { createdAt: 'desc' }],
+    });
+    const paidCents = payments.reduce((sum, p) => sum + p.amountCents, 0);
+
+    let expectedCents = 0;
+    if (household.feeAmountCents && household.feeFrequency && household.feeStartOn) {
+      const periods = periodsElapsed(household.feeStartOn, new Date(), household.feeFrequency);
+      expectedCents = household.feeAmountCents * periods;
+    }
+
+    return {
+      feeAmountCents: household.feeAmountCents,
+      feeFrequency: household.feeFrequency,
+      feeStartOn: toDateStr(household.feeStartOn),
+      expectedCents,
+      paidCents,
+      balanceCents: expectedCents - paidCents,
+      payments: payments.map(toPaymentView),
+    };
+  }
+
+  async addPayment(
+    actor: AuthUser,
+    masjidId: string,
+    householdId: string,
+    dto: CreatePaymentDto,
+  ): Promise<PaymentView> {
+    assertMasjidMember(actor, masjidId);
+    await this.assertMasjidWritable(masjidId);
+    await this.getHouseholdOrThrow(masjidId, householdId);
+    const payment = await this.prisma.householdPayment.create({
+      data: {
+        householdId,
+        amountCents: dto.amountCents,
+        paidOn: new Date(dto.paidOn),
+        method: dto.method,
+        periodLabel: dto.periodLabel,
+        note: dto.note,
+        recordedById: actor.id,
+      },
+    });
+    return toPaymentView(payment);
+  }
+
+  async removePayment(
+    actor: AuthUser,
+    masjidId: string,
+    householdId: string,
+    paymentId: string,
+  ): Promise<void> {
+    assertMasjidMember(actor, masjidId);
+    await this.assertMasjidWritable(masjidId);
+    await this.getHouseholdOrThrow(masjidId, householdId);
+    const { count } = await this.prisma.householdPayment.deleteMany({
+      where: { id: paymentId, householdId },
+    });
+    if (count === 0) {
+      throw new NotFoundException('Payment not found');
+    }
   }
 
   private async getHouseholdOrThrow(masjidId: string, id: string): Promise<Household> {
