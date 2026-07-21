@@ -1,4 +1,16 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Masjid, UserRole } from '@prisma/client';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
@@ -7,6 +19,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { PaginatedResult } from '../common/dto/pagination.dto';
 import { CreateMasjidDto } from './dto/create-masjid.dto';
 import { QueryMasjidsDto } from './dto/query-masjids.dto';
+import { ResetMasjidDto, ResetMasjidResult } from './dto/reset-masjid.dto';
 import { UpdateMasjidStatusDto } from './dto/update-masjid-status.dto';
 import { UpdateMasjidDto } from './dto/update-masjid.dto';
 import { MasjidWithUserCount, MasjidsService } from './masjids.service';
@@ -63,5 +76,29 @@ export class MasjidsController {
     @CurrentUser() user: AuthUser,
   ): Promise<Masjid> {
     return this.masjidsService.setStatus(id, dto.status, user);
+  }
+
+  @Post(':id/reset')
+  @Roles(UserRole.PLATFORM_ADMIN, UserRole.MASJID_ADMIN)
+  @ApiOperation({
+    summary: 'Wipe selected data (households/prayer times/announcements/events) for a masjid',
+  })
+  reset(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ResetMasjidDto,
+    @CurrentUser() user: AuthUser,
+  ): Promise<ResetMasjidResult> {
+    return this.masjidsService.reset(id, user, dto);
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.PLATFORM_ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Permanently delete a masjid and all its data (platform admin only)' })
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthUser,
+  ): Promise<void> {
+    await this.masjidsService.remove(id, user);
   }
 }

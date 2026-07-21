@@ -38,6 +38,11 @@ export default function SettingsPage() {
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
 
+  // Danger zone: destructive resets, gated behind typing the masjid name.
+  const [dangerConfirm, setDangerConfirm] = useState('');
+  const [dangerBusy, setDangerBusy] = useState('');
+  const [dangerNotice, setDangerNotice] = useState('');
+
   useEffect(() => {
     if (!masjidId) return;
     api<Masjid>(`/masjids/${masjidId}`)
@@ -68,6 +73,26 @@ export default function SettingsPage() {
       ...(place.state ? { state: place.state } : {}),
       ...(place.country ? { country: place.country } : {}),
     }));
+  };
+
+  const runReset = async (body: Record<string, boolean>, label: string) => {
+    setDangerBusy(label);
+    setDangerNotice('');
+    try {
+      const res = await api<Record<string, number>>(`/masjids/${masjidId}/reset`, {
+        method: 'POST',
+        body,
+      });
+      const deleted = Object.entries(res)
+        .filter(([, n]) => n > 0)
+        .map(([k, n]) => `${n} ${k}`);
+      setDangerNotice(deleted.length ? `Deleted ${deleted.join(', ')}.` : 'Nothing to delete.');
+      setDangerConfirm('');
+    } catch (err) {
+      setDangerNotice(err instanceof Error ? err.message : 'Reset failed');
+    } finally {
+      setDangerBusy('');
+    }
   };
 
   const save = async (e: React.FormEvent) => {
@@ -201,6 +226,61 @@ export default function SettingsPage() {
           </div>
         )}
       </form>
+
+      {canEdit && (
+        <Card title="Danger zone">
+          <div className="space-y-4 rounded-lg border border-destructive/40 p-4">
+            <p className="text-sm text-muted-foreground">
+              These permanently delete data for <strong>{form.name || 'this masjid'}</strong> and
+              cannot be undone. Type the masjid name below to enable them.
+            </p>
+            <Input
+              placeholder={`Type "${form.name}" to confirm`}
+              value={dangerConfirm}
+              onChange={(e) => setDangerConfirm(e.target.value)}
+            />
+            {(() => {
+              const armed = !!form.name && dangerConfirm.trim() === form.name.trim();
+              return (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="danger"
+                    disabled={!armed || dangerBusy !== ''}
+                    onClick={() => runReset({ households: true }, 'households')}
+                  >
+                    {dangerBusy === 'households' ? 'Deleting…' : 'Delete all households'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="danger"
+                    disabled={!armed || dangerBusy !== ''}
+                    onClick={() => runReset({ prayerTimes: true }, 'prayerTimes')}
+                  >
+                    {dangerBusy === 'prayerTimes' ? 'Clearing…' : 'Clear prayer times'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="danger"
+                    disabled={!armed || dangerBusy !== ''}
+                    onClick={() =>
+                      runReset({ announcements: true, events: true }, 'announcements & events')
+                    }
+                  >
+                    {dangerBusy === 'announcements & events'
+                      ? 'Clearing…'
+                      : 'Clear announcements & events'}
+                  </Button>
+                </div>
+              );
+            })()}
+            <p className="text-xs text-muted-foreground">
+              Deleting households also removes their members, dues history, and family-tree links.
+            </p>
+            {dangerNotice && <p className="text-sm text-primary">{dangerNotice}</p>}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

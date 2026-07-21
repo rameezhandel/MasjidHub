@@ -257,4 +257,71 @@ describe('MasjidsService', () => {
       );
     });
   });
+
+  describe('reset', () => {
+    function stubTx() {
+      const tx = {
+        household: { deleteMany: jest.fn().mockResolvedValue({ count: 3 }) },
+        prayerTimetableEntry: { deleteMany: jest.fn().mockResolvedValue({ count: 5 }) },
+        announcement: { deleteMany: jest.fn().mockResolvedValue({ count: 2 }) },
+        event: { deleteMany: jest.fn().mockResolvedValue({ count: 1 }) },
+      };
+      prisma.$transaction.mockImplementation((cb: (t: unknown) => unknown) => cb(tx));
+      return tx;
+    }
+
+    it('lets a masjid admin wipe only the requested data for their own masjid', async () => {
+      prisma.masjid.findUnique.mockResolvedValue({ id: 'masjid-a' });
+      const tx = stubTx();
+      const result = await service.reset('masjid-a', masjidAAdmin, { households: true });
+      expect(result).toEqual({ households: 3, prayerTimes: 0, announcements: 0, events: 0 });
+      expect(tx.household.deleteMany).toHaveBeenCalledWith({ where: { masjidId: 'masjid-a' } });
+      expect(tx.prayerTimetableEntry.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it('reports counts across all requested data sets', async () => {
+      prisma.masjid.findUnique.mockResolvedValue({ id: 'masjid-a' });
+      stubTx();
+      const result = await service.reset('masjid-a', platformAdmin, {
+        households: true,
+        prayerTimes: true,
+        announcements: true,
+        events: true,
+      });
+      expect(result).toEqual({ households: 3, prayerTimes: 5, announcements: 2, events: 1 });
+    });
+
+    it('blocks a masjid admin resetting another masjid', async () => {
+      await expect(
+        service.reset('masjid-b', masjidAAdmin, { households: true }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('404s an unknown masjid', async () => {
+      prisma.masjid.findUnique.mockResolvedValue(null);
+      await expect(service.reset('nope', platformAdmin, { households: true })).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('remove', () => {
+    it('deletes the users then the masjid', async () => {
+      prisma.masjid.findUnique.mockResolvedValue({ id: 'masjid-a', name: 'A', slug: 'masjid-a' });
+      const tx = {
+        user: { deleteMany: jest.fn().mockResolvedValue({ count: 2 }) },
+        masjid: { delete: jest.fn().mockResolvedValue({}) },
+      };
+      prisma.$transaction.mockImplementation((cb: (t: unknown) => unknown) => cb(tx));
+      await service.remove('masjid-a', platformAdmin);
+      expect(tx.user.deleteMany).toHaveBeenCalledWith({ where: { masjidId: 'masjid-a' } });
+      expect(tx.masjid.delete).toHaveBeenCalledWith({ where: { id: 'masjid-a' } });
+    });
+
+    it('404s an unknown masjid', async () => {
+      prisma.masjid.findUnique.mockResolvedValue(null);
+      await expect(service.remove('nope', platformAdmin)).rejects.toThrow(NotFoundException);
+    });
+  });
 });
