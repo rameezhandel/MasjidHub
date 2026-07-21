@@ -48,6 +48,10 @@ export default function PlatformMasjidsPage() {
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
 
+  const [deleteTarget, setDeleteTarget] = useState<Masjid | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleteBusy, setDeleteBusy] = useState(false);
+
   const [name, setName] = useState('');
   const [city, setCity] = useState('');
   const [country, setCountry] = useState('');
@@ -138,6 +142,22 @@ export default function PlatformMasjidsPage() {
   const setStatus = async (id: string, status: string) => {
     await api(`/masjids/${id}/status`, { method: 'PATCH', body: { status } });
     await load();
+  };
+
+  const doDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteBusy(true);
+    setError('');
+    try {
+      await api(`/masjids/${deleteTarget.id}`, { method: 'DELETE' });
+      setDeleteTarget(null);
+      setDeleteConfirm('');
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Delete failed');
+    } finally {
+      setDeleteBusy(false);
+    }
   };
 
   return (
@@ -276,30 +296,74 @@ export default function PlatformMasjidsPage() {
         ) : (
           <ul className="divide-y divide-border">
             {masjids.map((masjid) => (
-              <li key={masjid.id} className="flex items-center justify-between gap-4 py-3">
-                <div>
-                  <p className="font-medium">
-                    {masjid.name} <Badge value={masjid.status} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    <Link className="underline" href={`/m/${masjid.slug}`}>
-                      /m/{masjid.slug}
-                    </Link>{' '}
-                    · {[masjid.city, masjid.country].filter(Boolean).join(', ') || 'no address'} ·{' '}
-                    {masjid._count?.users ?? '—'} staff
-                  </p>
-                </div>
-                <div className="flex shrink-0 gap-2">
-                  {masjid.status === 'ACTIVE' ? (
-                    <Button variant="danger" onClick={() => setStatus(masjid.id, 'SUSPENDED')}>
-                      Suspend
+              <li key={masjid.id} className="py-3">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="font-medium">
+                      {masjid.name} <Badge value={masjid.status} />
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <Link className="underline" href={`/m/${masjid.slug}`}>
+                        /m/{masjid.slug}
+                      </Link>{' '}
+                      · {[masjid.city, masjid.country].filter(Boolean).join(', ') || 'no address'} ·{' '}
+                      {masjid._count?.users ?? '—'} staff
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    {masjid.status === 'ACTIVE' ? (
+                      <Button variant="secondary" onClick={() => setStatus(masjid.id, 'SUSPENDED')}>
+                        Suspend
+                      </Button>
+                    ) : (
+                      <Button variant="secondary" onClick={() => setStatus(masjid.id, 'ACTIVE')}>
+                        Activate
+                      </Button>
+                    )}
+                    <Button
+                      variant="danger"
+                      onClick={() => {
+                        setDeleteTarget(masjid);
+                        setDeleteConfirm('');
+                        setError('');
+                      }}
+                    >
+                      Delete
                     </Button>
-                  ) : (
-                    <Button variant="secondary" onClick={() => setStatus(masjid.id, 'ACTIVE')}>
-                      Activate
-                    </Button>
-                  )}
+                  </div>
                 </div>
+
+                {deleteTarget?.id === masjid.id && (
+                  <div className="mt-3 space-y-2 rounded-lg border border-destructive/40 p-3">
+                    <p className="text-sm">
+                      Permanently delete <strong>{masjid.name}</strong> and{' '}
+                      <strong>all</strong> its data — households, staff/admins, prayer times,
+                      announcements and events. This cannot be undone.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Type <code className="rounded bg-secondary px-1 py-0.5">{masjid.slug}</code> to
+                      confirm.
+                    </p>
+                    <Input
+                      value={deleteConfirm}
+                      onChange={(e) => setDeleteConfirm(e.target.value)}
+                      placeholder={masjid.slug}
+                      className="max-w-xs"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="danger"
+                        disabled={deleteConfirm.trim() !== masjid.slug || deleteBusy}
+                        onClick={doDelete}
+                      >
+                        {deleteBusy ? 'Deleting…' : 'Permanently delete'}
+                      </Button>
+                      <Button variant="secondary" onClick={() => setDeleteTarget(null)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </li>
             ))}
           </ul>

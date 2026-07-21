@@ -15,6 +15,7 @@ import { slugify } from '../common/utils/slugify';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMasjidDto } from './dto/create-masjid.dto';
 import { QueryMasjidsDto } from './dto/query-masjids.dto';
+import { ResetMasjidDto, ResetMasjidResult } from './dto/reset-masjid.dto';
 import { UpdateMasjidDto } from './dto/update-masjid.dto';
 
 export type MasjidWithUserCount = Masjid & { _count: { users: number } };
@@ -208,6 +209,85 @@ export class MasjidsService {
       metadata: { from: masjid.status, to: status },
     });
     return updated;
+  }
+
+  /**
+   * Wipe selected data sets for a masjid (households, prayer times, announcements,
+   * events). Platform admin may reset any masjid; a masjid admin only their own.
+   * Deleting households cascades their members, payments and family-tree links.
+   */
+  async reset(id: string, actor: AuthUser, opts: ResetMasjidDto): Promise<ResetMasjidResult> {
+    if (actor.role !== UserRole.PLATFORM_ADMIN && actor.masjidId !== id) {
+      throw new ForbiddenException('You do not have access to this masjid');
+    }
+    const masjid = await this.prisma.masjid.findUnique({ where: { id }, select: { id: true } });
+    if (!masjid) {
+      throw new NotFoundException('Masjid not found');
+    }
+
+    const result: ResetMasjidResult = {
+      households: 0,
+      prayerTimes: 0,
+      announcements: 0,
+      events: 0,
+    };
+    await this.prisma.$transaction(async (tx) => {
+      if (opts.households) {
+        result.households = (await tx.household.deleteMany({ where: { masjidId: id } })).count;
+      }
+      if (opts.prayerTimes) {
+        result.prayerTimes = (
+          await tx.prayerTimetableEntry.deleteMany({ where: { masjidId: id } })
+        ).count;
+      }
+      if (opts.announcements) {
+        result.announcements = (
+          await tx.announcement.deleteMany({ where: { masjidId: id } })
+        ).count;
+      }
+      if (opts.events) {
+        result.events = (await tx.event.deleteMany({ where: { masjidId: id } })).count;
+      }
+    });
+
+    await this.auditService.record({
+      action: AuditAction.MASJID_RESET,
+      actorId: actor.id,
+      actorEmail: actor.email,
+      masjidId: id,
+      targetType: 'masjid',
+      targetId: id,
+      metadata: { ...result },
+    });
+    return result;
+  }
+
+  /**
+   * Permanently delete a masjid and everything under it (platform admin only).
+   * The masjid's users are removed first because users.masjidId is RESTRICT;
+   * deleting the masjid then cascades all its content.
+   */
+  async remove(id: string, actor: AuthUser): Promise<void> {
+    const masjid = await this.prisma.masjid.findUnique({
+      where: { id },
+      select: { id: true, name: true, slug: true },
+    });
+    if (!masjid) {
+      throw new NotFoundException('Masjid not found');
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.deleteMany({ where: { masjidId: id } });
+      await tx.masjid.delete({ where: { id } });
+    });
+    await this.auditService.record({
+      action: AuditAction.MASJID_DELETED,
+      actorId: actor.id,
+      actorEmail: actor.email,
+      masjidId: id,
+      targetType: 'masjid',
+      targetId: id,
+      metadata: { name: masjid.name, slug: masjid.slug },
+    });
   }
 
   private async generateUniqueSlug(name: string): Promise<string> {

@@ -404,4 +404,58 @@ describe('MasjidHub API (e2e)', () => {
     await login(MASJID_B_ADMIN).expect(401);
     await login({ email: MASJID_B_ADMIN.email, password: newPassword }).expect(200);
   });
+
+  describe('reset and delete', () => {
+    it('a masjid admin cannot delete a masjid (platform only)', async () => {
+      const session = await login(MASJID_A_ADMIN).expect(200);
+      await request(http)
+        .delete(`/api/v1/masjids/${masjidAId}`)
+        .set('Authorization', `Bearer ${session.body.accessToken}`)
+        .expect(403);
+    });
+
+    it('resets households for its own masjid but not another', async () => {
+      const session = await login(MASJID_A_ADMIN).expect(200);
+      const token = session.body.accessToken as string;
+
+      await request(http)
+        .post(`/api/v1/masjids/${masjidAId}/households`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ familyName: 'Temp Family', headName: 'Temp Head' })
+        .expect(201);
+
+      const reset = await request(http)
+        .post(`/api/v1/masjids/${masjidAId}/reset`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ households: true })
+        .expect(201);
+      expect(reset.body.households).toBeGreaterThanOrEqual(1);
+
+      const summary = await request(http)
+        .get(`/api/v1/masjids/${masjidAId}/households/summary`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(summary.body.total).toBe(0);
+
+      // Cross-tenant reset is refused.
+      await request(http)
+        .post(`/api/v1/masjids/${masjidBId}/reset`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ households: true })
+        .expect(403);
+    });
+
+    it('platform admin permanently deletes a masjid and its users', async () => {
+      await request(http)
+        .delete(`/api/v1/masjids/${masjidBId}`)
+        .set('Authorization', `Bearer ${platformToken}`)
+        .expect(204);
+      await request(http)
+        .get(`/api/v1/masjids/${masjidBId}`)
+        .set('Authorization', `Bearer ${platformToken}`)
+        .expect(404);
+      // The deleted masjid's admin can no longer log in.
+      await login(MASJID_B_ADMIN).expect(401);
+    });
+  });
 });
