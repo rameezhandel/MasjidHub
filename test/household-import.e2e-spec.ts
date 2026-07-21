@@ -212,6 +212,72 @@ describe('Household Excel import (e2e)', () => {
     ).toBe('1988-09-30');
   });
 
+  it('imports fees and builds the family tree from relationships', async () => {
+    const FULL_HEADERS = [
+      'Family Name',
+      'Head Name',
+      'City',
+      'Fee Amount',
+      'Fee Frequency',
+      'Fee Start Date',
+      'Member First Name',
+      'Member Last Name',
+      'Relationship',
+      'Gender',
+      'Date of Birth',
+    ];
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Sheet1');
+    ws.addRow(FULL_HEADERS);
+    ws.addRow([
+      'Ansari Family',
+      'Rehan Ansari',
+      'Moodabidri',
+      '350',
+      'Monthly',
+      '2026-01-01',
+      'Rehan',
+      'Ansari',
+      'Head',
+      'Male',
+      '1990-06-18',
+    ]);
+    ws.addRow(['Ansari Family', 'Rehan Ansari', '', '', '', '', 'Nadia', 'Ansari', 'Spouse', 'Female', '1992-10-08']);
+    ws.addRow(['Ansari Family', 'Rehan Ansari', '', '', '', '', 'Ibrahim', 'Ansari', 'Son', 'Male', '2019-03-25']);
+    const buffer = Buffer.from(await wb.xlsx.writeBuffer());
+
+    await request(http)
+      .post(`/api/v1/masjids/${masjidId}/households/import`)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('file', buffer, 'ansari.xlsx')
+      .expect(201);
+
+    const list = await request(http)
+      .get(`/api/v1/masjids/${masjidId}/households?search=ansari`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    const householdId = list.body.data[0].id;
+
+    // Fee landed on the household.
+    const dues = await request(http)
+      .get(`/api/v1/masjids/${masjidId}/households/${householdId}/dues`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    expect(dues.body.feeAmountCents).toBe(35000);
+    expect(dues.body.feeFrequency).toBe('MONTHLY');
+
+    // The tree is connected: head–spouse (SPOUSE) and two PARENT edges to the son.
+    const tree = await request(http)
+      .get(`/api/v1/masjids/${masjidId}/households/${householdId}/tree`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    expect(tree.body.nodes).toHaveLength(3);
+    const spouse = tree.body.edges.filter((e: { type: string }) => e.type === 'SPOUSE');
+    const parent = tree.body.edges.filter((e: { type: string }) => e.type === 'PARENT');
+    expect(spouse).toHaveLength(1);
+    expect(parent).toHaveLength(2); // father→son and mother→son
+  });
+
   it('reports row errors and writes nothing on a bad sheet', async () => {
     const buffer = await buildXlsx([
       ['', 'Missing Family', '', '', '', 'X', 'Y', '', '', ''],
