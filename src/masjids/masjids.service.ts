@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Masjid, MasjidStatus, Prisma, UserRole } from '@prisma/client';
+import { Masjid, MasjidStatus, Prisma, User, UserRole } from '@prisma/client';
 import { AuditAction } from '../audit/audit-actions';
 import { AuditService } from '../audit/audit.service';
 import { AuthService } from '../auth/auth.service';
@@ -31,7 +31,18 @@ export class MasjidsService {
     const adminEmail = dto.admin.email.trim().toLowerCase();
     const existingUser = await this.prisma.user.findUnique({ where: { email: adminEmail } });
     if (existingUser) {
-      throw new ConflictException('A user with this email already exists');
+      // A user belongs to at most one masjid. Reuse an existing account only when it
+      // isn't tied to any masjid yet; otherwise reassigning it would be destructive.
+      if (existingUser.role === UserRole.PLATFORM_ADMIN) {
+        throw new ConflictException(
+          'This email belongs to a platform administrator and cannot be a masjid admin.',
+        );
+      }
+      if (existingUser.masjidId) {
+        throw new ConflictException(
+          'This user already belongs to another masjid. Use a different email, or remove them from their current masjid first.',
+        );
+      }
     }
 
     let slug: string;
@@ -45,37 +56,62 @@ export class MasjidsService {
       slug = await this.generateUniqueSlug(dto.name);
     }
 
-    const passwordHash = await AuthService.hashPassword(dto.admin.password);
     const { admin, slug: _ignored, ...masjidData } = dto;
 
-    const masjid = await this.prisma.masjid.create({
-      data: {
-        ...masjidData,
-        slug,
-        users: {
-          create: {
-            email: adminEmail,
-            passwordHash,
-            firstName: admin.firstName,
-            lastName: admin.lastName,
-            role: UserRole.MASJID_ADMIN,
+    let masjidRecord: Masjid;
+    let adminUser: User;
+
+    if (existingUser) {
+      // Attach the existing (unassigned) account as this masjid's admin, keeping its
+      // current credentials. Atomic so a failure can't leave an admin-less masjid.
+      const { created, attached } = await this.prisma.$transaction(async (tx) => {
+        const m = await tx.masjid.create({ data: { ...masjidData, slug } });
+        const u = await tx.user.update({
+          where: { id: existingUser.id },
+          data: { masjidId: m.id, role: UserRole.MASJID_ADMIN, isActive: true },
+        });
+        return { created: m, attached: u };
+      });
+      masjidRecord = created;
+      adminUser = attached;
+    } else {
+      const passwordHash = await AuthService.hashPassword(admin.password);
+      const masjid = await this.prisma.masjid.create({
+        data: {
+          ...masjidData,
+          slug,
+          users: {
+            create: {
+              email: adminEmail,
+              passwordHash,
+              firstName: admin.firstName,
+              lastName: admin.lastName,
+              role: UserRole.MASJID_ADMIN,
+            },
           },
         },
-      },
-      include: { users: true },
-    });
+        include: { users: true },
+      });
+      const { users, ...rest } = masjid;
+      masjidRecord = rest;
+      adminUser = users[0];
+    }
 
-    const { users, ...rest } = masjid;
     await this.auditService.record({
       action: AuditAction.MASJID_CREATED,
       actorId: actor.id,
       actorEmail: actor.email,
-      masjidId: masjid.id,
+      masjidId: masjidRecord.id,
       targetType: 'masjid',
-      targetId: masjid.id,
-      metadata: { name: masjid.name, slug: masjid.slug, adminEmail: adminEmail },
+      targetId: masjidRecord.id,
+      metadata: {
+        name: masjidRecord.name,
+        slug: masjidRecord.slug,
+        adminEmail,
+        reusedExistingUser: Boolean(existingUser),
+      },
     });
-    return { ...rest, admin: toSafeUser(users[0]) };
+    return { ...masjidRecord, admin: toSafeUser(adminUser) };
   }
 
   async findAll(query: QueryMasjidsDto): Promise<PaginatedResult<MasjidWithUserCount>> {

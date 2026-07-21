@@ -107,7 +107,8 @@ describe('MasjidHub API (e2e)', () => {
     masjidBId = res.body.id;
   });
 
-  it('rejects onboarding with a duplicate admin email', async () => {
+  it('rejects onboarding when the admin already belongs to another masjid', async () => {
+    // admin-a@e2e.local is already Masjid A's admin.
     await request(http)
       .post('/api/v1/masjids')
       .set('Authorization', `Bearer ${platformToken}`)
@@ -125,6 +126,43 @@ describe('MasjidHub API (e2e)', () => {
       .expect(200);
     expect(res.body.meta.total).toBe(2);
     expect(res.body.data).toHaveLength(2);
+  });
+
+  it('reuses an existing unassigned user as the new masjid admin', async () => {
+    // A user that exists but isn't tied to any masjid yet (e.g. a former member).
+    const orphan = { email: 'orphan@e2e.local', password: 'orphan-user-pass-1234' };
+    await prisma.user.create({
+      data: {
+        email: orphan.email,
+        passwordHash: await AuthService.hashPassword(orphan.password),
+        firstName: 'Orphan',
+        lastName: 'User',
+        role: UserRole.MASJID_MAINTAINER,
+        masjidId: null,
+      },
+    });
+
+    const res = await request(http)
+      .post('/api/v1/masjids')
+      .set('Authorization', `Bearer ${platformToken}`)
+      .send({
+        name: 'Masjid Reuse',
+        admin: {
+          email: orphan.email,
+          firstName: 'Ignored',
+          lastName: 'Ignored',
+          password: 'unused-password-123',
+        },
+      })
+      .expect(201);
+
+    expect(res.body.admin.email).toBe(orphan.email);
+    expect(res.body.admin.role).toBe('MASJID_ADMIN');
+    expect(res.body.admin.masjidId).toBe(res.body.id);
+
+    // The reused account keeps its original password and can log in.
+    const loginRes = await login(orphan).expect(200);
+    expect(loginRes.body.user.masjidId).toBe(res.body.id);
   });
 
   it('logs in masjid A admin', async () => {

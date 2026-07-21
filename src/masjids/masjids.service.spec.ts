@@ -147,8 +147,64 @@ describe('MasjidsService', () => {
       expect(result.slug).toBe('masjid-al-noor-2');
     });
 
-    it('rejects when the admin email is already in use', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'existing' });
+    it('reuses an existing unassigned user as the masjid admin', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'existing',
+        email: 'imam@al-noor.org',
+        role: UserRole.MASJID_MAINTAINER,
+        masjidId: null,
+      });
+      prisma.masjid.findUnique.mockResolvedValue(null); // slug free
+      const txMasjidCreate = jest
+        .fn()
+        .mockResolvedValue(masjid({ id: 'new-masjid', slug: 'masjid-al-noor' }));
+      const txUserUpdate = jest.fn().mockResolvedValue({
+        id: 'existing',
+        email: 'imam@al-noor.org',
+        passwordHash: 'existing-hash',
+        firstName: 'Imam',
+        lastName: 'Khan',
+        role: UserRole.MASJID_ADMIN,
+        isActive: true,
+        masjidId: 'new-masjid',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      prisma.$transaction.mockImplementation((cb: (tx: unknown) => unknown) =>
+        cb({ masjid: { create: txMasjidCreate }, user: { update: txUserUpdate } }),
+      );
+
+      const result = await service.create(dto, platformAdmin);
+
+      expect(result.admin.email).toBe('imam@al-noor.org');
+      expect(result.admin.role).toBe(UserRole.MASJID_ADMIN);
+      expect(result.admin).not.toHaveProperty('passwordHash');
+      expect(txUserUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'existing' },
+          data: expect.objectContaining({
+            masjidId: 'new-masjid',
+            role: UserRole.MASJID_ADMIN,
+          }),
+        }),
+      );
+    });
+
+    it('rejects reusing a user who already belongs to another masjid', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'existing',
+        role: UserRole.MASJID_ADMIN,
+        masjidId: 'other-masjid',
+      });
+      await expect(service.create(dto, platformAdmin)).rejects.toThrow(ConflictException);
+    });
+
+    it('rejects reusing a platform administrator as a masjid admin', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'existing',
+        role: UserRole.PLATFORM_ADMIN,
+        masjidId: null,
+      });
       await expect(service.create(dto, platformAdmin)).rejects.toThrow(ConflictException);
     });
 
