@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button, Card, Empty, ErrorText, Input, Label, Select } from '@/components/ui';
 import { api } from '@/lib/api';
+import { formatMoney } from '@/lib/currencies';
 import type { DuesSummary, FeeFrequency } from '@/lib/types';
 
-const money = (cents: number) => (cents / 100).toFixed(2);
 const toCents = (v: string) => Math.round(parseFloat(v) * 100);
+const centsToInput = (cents: number) => (cents / 100).toFixed(2);
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
 export function HouseholdDues({ masjidId, householdId }: { masjidId: string; householdId: string }) {
@@ -29,7 +30,7 @@ export function HouseholdDues({ masjidId, householdId }: { masjidId: string; hou
   const load = useCallback(async () => {
     const data = await api<DuesSummary>(`/masjids/${masjidId}/households/${householdId}/dues`);
     setDues(data);
-    setFeeAmount(data.feeAmountCents != null ? money(data.feeAmountCents) : '');
+    setFeeAmount(data.feeAmountCents != null ? centsToInput(data.feeAmountCents) : '');
     setFeeFrequency(data.feeFrequency ?? '');
     setFeeStartOn(data.feeStartOn ?? '');
   }, [masjidId, householdId]);
@@ -104,9 +105,10 @@ export function HouseholdDues({ masjidId, householdId }: { masjidId: string; hou
 
   if (!dues) return <Card title="Dues">{error ? <ErrorText>{error}</ErrorText> : <Empty>Loading…</Empty>}</Card>;
 
+  const fmt = (cents: number) => formatMoney(cents, dues.currency);
   const balance = dues.balanceCents;
   const balanceLabel =
-    balance > 0 ? `${money(balance)} owing` : balance < 0 ? `${money(-balance)} in credit` : 'Paid up';
+    balance > 0 ? `${fmt(balance)} owing` : balance < 0 ? `${fmt(-balance)} in credit` : 'Paid up';
   const balanceTone =
     balance > 0 ? 'text-destructive' : balance < 0 ? 'text-primary' : 'text-muted-foreground';
 
@@ -116,8 +118,8 @@ export function HouseholdDues({ masjidId, householdId }: { masjidId: string; hou
         {/* Balance summary */}
         <div className="grid grid-cols-3 gap-3 text-center">
           {[
-            ['Owed to date', money(dues.expectedCents)],
-            ['Paid', money(dues.paidCents)],
+            ['Owed to date', fmt(dues.expectedCents)],
+            ['Paid', fmt(dues.paidCents)],
             ['Balance', balanceLabel],
           ].map(([label, value], i) => (
             <div key={label} className="rounded-xl border border-border bg-muted/40 p-3">
@@ -184,7 +186,7 @@ export function HouseholdDues({ masjidId, householdId }: { masjidId: string; hou
               {dues.payments.map((p) => (
                 <li key={p.id} className="flex items-center justify-between gap-3 py-2 text-sm">
                   <div>
-                    <span className="font-medium">{money(p.amountCents)}</span>{' '}
+                    <span className="font-medium">{fmt(p.amountCents)}</span>{' '}
                     <span className="text-muted-foreground">
                       · {p.paidOn}
                       {p.method ? ` · ${p.method}` : ''}
