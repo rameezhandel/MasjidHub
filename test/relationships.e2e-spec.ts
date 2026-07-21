@@ -190,6 +190,8 @@ describe('Member relationships / family tree (e2e)', () => {
       (res.body.nodes as { householdName: string }[]).map((n) => n.householdName),
     );
     expect(householdNames.size).toBe(2);
+    // Each node carries its relationship label for the tree UI.
+    expect(res.body.nodes[0]).toHaveProperty('relationship');
   });
 
   it('blocks cross-tenant relationship and tree access', async () => {

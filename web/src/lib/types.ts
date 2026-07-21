@@ -207,6 +207,7 @@ export interface FamilyTreeNode {
   firstName: string;
   lastName: string;
   gender: Gender | null;
+  relationship: string | null;
   householdId: string;
   householdName: string;
 }
