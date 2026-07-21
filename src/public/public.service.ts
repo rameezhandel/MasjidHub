@@ -6,11 +6,13 @@ import {
   EventStatus,
   Masjid,
   MasjidStatus,
+  Prisma,
 } from '@prisma/client';
 import { PaginatedResult, PaginationQueryDto, paginated } from '../common/dto/pagination.dto';
 import { PrayerTimesService, PrayerTimetableEntryView } from '../prayer-times/prayer-times.service';
 import { QueryPrayerTimesDto } from '../prayer-times/dto/prayer-times.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { ListPublicMasjidsDto } from './dto/list-public-masjids.dto';
 
 /** Fields of a masjid that are safe to expose without authentication. */
 export type PublicMasjidProfile = Pick<
@@ -31,6 +33,18 @@ export type PublicMasjidProfile = Pick<
   | 'latitude'
   | 'longitude'
 >;
+
+/** A single masjid as shown in the public directory (a lightweight card). */
+export type PublicMasjidCard = Pick<Masjid, 'id' | 'name' | 'slug' | 'city' | 'state' | 'country'>;
+
+const PUBLIC_MASJID_CARD_SELECT = {
+  id: true,
+  name: true,
+  slug: true,
+  city: true,
+  state: true,
+  country: true,
+} as const;
 
 const PUBLIC_MASJID_SELECT = {
   id: true,
@@ -56,6 +70,32 @@ export class PublicService {
     private readonly prisma: PrismaService,
     private readonly prayerTimesService: PrayerTimesService,
   ) {}
+
+  /** Public directory of ACTIVE masjids, optionally filtered by name or city. */
+  async listActiveMasjids(query: ListPublicMasjidsDto): Promise<PaginatedResult<PublicMasjidCard>> {
+    const where: Prisma.MasjidWhereInput = {
+      status: MasjidStatus.ACTIVE,
+      ...(query.search
+        ? {
+            OR: [
+              { name: { contains: query.search, mode: 'insensitive' } },
+              { city: { contains: query.search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.masjid.findMany({
+        where,
+        skip: query.skip,
+        take: query.pageSize,
+        orderBy: { name: 'asc' },
+        select: PUBLIC_MASJID_CARD_SELECT,
+      }),
+      this.prisma.masjid.count({ where }),
+    ]);
+    return paginated(data, total, query);
+  }
 
   async getMasjidProfile(slug: string): Promise<PublicMasjidProfile> {
     return this.getActiveMasjidOrThrow(slug);

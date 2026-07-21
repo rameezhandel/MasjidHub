@@ -414,4 +414,44 @@ describe('Content & public API (e2e)', () => {
       await request(http).get('/api/v1/public/masjids/no-such-masjid').expect(404);
     });
   });
+
+  describe('public directory', () => {
+    it('lists active masjids without authentication or internal fields', async () => {
+      const res = await request(http).get('/api/v1/public/masjids').expect(200);
+      expect(res.body.meta.total).toBeGreaterThanOrEqual(2);
+      const card = res.body.data.find((m: { name: string }) => m.name === 'Masjid Content');
+      expect(card).toBeDefined();
+      expect(card.slug).toBe('masjid-content');
+      expect(card).not.toHaveProperty('email');
+      expect(card).not.toHaveProperty('status');
+    });
+
+    it('filters by name (case-insensitive)', async () => {
+      const res = await request(http).get('/api/v1/public/masjids?search=content').expect(200);
+      expect(res.body.data).toHaveLength(1);
+      expect(res.body.data[0].name).toBe('Masjid Content');
+    });
+
+    it('filters by city', async () => {
+      const res = await request(http).get('/api/v1/public/masjids?search=toronto').expect(200);
+      expect(res.body.data.map((m: { slug: string }) => m.slug)).toContain('masjid-content');
+    });
+
+    it('omits suspended masjids from the directory', async () => {
+      await request(http)
+        .patch(`/api/v1/masjids/${masjidAId}/status`)
+        .set('Authorization', `Bearer ${platformToken}`)
+        .send({ status: MasjidStatus.SUSPENDED })
+        .expect(200);
+
+      const res = await request(http).get('/api/v1/public/masjids?search=content').expect(200);
+      expect(res.body.data).toHaveLength(0);
+
+      await request(http)
+        .patch(`/api/v1/masjids/${masjidAId}/status`)
+        .set('Authorization', `Bearer ${platformToken}`)
+        .send({ status: MasjidStatus.ACTIVE })
+        .expect(200);
+    });
+  });
 });

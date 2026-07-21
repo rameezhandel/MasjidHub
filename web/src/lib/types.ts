@@ -273,3 +273,13 @@ export interface Paginated<T> {
   data: T[];
   meta: { page: number; pageSize: number; total: number; totalPages: number };
 }
+
+/** A masjid as shown in the public directory on the landing page. */
+export interface PublicMasjidCard {
+  id: string;
+  name: string;
+  slug: string;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+}
