@@ -100,11 +100,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Mobile top bar with a Sheet-backed drawer */}
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-4 py-3 sm:hidden">
-          <Link href="/dashboard" className="text-lg font-bold">
-            🕌 MasjidHub
-          </Link>
+        {/* Mobile top bar with a Sheet-backed drawer. Hamburger and drawer are
+            both on the left so the menu opens from the side it's triggered on. */}
+        <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-card px-4 py-3 sm:hidden">
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger
               aria-label="Open menu"
@@ -118,6 +116,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {accountFooter}
             </SheetContent>
           </Sheet>
+          <Link href="/dashboard" className="text-lg font-bold">
+            🕌 MasjidHub
+          </Link>
         </header>
 
         <main className="min-w-0 flex-1 p-4 sm:p-8">{children}</main>

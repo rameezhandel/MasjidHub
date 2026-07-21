@@ -2,7 +2,20 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { Badge, Button, Card, Empty, ErrorText, Input, Label, Select, Textarea } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Empty,
+  ErrorText,
+  Input,
+  Label,
+  Select,
+  Textarea,
+} from '@/components/ui';
 import { HouseholdImport } from '@/components/HouseholdImport';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -31,8 +44,8 @@ export default function HouseholdsPage() {
   const [summary, setSummary] = useState<HouseholdSummary | null>(null);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
-  const [showForm, setShowForm] = useState(false);
-  const [showImport, setShowImport] = useState(false);
+  // Only one of the two flows can be open at a time.
+  const [dialog, setDialog] = useState<'add' | 'import' | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -96,7 +109,7 @@ export default function HouseholdsPage() {
       setCity('');
       setNotes('');
       setMembers([emptyMember()]);
-      setShowForm(false);
+      setDialog(null);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to register household');
@@ -113,24 +126,26 @@ export default function HouseholdsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Households</h1>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => setShowImport((v) => !v)}>
-            {showImport ? 'Close' : 'Import Excel'}
+          <Button variant="secondary" onClick={() => setDialog('import')}>
+            Import Excel
           </Button>
-          <Button onClick={() => setShowForm((v) => !v)}>
-            {showForm ? 'Close' : '+ Register household'}
-          </Button>
+          <Button onClick={() => setDialog('add')}>+ Register household</Button>
         </div>
       </div>
 
-      {showImport && masjidId && (
-        <HouseholdImport
-          masjidId={masjidId}
-          onImported={() => {
-            void load();
-            setShowImport(false);
-          }}
-        />
-      )}
+      {/* Import: centered popup */}
+      <Dialog open={dialog === 'import'} onOpenChange={(open) => setDialog(open ? 'import' : null)}>
+        <DialogContent className="max-w-xl">
+          <DialogTitle>Import households from Excel</DialogTitle>
+          <HouseholdImport
+            masjidId={masjidId}
+            onImported={() => {
+              void load();
+              setDialog(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
       {summary && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
@@ -149,8 +164,10 @@ export default function HouseholdsPage() {
         </div>
       )}
 
-      {showForm && (
-        <Card title="Register a household">
+      {/* Add household: centered popup */}
+      <Dialog open={dialog === 'add'} onOpenChange={(open) => setDialog(open ? 'add' : null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogTitle>Register a household</DialogTitle>
           <form onSubmit={create} className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
@@ -237,8 +254,8 @@ export default function HouseholdsPage() {
               {busy ? 'Saving…' : 'Register household'}
             </Button>
           </form>
-        </Card>
-      )}
+        </DialogContent>
+      </Dialog>
 
       <Card
         title="Registered households"

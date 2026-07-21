@@ -22,6 +22,7 @@ const NODE_H = 64;
 
 interface PersonData extends Record<string, unknown> {
   name: string;
+  relationship: string | null;
   householdName: string;
   gender: 'MALE' | 'FEMALE' | null;
   isRoot: boolean;
@@ -43,7 +44,9 @@ function PersonNode({ data }: NodeProps<Node<PersonData>>) {
     >
       <Handle type="target" position={Position.Top} className="!bg-slate-400" />
       <p className="truncate text-sm font-semibold text-slate-800">{data.name}</p>
-      <p className="truncate text-xs text-slate-500">{data.householdName}</p>
+      <p className="truncate text-xs text-slate-500">
+        {data.relationship || data.householdName}
+      </p>
       <Handle type="source" position={Position.Bottom} className="!bg-slate-400" />
     </div>
   );
@@ -73,6 +76,7 @@ function layout(tree: FamilyTree): Node<PersonData>[] {
       position: { x: (pos?.x ?? 0) - NODE_W / 2, y: (pos?.y ?? 0) - NODE_H / 2 },
       data: {
         name: `${node.firstName} ${node.lastName}`,
+        relationship: node.relationship,
         householdName: node.householdName,
         gender: node.gender,
         isRoot: node.householdId === tree.rootHouseholdId,
@@ -80,6 +84,8 @@ function layout(tree: FamilyTree): Node<PersonData>[] {
     };
   });
 }
+
+const labelBg = { fill: '#ffffff', fillOpacity: 0.9 };
 
 function toEdges(tree: FamilyTree): Edge[] {
   return tree.edges.map((edge) =>
@@ -89,6 +95,11 @@ function toEdges(tree: FamilyTree): Edge[] {
           source: edge.fromMemberId,
           target: edge.toMemberId,
           type: 'smoothstep',
+          label: 'parent',
+          labelStyle: { fill: '#475569', fontSize: 10 },
+          labelBgStyle: labelBg,
+          labelBgPadding: [4, 2] as [number, number],
+          labelBgBorderRadius: 4,
           markerEnd: { type: MarkerType.ArrowClosed },
           style: { stroke: '#64748b' },
         }
@@ -97,6 +108,11 @@ function toEdges(tree: FamilyTree): Edge[] {
           source: edge.fromMemberId,
           target: edge.toMemberId,
           type: 'straight',
+          label: 'spouse',
+          labelStyle: { fill: '#db2777', fontSize: 10 },
+          labelBgStyle: labelBg,
+          labelBgPadding: [4, 2] as [number, number],
+          labelBgBorderRadius: 4,
           animated: false,
           style: { stroke: '#db2777', strokeDasharray: '5 4' },
         },

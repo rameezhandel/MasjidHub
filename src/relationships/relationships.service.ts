@@ -11,6 +11,8 @@ export interface TreeNode {
   firstName: string;
   lastName: string;
   gender: Gender | null;
+  /** The person's relationship label (e.g. "Head", "Spouse", "Son"). */
+  relationship: string | null;
   householdId: string;
   householdName: string;
 }
@@ -133,6 +135,7 @@ export class RelationshipsService {
         firstName: true,
         lastName: true,
         gender: true,
+        relationship: true,
         householdId: true,
         household: { select: { familyName: true } },
       },
@@ -143,6 +146,7 @@ export class RelationshipsService {
       firstName: m.firstName,
       lastName: m.lastName,
       gender: m.gender,
+      relationship: m.relationship,
       householdId: m.householdId,
       householdName: m.household.familyName,
     }));

@@ -16,3 +16,13 @@ export {
   SheetTitle,
   SheetDescription,
 } from './sheet';
+export {
+  Dialog,
+  DialogTrigger,
+  DialogClose,
+  DialogPortal,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from './dialog';
