@@ -4,62 +4,84 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * shadcn/ui design tokens, tuned to MasjidHub's existing look:
- * emerald primary, slate neutrals. Light-first — a `.dark` block is
- * defined for completeness but the app does not toggle dark mode yet.
+ * MasjidHub · "Rub el Hizb" design system.
+ * Deep forest green + rich gold on warm greige neutrals. shadcn `accent`
+ * stays the subtle interactive-hover surface (sage tint); the brand gold is
+ * its own --gold pair and is reserved for genuine highlights (next-prayer,
+ * balance owed, gold CTAs) — never repurposed as `accent`.
  */
 :root {
-  --radius: 0.65rem;
+  --radius: 0.625rem;
 
-  --background: #ffffff;
-  --foreground: #0f172a; /* slate-900 */
+  --background: #f6f3ec;
+  --foreground: #1a241c;
 
-  --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card: #fcfaf4;
+  --card-foreground: #1a241c;
 
-  --popover: #ffffff;
-  --popover-foreground: #0f172a;
+  --popover: #fcfaf4;
+  --popover-foreground: #1a241c;
 
-  --primary: #047857; /* emerald-700 */
-  --primary-foreground: #ffffff;
+  --primary: #1b4d33;
+  --primary-foreground: #fcfaf4;
 
-  --secondary: #f1f5f9; /* slate-100 */
-  --secondary-foreground: #0f172a;
+  --secondary: #e4eae3;
+  --secondary-foreground: #18442e;
 
-  --muted: #f8fafc; /* slate-50 */
-  --muted-foreground: #64748b; /* slate-500 */
+  --muted: #eae4d6;
+  --muted-foreground: #5a6155;
 
-  --accent: #ecfdf5; /* emerald-50 */
-  --accent-foreground: #065f46; /* emerald-800 */
+  --accent: #e7ede6;
+  --accent-foreground: #18442e;
 
-  --destructive: #dc2626; /* red-600 */
-  --destructive-foreground: #ffffff;
+  --gold: #b98a2e;
+  --gold-foreground: #fcfaf4;
 
-  --border: #e2e8f0; /* slate-200 */
-  --input: #cbd5e1; /* slate-300 */
-  --ring: #10b981; /* emerald-500 */
+  --success: #2c7a54;
+  --warning: #b98a2e;
+
+  --destructive: #a8432b;
+  --destructive-foreground: #fcfaf4;
+
+  --border: #ded6c4;
+  --input: #ded6c4;
+  --ring: #1b4d33;
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --card: #111827;
-  --card-foreground: #ededed;
-  --popover: #111827;
-  --popover-foreground: #ededed;
-  --primary: #10b981;
-  --primary-foreground: #052e1a;
-  --secondary: #1e293b;
-  --secondary-foreground: #ededed;
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-  --accent: #064e3b;
-  --accent-foreground: #d1fae5;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  --border: #1e293b;
-  --input: #334155;
-  --ring: #10b981;
+  --background: #101410;
+  --foreground: #ece6d6;
+
+  --card: #171d16;
+  --card-foreground: #ece6d6;
+
+  --popover: #171d16;
+  --popover-foreground: #ece6d6;
+
+  --primary: #57a877;
+  --primary-foreground: #0a140d;
+
+  --secondary: #202a1d;
+  --secondary-foreground: #ece6d6;
+
+  --muted: #212820;
+  --muted-foreground: #a0a793;
+
+  --accent: #232d1f;
+  --accent-foreground: #ece6d6;
+
+  --gold: #d9ae52;
+  --gold-foreground: #2e2100;
+
+  --success: #4fa06f;
+  --warning: #d9ae52;
+
+  --destructive: #d06b4e;
+  --destructive-foreground: #10170f;
+
+  --border: #2a3226;
+  --input: #2a3226;
+  --ring: #57a877;
 }
 
 @theme inline {
@@ -77,6 +99,10 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
@@ -87,10 +113,53 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-sora), var(--font-jakarta), ui-sans-serif, sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Sora carries headings, the wordmark, and big countdown numerals. */
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-sora), var(--font-jakarta), ui-sans-serif, sans-serif;
+}
+
+/* Prayer tables and money read best with tabular figures. */
+time,
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Low-contrast rub el hizb tessellation (two overlapping squares, one rotated
+ * 45°) for hero/header backdrops. Uses currentColor via a mask so it follows
+ * the theme; keep it quiet (≈8% opacity).
+ */
+.texture-rub {
+  position: relative;
+}
+.texture-rub > * {
+  position: relative;
+}
+.texture-rub::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: currentColor;
+  opacity: 0.08;
+  pointer-events: none;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23000' stroke-width='1.4'%3E%3Crect x='14' y='14' width='28' height='28'/%3E%3Crect x='14' y='14' width='28' height='28' transform='rotate(45 28 28)'/%3E%3C/g%3E%3C/svg%3E");
+  mask-size: 56px 56px;
+  mask-repeat: repeat;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23000' stroke-width='1.4'%3E%3Crect x='14' y='14' width='28' height='28'/%3E%3Crect x='14' y='14' width='28' height='28' transform='rotate(45 28 28)'/%3E%3C/g%3E%3C/svg%3E");
+  -webkit-mask-size: 56px 56px;
+  -webkit-mask-repeat: repeat;
 }

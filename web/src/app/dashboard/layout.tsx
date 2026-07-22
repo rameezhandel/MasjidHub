@@ -5,6 +5,7 @@ import { MenuIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Logo } from '@/components/Logo';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
@@ -92,10 +93,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-screen">
       {/* Desktop sidebar */}
       <aside className="hidden w-56 shrink-0 flex-col border-r border-border bg-card p-4 sm:flex">
-        <Link href="/dashboard" className="mb-6 px-2 text-lg font-bold">
-          🕌 MasjidHub
+        <Link href="/dashboard" className="mb-2 px-2">
+          <Logo />
         </Link>
-        <div className="flex-1">{navLinks}</div>
+        {user.role === 'PLATFORM_ADMIN' && (
+          <span className="mb-4 ml-2 w-fit rounded-sm bg-gold/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-gold">
+            Platform
+          </span>
+        )}
+        <div className="mt-2 flex-1">{navLinks}</div>
         {accountFooter}
       </aside>
 
@@ -111,13 +117,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <MenuIcon className="size-5" />
             </SheetTrigger>
             <SheetContent side="left" className="w-72">
-              <SheetTitle className="px-2">🕌 MasjidHub</SheetTitle>
+              <SheetTitle className="px-2">
+                <Logo />
+              </SheetTitle>
               <div className="flex-1">{navLinks}</div>
               {accountFooter}
             </SheetContent>
           </Sheet>
-          <Link href="/dashboard" className="text-lg font-bold">
-            🕌 MasjidHub
+          <Link href="/dashboard">
+            <Logo markClassName="size-6" className="[&>span]:text-base" />
           </Link>
         </header>
 

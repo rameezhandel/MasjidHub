@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { LogoMark } from '@/components/Logo';
 import { Input } from '@/components/ui';
 import { apiPublic } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -51,9 +52,11 @@ export default function LandingPage() {
     [m.city, m.state, m.country].filter(Boolean).join(', ');
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center px-6 py-16 text-center">
-      <p className="mb-3 text-4xl">🕌</p>
-      <h1 className="text-4xl font-bold tracking-tight text-foreground">MasjidHub</h1>
+    <main className="texture-rub mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center px-6 py-16 text-center text-foreground">
+      <LogoMark className="mb-4 size-14" />
+      <h1 className="text-4xl font-extrabold tracking-[-0.03em] text-foreground">
+        Masjid<span className="text-primary">Hub</span>
+      </h1>
       <p className="mt-4 max-w-xl text-lg text-muted-foreground">
         One platform for many masjids. Accurate prayer times, announcements, and events for your
         community — managed by your masjid&apos;s own team.

@@ -1,7 +1,19 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Badge, Button, Card, Empty, ErrorText, Input, Label, Select } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Empty,
+  ErrorText,
+  Input,
+  Label,
+  Select,
+} from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Invitation, Paginated, SafeUser } from '@/lib/types';
@@ -19,6 +31,7 @@ export default function StaffPage() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (!masjidId) return;
@@ -52,6 +65,7 @@ export default function StaffPage() {
       setEmail('');
       setFirstName('');
       setLastName('');
+      setOpen(false);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invitation failed');
@@ -75,41 +89,60 @@ export default function StaffPage() {
 
   return (
     <div className="max-w-4xl space-y-6">
-      <h1 className="text-2xl font-bold">Staff</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Staff</h1>
+        {isAdmin && <Button onClick={() => setOpen(true)}>+ Invite staff</Button>}
+      </div>
+
+      {notice && !open && (
+        <p className="rounded-lg border border-border bg-accent p-3 text-sm text-primary">
+          {notice}
+        </p>
+      )}
 
       {isAdmin && (
-        <Card title="Invite a staff member">
-          <form onSubmit={invite} className="grid gap-3 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <Label>Email</Label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </div>
-            <div>
-              <Label>First name</Label>
-              <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
-            </div>
-            <div>
-              <Label>Last name</Label>
-              <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
-            </div>
-            <div>
-              <Label>Role</Label>
-              <Select value={role} onChange={(e) => setRole(e.target.value)}>
-                <option value="MASJID_MAINTAINER">Maintainer</option>
-                <option value="MASJID_ADMIN">Admin</option>
-              </Select>
-            </div>
-            <div className="flex items-end">
-              <Button type="submit" disabled={busy}>
-                {busy ? 'Sending…' : 'Send invitation'}
-              </Button>
-            </div>
-            <div className="sm:col-span-2">
-              <ErrorText>{error}</ErrorText>
-              {notice && <p className="text-sm text-primary">{notice}</p>}
-            </div>
-          </form>
-        </Card>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent className="max-w-xl">
+            <DialogTitle>Invite a staff member</DialogTitle>
+            <p className="text-xs text-muted-foreground">
+              They&apos;ll get an email invitation and choose their own password.
+            </p>
+            <form onSubmit={invite} className="grid gap-3 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <Label>First name</Label>
+                <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+              </div>
+              <div>
+                <Label>Last name</Label>
+                <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+              </div>
+              <div>
+                <Label>Role</Label>
+                <Select value={role} onChange={(e) => setRole(e.target.value)}>
+                  <option value="MASJID_MAINTAINER">Maintainer</option>
+                  <option value="MASJID_ADMIN">Admin</option>
+                </Select>
+              </div>
+              <div className="flex items-end">
+                <Button type="submit" disabled={busy}>
+                  {busy ? 'Sending…' : 'Send invitation'}
+                </Button>
+              </div>
+              <div className="sm:col-span-2">
+                <ErrorText>{error}</ErrorText>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       )}
 
       <Card title="Team">
