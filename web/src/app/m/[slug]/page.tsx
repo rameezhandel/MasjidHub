@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { Logo } from '@/components/Logo';
+import { NextPrayerHero } from '@/components/NextPrayerHero';
 import { API_BASE } from '@/lib/api';
 import type {
   Announcement,
@@ -55,9 +58,15 @@ export default async function MasjidPublicPage({
     .join(', ');
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">{masjid.name}</h1>
+    <main className="mx-auto max-w-4xl px-6 pb-10">
+      <div className="sticky top-0 z-10 -mx-6 mb-6 border-b border-border bg-background/90 px-6 py-3 backdrop-blur">
+        <Link href="/">
+          <Logo markClassName="size-6" className="[&>span]:text-base" />
+        </Link>
+      </div>
+
+      <header className="mb-6">
+        <h1 className="text-3xl font-extrabold tracking-tight">{masjid.name}</h1>
         {address && <p className="mt-1 text-muted-foreground">{address}</p>}
         <p className="mt-1 text-sm text-muted-foreground">
           {[masjid.phone, masjid.email, masjid.website].filter(Boolean).join(' · ')}
@@ -72,9 +81,11 @@ export default async function MasjidPublicPage({
         )}
       </header>
 
-      <section className="rounded-xl border border-emerald-200 bg-card p-6 shadow-sm">
+      {today && <NextPrayerHero today={today} timezone={masjid.timezone} />}
+
+      <section className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
         <div className="mb-4 flex items-baseline justify-between">
-          <h2 className="text-lg font-semibold">Prayer times</h2>
+          <h2 className="text-lg font-bold">Today&apos;s times</h2>
           {today && <span className="text-sm text-muted-foreground">{today.date}</span>}
         </div>
         {today ? (
@@ -85,16 +96,20 @@ export default async function MasjidPublicPage({
                   <p className="text-xs font-medium uppercase tracking-wide text-primary">
                     {label}
                   </p>
-                  <p className="mt-1 text-xl font-bold text-foreground">{String(today[key])}</p>
+                  <p className="tabular mt-1 text-xl font-bold text-foreground">
+                    {String(today[key])}
+                  </p>
                   {today[iqamah] && (
-                    <p className="text-xs text-muted-foreground">Iqamah {String(today[iqamah])}</p>
+                    <p className="tabular text-xs text-muted-foreground">
+                      Iqamah {String(today[iqamah])}
+                    </p>
                   )}
                 </div>
               ))}
             </div>
             {(today.jumuah1 || today.jumuah2) && (
-              <p className="mt-3 text-sm text-muted-foreground">
-                Jumu&apos;ah: {[today.jumuah1, today.jumuah2].filter(Boolean).join(' & ')}
+              <p className="mt-3 rounded-lg border border-gold/40 bg-gold/10 px-3 py-2 text-sm font-medium text-foreground">
+                Jumu&apos;ah · {[today.jumuah1, today.jumuah2].filter(Boolean).join(' & ')}
               </p>
             )}
           </>

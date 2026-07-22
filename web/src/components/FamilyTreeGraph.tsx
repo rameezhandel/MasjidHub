@@ -30,24 +30,25 @@ interface PersonData extends Record<string, unknown> {
 
 /** A single person card. Parent edges enter the top, leave the bottom. */
 function PersonNode({ data }: NodeProps<Node<PersonData>>) {
-  const tone = data.isRoot
-    ? 'border-emerald-500 bg-emerald-50'
-    : data.gender === 'MALE'
-      ? 'border-sky-300 bg-sky-50'
+  const tone =
+    data.gender === 'MALE'
+      ? 'bg-[#DCE9F5] dark:bg-[#16324f]'
       : data.gender === 'FEMALE'
-        ? 'border-pink-300 bg-pink-50'
-        : 'border-slate-300 bg-white';
+        ? 'bg-[#F6E1E7] dark:bg-[#42202e]'
+        : 'bg-card';
   return (
     <div
-      className={`rounded-xl border px-3 py-2 shadow-sm ${tone}`}
+      className={`box-border rounded-xl border px-3 py-2 shadow-sm ${tone} ${
+        data.isRoot ? 'border-2 border-gold' : 'border-border'
+      }`}
       style={{ width: NODE_W, height: NODE_H }}
     >
-      <Handle type="target" position={Position.Top} className="!bg-slate-400" />
-      <p className="truncate text-sm font-semibold text-slate-800">{data.name}</p>
-      <p className="truncate text-xs text-slate-500">
+      <Handle type="target" position={Position.Top} className="!bg-muted-foreground" />
+      <p className="truncate text-sm font-bold text-foreground">{data.name}</p>
+      <p className="truncate text-xs text-muted-foreground">
         {data.relationship || data.householdName}
       </p>
-      <Handle type="source" position={Position.Bottom} className="!bg-slate-400" />
+      <Handle type="source" position={Position.Bottom} className="!bg-muted-foreground" />
     </div>
   );
 }
@@ -85,7 +86,8 @@ function layout(tree: FamilyTree): Node<PersonData>[] {
   });
 }
 
-const labelBg = { fill: '#ffffff', fillOpacity: 0.9 };
+// Pill labels + theme-var strokes: parent = solid primary, spouse = dashed gold.
+const labelBg = { fill: 'var(--card)', fillOpacity: 0.92 };
 
 function toEdges(tree: FamilyTree): Edge[] {
   return tree.edges.map((edge) =>
@@ -96,12 +98,12 @@ function toEdges(tree: FamilyTree): Edge[] {
           target: edge.toMemberId,
           type: 'smoothstep',
           label: 'parent',
-          labelStyle: { fill: '#475569', fontSize: 10 },
+          labelStyle: { fill: 'var(--muted-foreground)', fontSize: 10 },
           labelBgStyle: labelBg,
-          labelBgPadding: [4, 2] as [number, number],
-          labelBgBorderRadius: 4,
+          labelBgPadding: [5, 3] as [number, number],
+          labelBgBorderRadius: 6,
           markerEnd: { type: MarkerType.ArrowClosed },
-          style: { stroke: '#64748b' },
+          style: { stroke: 'var(--primary)' },
         }
       : {
           id: edge.id,
@@ -109,12 +111,12 @@ function toEdges(tree: FamilyTree): Edge[] {
           target: edge.toMemberId,
           type: 'straight',
           label: 'spouse',
-          labelStyle: { fill: '#db2777', fontSize: 10 },
+          labelStyle: { fill: 'var(--gold)', fontSize: 10 },
           labelBgStyle: labelBg,
-          labelBgPadding: [4, 2] as [number, number],
-          labelBgBorderRadius: 4,
+          labelBgPadding: [5, 3] as [number, number],
+          labelBgBorderRadius: 6,
           animated: false,
-          style: { stroke: '#db2777', strokeDasharray: '5 4' },
+          style: { stroke: 'var(--gold)', strokeDasharray: '5 4' },
         },
   );
 }
@@ -141,10 +143,10 @@ export function FamilyTreeGraph({ tree }: { tree: FamilyTree }) {
           zoomable
           nodeColor={(n) => {
             const d = n.data as PersonData;
-            if (d.isRoot) return '#10b981';
-            if (d.gender === 'MALE') return '#7dd3fc';
-            if (d.gender === 'FEMALE') return '#f9a8d4';
-            return '#cbd5e1';
+            if (d.isRoot) return '#B98A2E';
+            if (d.gender === 'MALE') return '#7ea8cd';
+            if (d.gender === 'FEMALE') return '#d99aac';
+            return '#9aa39a';
           }}
         />
       </ReactFlow>

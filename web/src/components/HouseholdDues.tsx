@@ -110,7 +110,7 @@ export function HouseholdDues({ masjidId, householdId }: { masjidId: string; hou
   const balanceLabel =
     balance > 0 ? `${fmt(balance)} owing` : balance < 0 ? `${fmt(-balance)} in credit` : 'Paid up';
   const balanceTone =
-    balance > 0 ? 'text-destructive' : balance < 0 ? 'text-primary' : 'text-muted-foreground';
+    balance > 0 ? 'text-gold' : balance < 0 ? 'text-primary' : 'text-muted-foreground';
 
   return (
     <Card title="Dues">
@@ -122,8 +122,13 @@ export function HouseholdDues({ masjidId, householdId }: { masjidId: string; hou
             ['Paid', fmt(dues.paidCents)],
             ['Balance', balanceLabel],
           ].map(([label, value], i) => (
-            <div key={label} className="rounded-xl border border-border bg-muted/40 p-3">
-              <p className={`text-lg font-bold ${i === 2 ? balanceTone : ''}`}>{value}</p>
+            <div
+              key={label}
+              className={`rounded-xl border p-3 ${
+                i === 2 && balance > 0 ? 'border-gold/40 bg-gold/10' : 'border-border bg-muted/40'
+              }`}
+            >
+              <p className={`tabular text-lg font-bold ${i === 2 ? balanceTone : ''}`}>{value}</p>
               <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
             </div>
           ))}
@@ -233,7 +238,7 @@ export function HouseholdDues({ masjidId, householdId }: { masjidId: string; hou
               <option key={m} value={m} />
             ))}
           </datalist>
-          <Button type="submit" disabled={busy}>
+          <Button type="submit" variant="gold" disabled={busy}>
             Record payment
           </Button>
         </form>

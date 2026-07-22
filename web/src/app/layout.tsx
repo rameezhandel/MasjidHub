@@ -1,9 +1,18 @@
 import type { Metadata } from 'next';
-import { Geist } from 'next/font/google';
+import { Plus_Jakarta_Sans, Sora } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth';
 import './globals.css';
 
-const geist = Geist({ subsets: ['latin'] });
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-jakarta',
+  weight: ['400', '500', '600', '700'],
+});
+const sora = Sora({
+  subsets: ['latin'],
+  variable: '--font-sora',
+  weight: ['600', '700', '800'],
+});
 
 export const metadata: Metadata = {
   title: { default: 'MasjidHub', template: '%s · MasjidHub' },
@@ -20,7 +29,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={`${geist.className} min-h-screen bg-background text-foreground antialiased`}>
+      <body
+        className={`${jakarta.variable} ${sora.variable} min-h-screen bg-background text-foreground antialiased`}
+      >
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Logo } from '@/components/Logo';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button, ErrorText, Input, Label } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
@@ -40,10 +41,10 @@ export default function LoginPage() {
       <div className="absolute right-4 top-4">
         <ThemeToggle />
       </div>
-      <h1 className="text-center text-2xl font-bold">🕌 MasjidHub</h1>
+      <div className="flex justify-center"><Logo /></div>
       <p className="mb-6 mt-1 text-center text-sm text-muted-foreground">Staff sign in</p>
       {passwordChanged && (
-        <p className="mb-4 rounded-lg border border-emerald-200 bg-accent p-3 text-center text-sm text-primary">
+        <p className="mb-4 rounded-lg border border-border bg-accent p-3 text-center text-sm text-primary">
           Password changed. Please sign in with your new password.
         </p>
       )}
