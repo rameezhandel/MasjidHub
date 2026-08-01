@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans, Sora } from 'next/font/google';
+import { Toaster } from '@/components/ui/toast';
 import { AuthProvider } from '@/lib/auth';
 import './globals.css';
 
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${jakarta.variable} ${sora.variable} min-h-screen bg-background text-foreground antialiased`}
       >
         <AuthProvider>{children}</AuthProvider>
+        <Toaster />
       </body>
     </html>
   );
