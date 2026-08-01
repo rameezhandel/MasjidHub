@@ -1,7 +1,37 @@
+import { toast } from '@/components/ui/toast';
 import type { AuthTokens, SafeUser } from './types';
 
 export const API_BASE =
   (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').replace(/\/$/, '') + '/api/v1';
+
+/** Nothing waits forever — generous enough for a free-tier server waking up. */
+const REQUEST_TIMEOUT_MS = 25_000;
+
+/**
+ * fetch that (a) always times out and (b) turns opaque network failures into a
+ * readable ApiError. Timeouts and connection failures also raise a toast, since
+ * many screens swallow load errors silently.
+ */
+async function fetchSafe(input: string, init: RequestInit = {}): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const res = await fetch(input, { ...init, signal: controller.signal });
+    if (res.status >= 500) {
+      toast.error('The server hit an error. Please try again.');
+    }
+    return res;
+  } catch (err) {
+    const timedOut = err instanceof DOMException && err.name === 'AbortError';
+    const message = timedOut
+      ? 'The server is taking too long to respond — it may be waking up. Please try again.'
+      : 'Cannot reach the server. Check your connection and try again.';
+    toast.error(message);
+    throw new ApiError(0, message);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 const ACCESS_KEY = 'mh.accessToken';
 const REFRESH_KEY = 'mh.refreshToken';
@@ -56,7 +86,7 @@ async function tryRefresh(): Promise<boolean> {
   refreshing ??= (async () => {
     const refreshToken = session.refreshToken();
     if (!refreshToken) return false;
-    const res = await fetch(`${API_BASE}/auth/refresh`, {
+    const res = await fetchSafe(`${API_BASE}/auth/refresh`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
@@ -79,7 +109,7 @@ export async function api<T>(
   options: { method?: string; body?: unknown } = {},
 ): Promise<T> {
   const doFetch = () =>
-    fetch(`${API_BASE}${path}`, {
+    fetchSafe(`${API_BASE}${path}`, {
       method: options.method ?? 'GET',
       headers: {
         ...(options.body !== undefined ? { 'content-type': 'application/json' } : {}),
@@ -95,6 +125,7 @@ export async function api<T>(
     res = await doFetch();
   }
   if (res.status === 401) {
+    toast.error('Your session has expired. Please sign in again.');
     session.clear();
     if (typeof window !== 'undefined') window.location.href = '/login';
   }
@@ -112,7 +143,7 @@ export async function apiUpload<T>(
   const qs = query ? `?${new URLSearchParams(query).toString()}` : '';
   const form = new FormData();
   form.append('file', file);
-  const res = await fetch(`${API_BASE}${path}${qs}`, {
+  const res = await fetchSafe(`${API_BASE}${path}${qs}`, {
     method: 'POST',
     headers: session.accessToken() ? { authorization: `Bearer ${session.accessToken()}` } : {},
     body: form,
@@ -127,7 +158,7 @@ export async function apiUpload<T>(
 
 /** Authenticated binary download that triggers a browser save dialog. */
 export async function apiDownload(path: string, filename: string): Promise<void> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetchSafe(`${API_BASE}${path}`, {
     headers: session.accessToken() ? { authorization: `Bearer ${session.accessToken()}` } : {},
   });
   if (!res.ok) throw await parseError(res);
@@ -147,7 +178,7 @@ export async function apiPublic<T>(
   path: string,
   options: { method?: string; body?: unknown } = {},
 ): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetchSafe(`${API_BASE}${path}`, {
     method: options.method ?? 'GET',
     headers: options.body !== undefined ? { 'content-type': 'application/json' } : undefined,
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,

@@ -26,3 +26,4 @@ export {
   DialogTitle,
   DialogDescription,
 } from './dialog';
+export { Toaster, toast } from './toast';
