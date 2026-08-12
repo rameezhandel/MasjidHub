@@ -6,38 +6,9 @@ import { LocationPicker, type Place } from '@/components/LocationPicker';
 import { Badge, Button, Card, Empty, ErrorText, Input, Label, Select } from '@/components/ui';
 import { api } from '@/lib/api';
 import { CURRENCIES } from '@/lib/currencies';
+import { timezoneList } from '@/lib/timezones';
 import { useAuth } from '@/lib/auth';
 import type { Masjid, Paginated } from '@/lib/types';
-
-/** Full IANA timezone list where supported, with a small fallback. */
-function timezoneList(): string[] {
-  try {
-    const fn = (Intl as unknown as { supportedValuesOf?: (k: string) => string[] })
-      .supportedValuesOf;
-    if (typeof fn === 'function') {
-      const list = fn('timeZone');
-      return list.includes('UTC') ? list : ['UTC', ...list];
-    }
-  } catch {
-    // fall through
-  }
-  return [
-    'UTC',
-    'America/New_York',
-    'America/Chicago',
-    'America/Denver',
-    'America/Los_Angeles',
-    'Europe/London',
-    'Asia/Karachi',
-    'Asia/Dubai',
-    'Asia/Riyadh',
-    'Asia/Kolkata',
-    'Asia/Singapore',
-    'Australia/Sydney',
-  ];
-}
-
-const TIMEZONES = timezoneList();
 
 export default function PlatformMasjidsPage() {
   const { user } = useAuth();
@@ -68,7 +39,7 @@ export default function PlatformMasjidsPage() {
   useEffect(() => {
     try {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      if (tz && TIMEZONES.includes(tz)) setTimezone(tz);
+      if (tz) setTimezone(tz);
     } catch {
       // keep UTC
     }
@@ -79,7 +50,7 @@ export default function PlatformMasjidsPage() {
     setRegion(place.state ?? '');
     setCoords({ lat: place.latitude, lon: place.longitude });
     // The masjid's timezone follows its location, not the admin's device.
-    if (place.timezone && TIMEZONES.includes(place.timezone)) setTimezone(place.timezone);
+    if (place.timezone) setTimezone(place.timezone);
   };
 
   const load = useCallback(async () => {
@@ -197,7 +168,7 @@ export default function PlatformMasjidsPage() {
                 <div>
                   <Label>Timezone</Label>
                   <Select value={timezone} onChange={(e) => setTimezone(e.target.value)} required>
-                    {TIMEZONES.map((tz) => (
+                    {timezoneList([timezone]).map((tz) => (
                       <option key={tz} value={tz}>
                         {tz}
                       </option>

@@ -6,6 +6,7 @@ import { Button, Card, Empty, ErrorText, Input, Label, Select } from '@/componen
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { CURRENCIES } from '@/lib/currencies';
+import { timezoneList } from '@/lib/timezones';
 import { CALCULATION_METHODS, type Masjid } from '@/lib/types';
 
 const FIELDS = [
@@ -19,7 +20,6 @@ const FIELDS = [
   ['state', 'State/Province'],
   ['postalCode', 'Postal code'],
   ['country', 'Country'],
-  ['timezone', 'Timezone (IANA)'],
 ] as const;
 
 export default function SettingsPage() {
@@ -49,6 +49,7 @@ export default function SettingsPage() {
       .then((masjid) => {
         const next: Record<string, string> = {};
         for (const [key] of FIELDS) next[key] = (masjid[key] as string | null) ?? '';
+        next.timezone = masjid.timezone || 'UTC';
         setForm(next);
         setCalculationMethod(masjid.calculationMethod);
         setAsrMethod(masjid.asrMethod);
@@ -103,7 +104,12 @@ export default function SettingsPage() {
     setError('');
     setNotice('');
     try {
-      const body: Record<string, unknown> = { calculationMethod, asrMethod, currency };
+      const body: Record<string, unknown> = {
+        calculationMethod,
+        asrMethod,
+        currency,
+        timezone: form.timezone || 'UTC',
+      };
       for (const [key] of FIELDS) {
         if (form[key] !== '') body[key] = form[key];
       }
@@ -139,6 +145,20 @@ export default function SettingsPage() {
                 />
               </div>
             ))}
+            <div>
+              <Label>Timezone</Label>
+              <Select
+                value={form.timezone ?? 'UTC'}
+                disabled={!canEdit}
+                onChange={(e) => setForm((prev) => ({ ...prev, timezone: e.target.value }))}
+              >
+                {timezoneList([form.timezone]).map((tz) => (
+                  <option key={tz} value={tz}>
+                    {tz}
+                  </option>
+                ))}
+              </Select>
+            </div>
             <div>
               <Label>Currency (for dues)</Label>
               <Select
