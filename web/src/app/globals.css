@@ -139,6 +139,36 @@ time,
 }
 
 /*
+ * React Flow chrome (zoom controls, minimap) defaults to white backgrounds,
+ * illegible in dark mode. The library themes through its own --xy-* variables,
+ * so point those at our tokens instead of fighting its stylesheet.
+ */
+.react-flow {
+  --xy-controls-button-background-color: var(--card);
+  --xy-controls-button-background-color-hover: var(--accent);
+  --xy-controls-button-color: var(--foreground);
+  --xy-controls-button-color-hover: var(--foreground);
+  --xy-controls-button-border-color: var(--border);
+  --xy-controls-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  --xy-minimap-background-color: var(--card);
+  --xy-minimap-mask-background-color: color-mix(in srgb, var(--muted) 60%, transparent);
+  --xy-attribution-background-color: transparent;
+}
+.react-flow__controls {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.react-flow__controls-button svg {
+  fill: currentColor;
+}
+.react-flow__minimap {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/*
  * Low-contrast rub el hizb tessellation (two overlapping squares, one rotated
  * 45°) for hero/header backdrops. Uses currentColor via a mask so it follows
  * the theme; keep it quiet (≈8% opacity).
