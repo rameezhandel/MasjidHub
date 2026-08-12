@@ -1,6 +1,7 @@
 'use client';
 
 import 'leaflet/dist/leaflet.css';
+import tzLookupImport from 'tz-lookup';
 import type { Map as LeafletMap, Marker as LeafletMarker } from 'leaflet';
 import { MapPinIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -13,6 +14,22 @@ export interface Place {
   latitude: number;
   longitude: number;
   displayName: string;
+  /** IANA timezone derived from the coordinates (drives prayer-time rendering). */
+  timezone?: string;
+}
+
+// tz-lookup is CommonJS; depending on the bundler the function arrives either
+// directly or under `.default` — unwrap whichever shape we got.
+const tzLookup: typeof tzLookupImport =
+  (tzLookupImport as unknown as { default?: typeof tzLookupImport }).default ?? tzLookupImport;
+
+/** Timezone for a coordinate pair; undefined if the lookup fails. */
+function timezoneFor(lat: number, lon: number): string | undefined {
+  try {
+    return tzLookup(lat, lon);
+  } catch {
+    return undefined;
+  }
 }
 
 interface NominatimResult {
@@ -109,6 +126,7 @@ export function LocationPicker({
             latitude: parseFloat(d.lat),
             longitude: parseFloat(d.lon),
             displayName: d.display_name,
+            timezone: timezoneFor(parseFloat(d.lat), parseFloat(d.lon)),
           })),
         );
         setOpen(data.length > 0);
@@ -175,6 +193,7 @@ export function LocationPicker({
       latitude: lat,
       longitude: lon,
       displayName: parts.displayName || `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+      timezone: timezoneFor(lat, lon),
     });
   };
   const placePinRef = useRef(placePin);
