@@ -24,15 +24,17 @@ export default function PrayerTimesPage() {
   const { user } = useAuth();
   const masjidId = user?.masjidId;
   const [entries, setEntries] = useState<PrayerTimetableEntry[]>([]);
-  const [from, setFrom] = useState(todayStr());
-  const [to, setTo] = useState(plusDays(30));
+  // The timetable always shows the coming month, starting today.
+  const [from] = useState(todayStr());
+  const [to] = useState(() => plusDays(30));
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
 
   const [genFrom, setGenFrom] = useState(todayStr());
-  const [genTo, setGenTo] = useState(plusDays(30));
+  // Default to a full year — the backend allows up to 366 days inclusive.
+  const [genTo, setGenTo] = useState(() => plusDays(365));
   const [overwrite, setOverwrite] = useState(false);
   const [fajrOffset, setFajrOffset] = useState('');
   const [dhuhrOffset, setDhuhrOffset] = useState('');
@@ -184,16 +186,9 @@ export default function PrayerTimesPage() {
       <Card
         title="Timetable"
         actions={
-          <div className="flex items-center gap-2">
-            <Input
-              type="date"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              className="w-36"
-            />
-            <span className="text-xs text-muted-foreground">to</span>
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-36" />
-          </div>
+          <span className="tabular text-sm text-muted-foreground">
+            {from} — {to}
+          </span>
         }
       >
         {entries.length === 0 ? (
