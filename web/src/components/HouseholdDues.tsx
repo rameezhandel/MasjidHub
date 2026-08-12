@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Button, Card, Empty, ErrorText, Input, Label, Select } from '@/components/ui';
+import { Button, Card, Empty, ErrorText, Input, Label, Loading, Select } from '@/components/ui';
 import { api } from '@/lib/api';
 import { formatMoney } from '@/lib/currencies';
 import type { DuesSummary, FeeFrequency } from '@/lib/types';
@@ -103,7 +103,12 @@ export function HouseholdDues({ masjidId, householdId }: { masjidId: string; hou
     }
   };
 
-  if (!dues) return <Card title="Dues">{error ? <ErrorText>{error}</ErrorText> : <Empty>Loading…</Empty>}</Card>;
+  if (!dues)
+    return (
+      <Card title="Dues">
+        {error ? <ErrorText>{error}</ErrorText> : <Loading label="Loading dues…" />}
+      </Card>
+    );
 
   const fmt = (cents: number) => formatMoney(cents, dues.currency);
   const balance = dues.balanceCents;

@@ -12,6 +12,7 @@ import {
   ErrorText,
   Input,
   Label,
+  Loading,
   Select,
 } from '@/components/ui';
 import { api } from '@/lib/api';
@@ -23,6 +24,7 @@ export default function StaffPage() {
   const masjidId = user?.masjidId;
   const isAdmin = user?.role === 'MASJID_ADMIN' || user?.role === 'PLATFORM_ADMIN';
   const [staff, setStaff] = useState<SafeUser[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -46,7 +48,9 @@ export default function StaffPage() {
   }, [masjidId, isAdmin]);
 
   useEffect(() => {
-    void load().catch(() => {});
+    void load()
+      .catch(() => {})
+      .finally(() => setLoaded(true));
   }, [load]);
 
   if (!masjidId) return <Empty>Staff are managed per masjid.</Empty>;
@@ -146,7 +150,9 @@ export default function StaffPage() {
       )}
 
       <Card title="Team">
-        {staff.length === 0 ? (
+        {!loaded ? (
+          <Loading label="Loading staff…" />
+        ) : staff.length === 0 ? (
           <Empty>No staff yet.</Empty>
         ) : (
           <ul className="divide-y divide-border">

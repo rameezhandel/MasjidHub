@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import { FamilyTreeGraph } from '@/components/FamilyTreeGraph';
-import { Button, Card, Empty, ErrorText, Label, Select } from '@/components/ui';
+import { Button, Card, Empty, ErrorText, Label, Loading, Select } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { FamilyTree, Household, Paginated, RelationshipType } from '@/lib/types';
@@ -117,7 +117,9 @@ export default function HouseholdTreePage({ params }: { params: Promise<{ id: st
 
       <ErrorText>{error}</ErrorText>
 
-      {tree && tree.nodes.length > 0 ? (
+      {tree === null ? (
+        <Loading label="Loading family tree…" />
+      ) : tree.nodes.length > 0 ? (
         <>
           <FamilyTreeGraph tree={tree} />
           <div className="flex flex-wrap gap-4 text-xs text-slate-500">

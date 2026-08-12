@@ -3,7 +3,21 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { use, useCallback, useEffect, useState } from 'react';
-import { Badge, Button, Card, Empty, ErrorText, Input, Label, Select, Textarea } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Empty,
+  ErrorText,
+  Input,
+  Label,
+  Loading,
+  Select,
+  Textarea,
+} from '@/components/ui';
 import { HouseholdDues } from '@/components/HouseholdDues';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -22,6 +36,12 @@ const HOUSEHOLD_FIELDS = [
   ['country', 'Country'],
 ] as const;
 
+const STATUS_LABELS: Record<string, string> = {
+  ACTIVE: 'Active',
+  INACTIVE: 'Inactive',
+  MOVED_OUT: 'Moved out',
+};
+
 export default function HouseholdDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user } = useAuth();
@@ -30,11 +50,11 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
   const isAdmin = user?.role === 'MASJID_ADMIN' || user?.role === 'PLATFORM_ADMIN';
 
   const [household, setHousehold] = useState<Household | null>(null);
+  const [dialog, setDialog] = useState<'edit' | 'members' | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
   const [status, setStatus] = useState('ACTIVE');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
 
   const [mFirst, setMFirst] = useState('');
@@ -59,18 +79,19 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
   }, [load]);
 
   if (!masjidId) return <Empty>Households are managed per masjid.</Empty>;
-  if (!household) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (!household) return <Loading label="Loading household…" />;
+
+  const members = household.members ?? [];
 
   const saveHousehold = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
     setError('');
-    setNotice('');
     try {
       const body: Record<string, unknown> = { status, notes };
       for (const [key] of HOUSEHOLD_FIELDS) body[key] = form[key];
       await api(`/masjids/${masjidId}/households/${id}`, { method: 'PATCH', body });
-      setNotice('Saved.');
+      setDialog(null);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');
@@ -119,16 +140,16 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="max-w-4xl space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
           <Link className="text-sm text-muted-foreground hover:underline" href="/dashboard/households">
             ← Households
           </Link>
-          <h1 className="text-2xl font-bold">
+          <h1 className="break-words text-2xl font-bold">
             {household.familyName} <Badge value={household.status} />
           </h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link href={`/dashboard/households/${id}/tree`}>
             <Button variant="secondary">Family tree</Button>
           </Link>
@@ -140,88 +161,172 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
         </div>
       </div>
 
-      <Card title="Household details">
-        <form onSubmit={saveHousehold} className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {HOUSEHOLD_FIELDS.map(([key, label]) => (
-              <div key={key}>
-                <Label>{label}</Label>
-                <Input
-                  value={form[key] ?? ''}
-                  onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
-                />
-              </div>
-            ))}
-            <div>
-              <Label>Status</Label>
-              <Select value={status} onChange={(e) => setStatus(e.target.value)}>
-                <option value="ACTIVE">Active</option>
-                <option value="INACTIVE">Inactive</option>
-                <option value="MOVED_OUT">Moved out</option>
-              </Select>
-            </div>
-          </div>
-          <div>
-            <Label>Notes</Label>
-            <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
-          </div>
-          <ErrorText>{error}</ErrorText>
-          {notice && <p className="text-sm text-primary">{notice}</p>}
-          <Button type="submit" disabled={busy}>
-            {busy ? 'Saving…' : 'Save details'}
-          </Button>
-        </form>
-      </Card>
+      <ErrorText>{!dialog ? error : ''}</ErrorText>
 
-      <Card title={`Members (${household.members?.length ?? 0})`}>
-        {household.members && household.members.length > 0 ? (
-          <ul className="mb-5 divide-y divide-border">
-            {household.members.map((member) => (
-              <li key={member.id} className="flex items-center justify-between py-2">
-                <div>
-                  <p className="font-medium">
-                    {member.firstName} {member.lastName}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {[
-                      member.relationship,
-                      member.gender === 'MALE' ? 'M' : member.gender === 'FEMALE' ? 'F' : null,
-                      member.dateOfBirth,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ') || '—'}
-                  </p>
-                </div>
-                <button
-                  className="text-xs text-red-500 hover:underline"
-                  onClick={() => removeMember(member.id)}
-                >
-                  remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <Empty>No members recorded.</Empty>
-        )}
-
-        <form onSubmit={addMember} className="grid grid-cols-2 gap-2 sm:grid-cols-6">
-          <Input placeholder="First name" value={mFirst} onChange={(e) => setMFirst(e.target.value)} required />
-          <Input placeholder="Last name" value={mLast} onChange={(e) => setMLast(e.target.value)} required />
-          <Input placeholder="Relationship" value={mRel} onChange={(e) => setMRel(e.target.value)} />
-          <Select value={mGender} onChange={(e) => setMGender(e.target.value as '' | Gender)}>
-            <option value="">Gender…</option>
-            <option value="MALE">Male</option>
-            <option value="FEMALE">Female</option>
-          </Select>
-          <Input type="date" value={mDob} onChange={(e) => setMDob(e.target.value)} />
-          <Button type="submit" disabled={busy}>
-            Add
-          </Button>
-        </form>
-      </Card>
-
+      {/* Dues lead the page — the most actionable information for staff. */}
       <HouseholdDues masjidId={masjidId} householdId={id} />
+
+      <Card
+        title="Household details"
+        actions={
+          <Button variant="secondary" onClick={() => setDialog('edit')}>
+            Edit
+          </Button>
+        }
+      >
+        <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+          {HOUSEHOLD_FIELDS.map(([key, label]) => (
+            <div key={key}>
+              <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
+              <dd className="text-sm font-medium">
+                {(household[key] as string | null) || <span className="text-muted-foreground">—</span>}
+              </dd>
+            </div>
+          ))}
+          <div>
+            <dt className="text-xs uppercase tracking-wide text-muted-foreground">Status</dt>
+            <dd className="text-sm font-medium">{STATUS_LABELS[household.status] ?? household.status}</dd>
+          </div>
+        </dl>
+        {household.notes && (
+          <div className="mt-4 border-t border-border pt-3">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Notes</p>
+            <p className="mt-1 whitespace-pre-line text-sm">{household.notes}</p>
+          </div>
+        )}
+      </Card>
+
+      <Card
+        title="Members"
+        actions={
+          <Button variant="secondary" onClick={() => setDialog('members')}>
+            View &amp; manage
+          </Button>
+        }
+      >
+        <button
+          type="button"
+          onClick={() => setDialog('members')}
+          className="flex w-full items-baseline gap-2 rounded-lg p-1 text-left transition-colors hover:bg-accent"
+        >
+          <span className="tabular text-3xl font-bold">{members.length}</span>
+          <span className="text-sm text-muted-foreground">
+            {members.length === 1 ? 'person' : 'people'} in this household
+          </span>
+        </button>
+      </Card>
+
+      {/* Edit details: centered popup */}
+      <Dialog open={dialog === 'edit'} onOpenChange={(open) => setDialog(open ? 'edit' : null)}>
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+          <DialogTitle>Edit household details</DialogTitle>
+          <form onSubmit={saveHousehold} className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {HOUSEHOLD_FIELDS.map(([key, label]) => (
+                <div key={key}>
+                  <Label>{label}</Label>
+                  <Input
+                    value={form[key] ?? ''}
+                    onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
+                  />
+                </div>
+              ))}
+              <div>
+                <Label>Status</Label>
+                <Select value={status} onChange={(e) => setStatus(e.target.value)}>
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                  <option value="MOVED_OUT">Moved out</option>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label>Notes</Label>
+              <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+            </div>
+            <ErrorText>{error}</ErrorText>
+            <Button type="submit" disabled={busy}>
+              {busy ? 'Saving…' : 'Save details'}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Members list + add: centered popup */}
+      <Dialog open={dialog === 'members'} onOpenChange={(open) => setDialog(open ? 'members' : null)}>
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+          <DialogTitle>Members ({members.length})</DialogTitle>
+          {members.length > 0 ? (
+            <ul className="divide-y divide-border">
+              {members.map((member) => (
+                <li key={member.id} className="flex items-center justify-between py-2">
+                  <div>
+                    <p className="font-medium">
+                      {member.firstName} {member.lastName}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {[
+                        member.relationship,
+                        member.gender === 'MALE' ? 'M' : member.gender === 'FEMALE' ? 'F' : null,
+                        member.dateOfBirth,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ') || '—'}
+                    </p>
+                  </div>
+                  <button
+                    className="text-xs text-destructive hover:underline"
+                    onClick={() => removeMember(member.id)}
+                  >
+                    remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <Empty>No members recorded yet.</Empty>
+          )}
+
+          <div className="border-t border-border pt-4">
+            <p className="mb-2 text-sm font-medium">Add a member</p>
+            <form onSubmit={addMember} className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              <Input
+                placeholder="First name"
+                value={mFirst}
+                onChange={(e) => setMFirst(e.target.value)}
+                required
+              />
+              <Input
+                placeholder="Last name"
+                value={mLast}
+                onChange={(e) => setMLast(e.target.value)}
+                required
+              />
+              <Input
+                placeholder="Relationship"
+                list="member-relationships"
+                value={mRel}
+                onChange={(e) => setMRel(e.target.value)}
+              />
+              <Select value={mGender} onChange={(e) => setMGender(e.target.value as '' | Gender)}>
+                <option value="">Gender…</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+              </Select>
+              <Input type="date" value={mDob} onChange={(e) => setMDob(e.target.value)} />
+              <datalist id="member-relationships">
+                {['Head', 'Spouse', 'Son', 'Daughter', 'Father', 'Mother', 'Other'].map((r) => (
+                  <option key={r} value={r} />
+                ))}
+              </datalist>
+              <Button type="submit" disabled={busy}>
+                {busy ? 'Adding…' : 'Add'}
+              </Button>
+            </form>
+            <ErrorText>{error}</ErrorText>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

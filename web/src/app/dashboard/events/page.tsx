@@ -12,6 +12,7 @@ import {
   ErrorText,
   Input,
   Label,
+  Loading,
   Textarea,
 } from '@/components/ui';
 import { api, refreshPublicPages } from '@/lib/api';
@@ -23,6 +24,7 @@ export default function EventsPage() {
   const masjidId = user?.masjidId;
   const isAdmin = user?.role !== 'MASJID_MAINTAINER';
   const [items, setItems] = useState<MasjidEvent[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
@@ -39,7 +41,9 @@ export default function EventsPage() {
   }, [masjidId]);
 
   useEffect(() => {
-    void load().catch(() => {});
+    void load()
+      .catch(() => {})
+      .finally(() => setLoaded(true));
   }, [load]);
 
   if (!masjidId) return <Empty>Events are managed per masjid.</Empty>;
@@ -138,7 +142,9 @@ export default function EventsPage() {
       </Dialog>
 
       <Card title="All events">
-        {items.length === 0 ? (
+        {!loaded ? (
+          <Loading label="Loading events…" />
+        ) : items.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-10 text-center">
             <button
               type="button"

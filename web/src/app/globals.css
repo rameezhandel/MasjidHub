@@ -168,6 +168,19 @@ time,
   border-radius: 8px;
 }
 
+/* Global activity bar: one lap ≈1.2s, slides a 40%-wide segment across. */
+@keyframes progress-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+.progress-indeterminate {
+  animation: progress-slide 1.2s ease-in-out infinite;
+}
+
 /*
  * Low-contrast rub el hizb tessellation (two overlapping squares, one rotated
  * 45°) for hero/header backdrops. Uses currentColor via a mask so it follows

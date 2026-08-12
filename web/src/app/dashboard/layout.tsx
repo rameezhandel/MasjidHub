@@ -7,7 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Logo } from '@/components/Logo';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui';
+import { Loading, Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 
 const STAFF_LINKS = [
@@ -45,7 +45,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [pathname]);
 
   if (loading || !user) {
-    return <div className="p-10 text-center text-sm text-muted-foreground">Loading…</div>;
+    return <Loading className="p-10" label="Loading your dashboard…" />;
   }
 
   const links = user.role === 'PLATFORM_ADMIN' ? PLATFORM_LINKS : STAFF_LINKS;

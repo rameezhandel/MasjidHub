@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Button, Card, Empty, ErrorText, Input, Label } from '@/components/ui';
+import { Button, Card, ErrorText, Input, Label, Loading } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { SafeUser } from '@/lib/types';
@@ -25,7 +25,7 @@ export default function AccountPage() {
   const [pwBusy, setPwBusy] = useState(false);
   const [pwError, setPwError] = useState('');
 
-  if (!user) return <Empty>Loading…</Empty>;
+  if (!user) return <Loading />;
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();

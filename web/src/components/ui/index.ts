@@ -7,7 +7,7 @@ export { Label } from './label';
 export { Select } from './select';
 export { Card, CardRoot, CardHeader, CardTitle, CardContent } from './card';
 export { Badge } from './badge';
-export { ErrorText, Empty } from './feedback';
+export { ErrorText, Empty, Spinner, Loading } from './feedback';
 export {
   Sheet,
   SheetTrigger,

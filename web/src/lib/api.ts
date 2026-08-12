@@ -1,4 +1,5 @@
 import { toast } from '@/components/ui/toast';
+import { progress } from './progress';
 import type { AuthTokens, SafeUser } from './types';
 
 export const API_BASE =
@@ -15,6 +16,7 @@ const REQUEST_TIMEOUT_MS = 25_000;
 async function fetchSafe(input: string, init: RequestInit = {}): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  progress.start();
   try {
     const res = await fetch(input, { ...init, signal: controller.signal });
     if (res.status >= 500) {
@@ -30,6 +32,7 @@ async function fetchSafe(input: string, init: RequestInit = {}): Promise<Respons
     throw new ApiError(0, message);
   } finally {
     clearTimeout(timer);
+    progress.done();
   }
 }
 

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { Badge, Card, Empty, ErrorText, Input, Select } from '@/components/ui';
+import { Badge, Card, Empty, ErrorText, Input, Loading, Select, Spinner } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Gender, MemberSearchResult, Paginated } from '@/lib/types';
@@ -19,7 +19,8 @@ export default function MembersPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  // Starts true so the first render shows a loader, not a false "no members".
+  const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     if (!masjidId) return;
@@ -82,15 +83,23 @@ export default function MembersPage() {
           <option value="MALE">Male</option>
           <option value="FEMALE">Female</option>
         </Select>
-        <span className="text-sm text-muted-foreground">
-          {loading ? 'Searching…' : `${total} ${total === 1 ? 'person' : 'people'}`}
+        <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          {loading ? (
+            <>
+              <Spinner className="size-3.5" /> Searching…
+            </>
+          ) : (
+            `${total} ${total === 1 ? 'person' : 'people'}`
+          )}
         </span>
       </div>
 
       <ErrorText>{error}</ErrorText>
 
       <Card title="Results">
-        {results.length === 0 ? (
+        {loading && results.length === 0 ? (
+          <Loading label="Searching members…" />
+        ) : results.length === 0 ? (
           <Empty>{search.trim() ? 'No members match your search.' : 'No members yet.'}</Empty>
         ) : (
           <ul className="divide-y divide-border">
