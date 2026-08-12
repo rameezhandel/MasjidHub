@@ -72,6 +72,8 @@ export default function SettingsPage() {
       city: place.city || prev.city,
       ...(place.state ? { state: place.state } : {}),
       ...(place.country ? { country: place.country } : {}),
+      // The masjid's timezone follows its location, not the admin's device.
+      ...(place.timezone ? { timezone: place.timezone } : {}),
     }));
   };
 

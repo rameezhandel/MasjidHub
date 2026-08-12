@@ -78,6 +78,8 @@ export default function PlatformMasjidsPage() {
     setCountry(place.country ?? '');
     setRegion(place.state ?? '');
     setCoords({ lat: place.latitude, lon: place.longitude });
+    // The masjid's timezone follows its location, not the admin's device.
+    if (place.timezone && TIMEZONES.includes(place.timezone)) setTimezone(place.timezone);
   };
 
   const load = useCallback(async () => {
