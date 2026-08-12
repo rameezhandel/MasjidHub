@@ -11,6 +11,7 @@ import {
   ErrorText,
   Input,
   Label,
+  Loading,
 } from '@/components/ui';
 import { api, refreshPublicPages } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -24,6 +25,7 @@ export default function PrayerTimesPage() {
   const { user } = useAuth();
   const masjidId = user?.masjidId;
   const [entries, setEntries] = useState<PrayerTimetableEntry[]>([]);
+  const [loaded, setLoaded] = useState(false);
   // The timetable always shows the coming month, starting today.
   const [from] = useState(todayStr());
   const [to] = useState(() => plusDays(30));
@@ -57,7 +59,7 @@ export default function PrayerTimesPage() {
   }, [masjidId, from, to]);
 
   useEffect(() => {
-    void load();
+    void load().finally(() => setLoaded(true));
   }, [load]);
 
   if (!masjidId) return <Empty>Prayer times are managed per masjid.</Empty>;
@@ -192,7 +194,9 @@ export default function PrayerTimesPage() {
           </span>
         }
       >
-        {entries.length === 0 ? (
+        {!loaded ? (
+          <Loading label="Loading timetable…" />
+        ) : entries.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-10 text-center">
             <button
               type="button"

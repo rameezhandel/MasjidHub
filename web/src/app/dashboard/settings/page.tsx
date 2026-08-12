@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { LocationPicker, type Place } from '@/components/LocationPicker';
-import { Button, Card, Empty, ErrorText, Input, Label, Select } from '@/components/ui';
+import { Button, Card, Empty, ErrorText, Input, Label, Loading, Select } from '@/components/ui';
 import { api, refreshPublicPages } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { CURRENCIES } from '@/lib/currencies';
@@ -34,6 +34,7 @@ export default function SettingsPage() {
   const [longitude, setLongitude] = useState('');
   // Captured once on load so the map's initial pin doesn't jump as fields are edited.
   const [initialCoords, setInitialCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
@@ -60,7 +61,8 @@ export default function SettingsPage() {
           setInitialCoords({ lat: masjid.latitude, lng: masjid.longitude });
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoaded(true));
   }, [masjidId]);
 
   if (!masjidId) return <Empty>Settings are managed per masjid.</Empty>;
@@ -124,6 +126,15 @@ export default function SettingsPage() {
       setBusy(false);
     }
   };
+
+  if (!loaded) {
+    return (
+      <div className="max-w-3xl space-y-6">
+        <h1 className="text-2xl font-bold">Masjid settings</h1>
+        <Loading label="Loading settings…" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl space-y-6">

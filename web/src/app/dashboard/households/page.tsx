@@ -13,6 +13,7 @@ import {
   ErrorText,
   Input,
   Label,
+  Loading,
   Select,
   Textarea,
 } from '@/components/ui';
@@ -41,6 +42,7 @@ export default function HouseholdsPage() {
   const { user } = useAuth();
   const masjidId = user?.masjidId;
   const [items, setItems] = useState<Household[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [summary, setSummary] = useState<HouseholdSummary | null>(null);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
@@ -71,7 +73,9 @@ export default function HouseholdsPage() {
   }, [masjidId, search, status]);
 
   useEffect(() => {
-    void load().catch(() => {});
+    void load()
+      .catch(() => {})
+      .finally(() => setLoaded(true));
   }, [load]);
 
   if (!masjidId) return <Empty>Households are managed per masjid.</Empty>;
@@ -276,7 +280,9 @@ export default function HouseholdsPage() {
           </div>
         }
       >
-        {items.length === 0 ? (
+        {!loaded ? (
+          <Loading label="Loading households…" />
+        ) : items.length === 0 ? (
           <Empty>No households registered yet.</Empty>
         ) : (
           <ul className="divide-y divide-border">

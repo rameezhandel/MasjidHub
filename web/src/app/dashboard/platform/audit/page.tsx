@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Card, Empty, Select } from '@/components/ui';
+import { Card, Empty, Loading, Select } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { AuditLog, Paginated } from '@/lib/types';
@@ -22,6 +22,7 @@ const ACTIONS = [
 export default function AuditLogPage() {
   const { user } = useAuth();
   const [entries, setEntries] = useState<AuditLog[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [action, setAction] = useState('');
 
   const load = useCallback(async () => {
@@ -32,7 +33,9 @@ export default function AuditLogPage() {
   }, [action]);
 
   useEffect(() => {
-    void load().catch(() => {});
+    void load()
+      .catch(() => {})
+      .finally(() => setLoaded(true));
   }, [load]);
 
   if (user && user.role !== 'PLATFORM_ADMIN') {
@@ -54,7 +57,9 @@ export default function AuditLogPage() {
           </Select>
         }
       >
-        {entries.length === 0 ? (
+        {!loaded ? (
+          <Loading label="Loading audit log…" />
+        ) : entries.length === 0 ? (
           <Empty>No audit entries.</Empty>
         ) : (
           <div className="overflow-x-auto">

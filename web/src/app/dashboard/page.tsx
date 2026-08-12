@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useNextPrayer } from '@/components/NextPrayerHero';
-import { Badge, Card, Empty } from '@/components/ui';
+import { Badge, Card, Empty, Loading } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type {
@@ -146,7 +146,9 @@ function StaffOverview({ masjidId, firstName }: { masjidId: string; firstName: s
             </Link>
           }
         >
-          {announcements?.data.length ? (
+          {announcements === null ? (
+            <Loading className="py-6" />
+          ) : announcements.data.length ? (
             <ul className="divide-y divide-border">
               {announcements.data.map((a) => (
                 <li key={a.id} className="flex items-center justify-between gap-3 py-2.5">
@@ -168,7 +170,9 @@ function StaffOverview({ masjidId, firstName }: { masjidId: string; firstName: s
             </Link>
           }
         >
-          {events?.data.length ? (
+          {events === null ? (
+            <Loading className="py-6" />
+          ) : events.data.length ? (
             <ul className="divide-y divide-border">
               {events.data.map((e) => (
                 <li key={e.id} className="flex items-center justify-between gap-3 py-2.5">

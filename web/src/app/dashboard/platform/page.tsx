@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { LocationPicker, type Place } from '@/components/LocationPicker';
-import { Badge, Button, Card, Empty, ErrorText, Input, Label, Select } from '@/components/ui';
+import { Badge, Button, Card, Empty, ErrorText, Input, Label, Loading, Select } from '@/components/ui';
 import { api } from '@/lib/api';
 import { CURRENCIES } from '@/lib/currencies';
 import { timezoneList } from '@/lib/timezones';
@@ -12,6 +12,7 @@ import type { Masjid, Paginated } from '@/lib/types';
 export default function PlatformMasjidsPage() {
   const { user } = useAuth();
   const [masjids, setMasjids] = useState<Masjid[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState('');
@@ -60,7 +61,9 @@ export default function PlatformMasjidsPage() {
   }, [search]);
 
   useEffect(() => {
-    void load().catch(() => {});
+    void load()
+      .catch(() => {})
+      .finally(() => setLoaded(true));
   }, [load]);
 
   if (user && user.role !== 'PLATFORM_ADMIN') {
@@ -263,7 +266,9 @@ export default function PlatformMasjidsPage() {
           />
         }
       >
-        {masjids.length === 0 ? (
+        {!loaded ? (
+          <Loading label="Loading masjids…" />
+        ) : masjids.length === 0 ? (
           <Empty>No masjids found.</Empty>
         ) : (
           <ul className="divide-y divide-border">

@@ -12,6 +12,7 @@ import {
   ErrorText,
   Input,
   Label,
+  Loading,
   Textarea,
 } from '@/components/ui';
 import { api, refreshPublicPages } from '@/lib/api';
@@ -23,6 +24,7 @@ export default function AnnouncementsPage() {
   const masjidId = user?.masjidId;
   const isAdmin = user?.role !== 'MASJID_MAINTAINER';
   const [items, setItems] = useState<Announcement[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [error, setError] = useState('');
@@ -38,7 +40,9 @@ export default function AnnouncementsPage() {
   }, [masjidId]);
 
   useEffect(() => {
-    void load().catch(() => {});
+    void load()
+      .catch(() => {})
+      .finally(() => setLoaded(true));
   }, [load]);
 
   if (!masjidId) return <Empty>Announcements are managed per masjid.</Empty>;
@@ -107,7 +111,9 @@ export default function AnnouncementsPage() {
       </Dialog>
 
       <Card title="All announcements">
-        {items.length === 0 ? (
+        {!loaded ? (
+          <Loading label="Loading announcements…" />
+        ) : items.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-10 text-center">
             <button
               type="button"
