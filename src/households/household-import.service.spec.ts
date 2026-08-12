@@ -120,6 +120,23 @@ describe('HouseholdImportService', () => {
     expect(header.getCell(11).value).toBe('Member First Name');
   });
 
+  it('offers dropdowns for status, frequency, relationship and gender', async () => {
+    const buffer = await service.buildTemplate(actor, 'masjid-a');
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buffer as unknown as ExcelJS.Buffer);
+    const sheet = wb.getWorksheet('Households')!;
+    const listOf = (addr: string) => sheet.getCell(addr).dataValidation?.formulae?.[0] ?? '';
+    expect(listOf('I2')).toContain('Monthly');
+    expect(listOf('I2')).toContain('Yearly');
+    expect(listOf('M2')).toContain('Uncle');
+    expect(listOf('M2')).toContain('Grandfather');
+    expect(listOf('M2')).toContain('Head');
+    expect(listOf('N2')).toContain('Male');
+    expect(listOf('G2')).toContain('ACTIVE');
+    // ...and far down the sheet, not just the example rows.
+    expect(listOf('M500')).toContain('Aunt');
+  });
+
   it('groups rows into households and previews on dry-run', async () => {
     const buffer = await buildXlsx([
       row({
@@ -229,6 +246,44 @@ describe('HouseholdImportService', () => {
     const edge = memberRelationship.create.mock.calls[0][0].data;
     expect(edge.type).toBe(RelationshipType.SPOUSE);
     expect([edge.fromMemberId, edge.toMemberId].sort()).toEqual(['m-0', 'm-1']);
+  });
+
+  it('attaches member rows with a blank family name to the family above', async () => {
+    const buffer = await buildXlsx([
+      row({
+        familyName: 'Handel Family',
+        headName: 'Rameez Handel',
+        memberFirstName: 'Rameez',
+        memberLastName: 'Handel',
+        relationship: 'Head',
+      }),
+      row({ memberFirstName: 'Aisha', memberLastName: 'Handel', relationship: 'Spouse' }),
+      row({
+        familyName: 'Omar Family',
+        headName: 'Bilal Omar',
+        memberFirstName: 'Bilal',
+        memberLastName: 'Omar',
+        relationship: 'Head',
+      }),
+      row({ memberFirstName: 'Zara', memberLastName: 'Omar', relationship: 'Daughter' }),
+    ]);
+    const result = await service.import(actor, 'masjid-a', file(buffer), true);
+    expect(result).toEqual({
+      dryRun: true,
+      imported: false,
+      households: 2,
+      members: 4,
+      errors: [],
+    });
+  });
+
+  it('rejects a member row with no family above it', async () => {
+    const buffer = await buildXlsx([
+      row({ memberFirstName: 'Orphan', memberLastName: 'Row' }), // first data row, no family
+    ]);
+    const result = await service.import(actor, 'masjid-a', file(buffer), true);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].message).toMatch(/Family Name is required/);
   });
 
   it('reports row-level errors and writes nothing', async () => {

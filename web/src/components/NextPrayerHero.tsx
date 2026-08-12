@@ -35,29 +35,26 @@ function nowInZone(timezone: string): number {
 }
 
 /**
- * The public page's showcase: which prayer is next and a live countdown,
- * in the masjid's own timezone, on a textured primary panel.
+ * Which prayer is next (in the masjid's own timezone) and a ticking countdown.
+ * Renders a stable placeholder until mounted, so SSR markup never mismatches.
  */
-export function NextPrayerHero({
-  today,
-  timezone,
-}: {
-  today: PrayerTimetableEntry;
-  timezone: string;
-}) {
+export function useNextPrayer(
+  today: PrayerTimetableEntry | null | undefined,
+  timezone: string,
+): { label: string; time: string; countdown: string } {
   const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
+    if (!today) return;
     setNow(nowInZone(timezone));
     const t = setInterval(() => setNow(nowInZone(timezone)), 1000);
     return () => clearInterval(t);
-  }, [timezone]);
+  }, [timezone, today]);
 
-  // Render a stable shell on the server; the countdown fills in after mount.
   let label = '—';
   let time = '';
   let countdown = '--:--:--';
-  if (now != null) {
+  if (today && now != null) {
     const upcoming = PRAYERS.map((p) => ({ ...p, at: toMinutes(String(today[p.key])) * 60 })).find(
       (p) => p.at > now,
     );
@@ -73,6 +70,21 @@ export function NextPrayerHero({
     const s = secs % 60;
     countdown = [h, m, s].map((n) => String(n).padStart(2, '0')).join(':');
   }
+  return { label, time, countdown };
+}
+
+/**
+ * The public page's showcase: which prayer is next and a live countdown,
+ * in the masjid's own timezone, on a textured primary panel.
+ */
+export function NextPrayerHero({
+  today,
+  timezone,
+}: {
+  today: PrayerTimetableEntry;
+  timezone: string;
+}) {
+  const { label, time, countdown } = useNextPrayer(today, timezone);
 
   return (
     <section className="texture-rub overflow-hidden rounded-2xl bg-primary p-6 text-primary-foreground sm:p-8">

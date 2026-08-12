@@ -118,6 +118,32 @@ interface DerivedEdge {
   type: RelationshipType;
 }
 
+/** Dropdown (data-validation) lists offered in the template, by column letter. */
+const TEMPLATE_DROPDOWNS: Array<[column: string, values: string[]]> = [
+  ['G', ['ACTIVE', 'INACTIVE', 'MOVED_OUT']], // Status
+  ['I', ['Monthly', 'Yearly']], // Fee Frequency
+  [
+    'M', // Relationship (to the head)
+    [
+      'Head',
+      'Wife',
+      'Husband',
+      'Son',
+      'Daughter',
+      'Father',
+      'Mother',
+      'Grandfather',
+      'Grandmother',
+      'Brother',
+      'Sister',
+      'Uncle',
+      'Aunt',
+      'Other',
+    ],
+  ],
+  ['N', ['Male', 'Female']], // Gender
+];
+
 @Injectable()
 export class HouseholdImportService {
   constructor(private readonly prisma: PrismaService) {}
@@ -148,9 +174,11 @@ export class HouseholdImportService {
       'Male',
       '1985-04-12',
     ]);
+    // Additional members: leave Family Name/Head Name blank — the row attaches
+    // to the family above it.
     sheet.addRow([
-      'Handel Family',
-      'Rameez Handel',
+      '',
+      '',
       '',
       '',
       '',
@@ -166,13 +194,25 @@ export class HouseholdImportService {
       '1988-09-30',
     ]);
 
+    // Dropdowns keep Status/Frequency/Relationship/Gender typo-free.
+    for (const [column, values] of TEMPLATE_DROPDOWNS) {
+      for (let r = 2; r <= MAX_ROWS + 1; r += 1) {
+        sheet.getCell(`${column}${r}`).dataValidation = {
+          type: 'list',
+          allowBlank: true,
+          formulae: [`"${values.join(',')}"`],
+        };
+      }
+    }
+
     const notes = workbook.addWorksheet('Instructions');
     notes.getColumn(1).width = 100;
     [
       'How to fill in this sheet',
       '',
-      '• One row per PERSON. Rows with the same Family Name + Head Name become one household.',
-      '• Family Name and Head Name are required on every row.',
+      '• One row per PERSON. The first row of a family carries the Family Name + Head Name;',
+      '•   leave both blank on the following member rows — they attach to the family above.',
+      '•   (Repeating the same Family Name + Head Name on every row also works.)',
       '• A row with no member name records the household only (no person).',
       '• Household fields (Phone, Email, Address, City, Status, Fee) are read from the first row of each family.',
       '• Status: ACTIVE, INACTIVE or MOVED_OUT (defaults to ACTIVE).',
@@ -303,6 +343,9 @@ export class HouseholdImportService {
     const groups = new Map<string, HouseholdGroup>();
     const errors: ImportError[] = [];
     let dataRows = 0;
+    // The family the sheet is "inside" — member rows with a blank Family Name
+    // attach here, so a family's name only needs to be written once.
+    let currentGroup: HouseholdGroup | null = null;
 
     for (let r = 2; r <= sheet.rowCount; r += 1) {
       const row = sheet.getRow(r);
@@ -323,9 +366,13 @@ export class HouseholdImportService {
         throw new BadRequestException(`Too many rows — the limit is ${MAX_ROWS} per file`);
       }
 
+      const isContinuation = !familyName && !headName && currentGroup !== null;
+
       const rowErrors: string[] = [];
-      if (!familyName) rowErrors.push('Family Name is required');
-      if (!headName) rowErrors.push('Head Name is required');
+      if (!isContinuation) {
+        if (!familyName) rowErrors.push('Family Name is required');
+        if (!headName) rowErrors.push('Head Name is required');
+      }
 
       const status = parseStatus(cellText(cell('status')), rowErrors);
       const gender = parseGender(cellText(cell('gender')), rowErrors);
@@ -357,24 +404,32 @@ export class HouseholdImportService {
         continue;
       }
 
-      const key = `${familyName.toLowerCase()} ${headName.toLowerCase()}`;
-      let group = groups.get(key);
-      if (!group) {
-        group = {
-          familyName,
-          headName,
-          phone: cellText(cell('phone')) || null,
-          email: cellText(cell('email')) || null,
-          addressLine1: cellText(cell('addressLine1')) || null,
-          city: cellText(cell('city')) || null,
-          status,
-          feeAmountCents: fee.feeAmountCents,
-          feeFrequency: fee.feeFrequency,
-          feeStartOn: fee.feeStartOn,
-          members: [],
-        };
-        groups.set(key, group);
+      let group: HouseholdGroup;
+      if (isContinuation) {
+        group = currentGroup!;
+      } else {
+        const key = `${familyName.toLowerCase()} ${headName.toLowerCase()}`;
+        const existing = groups.get(key);
+        if (existing) {
+          group = existing;
+        } else {
+          group = {
+            familyName,
+            headName,
+            phone: cellText(cell('phone')) || null,
+            email: cellText(cell('email')) || null,
+            addressLine1: cellText(cell('addressLine1')) || null,
+            city: cellText(cell('city')) || null,
+            status,
+            feeAmountCents: fee.feeAmountCents,
+            feeFrequency: fee.feeFrequency,
+            feeStartOn: fee.feeStartOn,
+            members: [],
+          };
+          groups.set(key, group);
+        }
       }
+      currentGroup = group;
       if (member) {
         group.members.push(member);
       }
