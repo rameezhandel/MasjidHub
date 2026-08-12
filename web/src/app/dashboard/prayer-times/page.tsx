@@ -1,7 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Button, Card, Empty, ErrorText, Input, Label } from '@/components/ui';
+import {
+  Button,
+  Card,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Empty,
+  ErrorText,
+  Input,
+  Label,
+} from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { PrayerTimetableEntry } from '@/lib/types';
@@ -19,6 +29,7 @@ export default function PrayerTimesPage() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const [genFrom, setGenFrom] = useState(todayStr());
   const [genTo, setGenTo] = useState(plusDays(30));
@@ -79,6 +90,7 @@ export default function PrayerTimesPage() {
         },
       );
       setNotice(`Generated ${result.generated} day(s), kept ${result.skipped} existing.`);
+      setOpen(false);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Generation failed');
@@ -89,74 +101,85 @@ export default function PrayerTimesPage() {
 
   return (
     <div className="max-w-5xl space-y-6">
-      <h1 className="text-2xl font-bold">Prayer times</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Prayer times</h1>
+        <Button onClick={() => setOpen(true)}>Auto-generate</Button>
+      </div>
 
-      <Card title="Auto-generate from your masjid's location">
-        <form onSubmit={generate} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <Label>From</Label>
-            <Input type="date" value={genFrom} onChange={(e) => setGenFrom(e.target.value)} />
-          </div>
-          <div>
-            <Label>To</Label>
-            <Input type="date" value={genTo} onChange={(e) => setGenTo(e.target.value)} />
-          </div>
-          <div>
-            <Label>Jumu&apos;ah time (Fridays)</Label>
-            <Input
-              placeholder="13:30"
-              value={jumuah1}
-              onChange={(e) => setJumuah1(e.target.value)}
-            />
-          </div>
-          <div className="flex items-end gap-2 pb-1">
-            <input
-              id="overwrite"
-              type="checkbox"
-              checked={overwrite}
-              onChange={(e) => setOverwrite(e.target.checked)}
-            />
-            <label htmlFor="overwrite" className="text-sm text-muted-foreground">
-              Overwrite existing days
-            </label>
-          </div>
-          <div className="sm:col-span-2 lg:col-span-4">
-            <Label>Iqamah offsets in minutes after adhan (optional)</Label>
-            <div className="grid grid-cols-5 gap-2">
-              {[
-                ['Fajr', fajrOffset, setFajrOffset],
-                ['Dhuhr', dhuhrOffset, setDhuhrOffset],
-                ['Asr', asrOffset, setAsrOffset],
-                ['Maghrib', maghribOffset, setMaghribOffset],
-                ['Isha', ishaOffset, setIshaOffset],
-              ].map(([label, value, setter]) => (
-                <Input
-                  key={label as string}
-                  type="number"
-                  min={0}
-                  max={180}
-                  placeholder={label as string}
-                  value={value as string}
-                  onChange={(e) =>
-                    (setter as React.Dispatch<React.SetStateAction<string>>)(e.target.value)
-                  }
-                />
-              ))}
+      {notice && !open && (
+        <p className="rounded-lg border border-border bg-accent p-3 text-sm text-primary">
+          {notice}
+        </p>
+      )}
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogTitle>Auto-generate timetable</DialogTitle>
+          <p className="text-xs text-muted-foreground">
+            Calculated from your masjid&apos;s coordinates and calculation method — set them under
+            Masjid settings.
+          </p>
+          <form onSubmit={generate} className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label>From</Label>
+              <Input type="date" value={genFrom} onChange={(e) => setGenFrom(e.target.value)} />
             </div>
-          </div>
-          <div className="sm:col-span-2 lg:col-span-4">
-            <Button type="submit" disabled={busy}>
-              {busy ? 'Generating…' : 'Generate timetable'}
-            </Button>
-            {notice && <span className="ml-3 text-sm text-primary">{notice}</span>}
-            <ErrorText>{error}</ErrorText>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Requires the masjid&apos;s coordinates and calculation method — set them under Masjid
-              settings.
-            </p>
-          </div>
-        </form>
-      </Card>
+            <div>
+              <Label>To</Label>
+              <Input type="date" value={genTo} onChange={(e) => setGenTo(e.target.value)} />
+            </div>
+            <div>
+              <Label>Jumu&apos;ah time (Fridays)</Label>
+              <Input
+                placeholder="13:30"
+                value={jumuah1}
+                onChange={(e) => setJumuah1(e.target.value)}
+              />
+            </div>
+            <div className="flex items-end gap-2 pb-1">
+              <input
+                id="overwrite"
+                type="checkbox"
+                checked={overwrite}
+                onChange={(e) => setOverwrite(e.target.checked)}
+              />
+              <label htmlFor="overwrite" className="text-sm text-muted-foreground">
+                Overwrite existing days
+              </label>
+            </div>
+            <div className="sm:col-span-2">
+              <Label>Iqamah offsets in minutes after adhan (optional)</Label>
+              <div className="grid grid-cols-5 gap-2">
+                {[
+                  ['Fajr', fajrOffset, setFajrOffset],
+                  ['Dhuhr', dhuhrOffset, setDhuhrOffset],
+                  ['Asr', asrOffset, setAsrOffset],
+                  ['Maghrib', maghribOffset, setMaghribOffset],
+                  ['Isha', ishaOffset, setIshaOffset],
+                ].map(([label, value, setter]) => (
+                  <Input
+                    key={label as string}
+                    type="number"
+                    min={0}
+                    max={180}
+                    placeholder={label as string}
+                    value={value as string}
+                    onChange={(e) =>
+                      (setter as React.Dispatch<React.SetStateAction<string>>)(e.target.value)
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="sm:col-span-2">
+              <Button type="submit" disabled={busy}>
+                {busy ? 'Generating…' : 'Generate timetable'}
+              </Button>
+              <ErrorText>{error}</ErrorText>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Card
         title="Timetable"
@@ -174,7 +197,19 @@ export default function PrayerTimesPage() {
         }
       >
         {entries.length === 0 ? (
-          <Empty>No entries in this range yet — generate above.</Empty>
+          <div className="flex flex-col items-center gap-3 py-10 text-center">
+            <button
+              type="button"
+              aria-label="Auto-generate"
+              onClick={() => setOpen(true)}
+              className="flex size-14 items-center justify-center rounded-full border-2 border-dashed border-border text-3xl leading-none text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+            >
+              +
+            </button>
+            <p className="text-sm text-muted-foreground">
+              No entries in this range yet — auto-generate the timetable.
+            </p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
