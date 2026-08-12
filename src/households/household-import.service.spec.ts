@@ -231,6 +231,44 @@ describe('HouseholdImportService', () => {
     expect([edge.fromMemberId, edge.toMemberId].sort()).toEqual(['m-0', 'm-1']);
   });
 
+  it('attaches member rows with a blank family name to the family above', async () => {
+    const buffer = await buildXlsx([
+      row({
+        familyName: 'Handel Family',
+        headName: 'Rameez Handel',
+        memberFirstName: 'Rameez',
+        memberLastName: 'Handel',
+        relationship: 'Head',
+      }),
+      row({ memberFirstName: 'Aisha', memberLastName: 'Handel', relationship: 'Spouse' }),
+      row({
+        familyName: 'Omar Family',
+        headName: 'Bilal Omar',
+        memberFirstName: 'Bilal',
+        memberLastName: 'Omar',
+        relationship: 'Head',
+      }),
+      row({ memberFirstName: 'Zara', memberLastName: 'Omar', relationship: 'Daughter' }),
+    ]);
+    const result = await service.import(actor, 'masjid-a', file(buffer), true);
+    expect(result).toEqual({
+      dryRun: true,
+      imported: false,
+      households: 2,
+      members: 4,
+      errors: [],
+    });
+  });
+
+  it('rejects a member row with no family above it', async () => {
+    const buffer = await buildXlsx([
+      row({ memberFirstName: 'Orphan', memberLastName: 'Row' }), // first data row, no family
+    ]);
+    const result = await service.import(actor, 'masjid-a', file(buffer), true);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].message).toMatch(/Family Name is required/);
+  });
+
   it('reports row-level errors and writes nothing', async () => {
     const buffer = await buildXlsx([
       row({ headName: 'No Family', memberFirstName: 'X', memberLastName: 'Y' }), // missing family name
