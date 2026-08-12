@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { LocationPicker, type Place } from '@/components/LocationPicker';
 import { Badge, Button, Card, Empty, ErrorText, Input, Label, Select } from '@/components/ui';
@@ -276,9 +275,14 @@ export default function PlatformMasjidsPage() {
                       {masjid.name} <Badge value={masjid.status} />
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      <Link className="underline" href={`/m/${masjid.slug}`}>
-                        /m/{masjid.slug}
-                      </Link>{' '}
+                      <a
+                        className="underline"
+                        href={`/m/${masjid.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        /m/{masjid.slug} ↗
+                      </a>{' '}
                       · {[masjid.city, masjid.country].filter(Boolean).join(', ') || 'no address'} ·{' '}
                       {masjid._count?.users ?? '—'} staff
                     </p>

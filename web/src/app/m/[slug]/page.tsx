@@ -74,9 +74,11 @@ export default async function MasjidPublicPage({
         {masjid.latitude != null && masjid.longitude != null && (
           <a
             className="mt-1 inline-block text-sm text-primary underline"
-            href={`https://www.openstreetmap.org/?mlat=${masjid.latitude}&mlon=${masjid.longitude}#map=16/${masjid.latitude}/${masjid.longitude}`}
+            href={`https://www.google.com/maps?q=${masjid.latitude},${masjid.longitude}`}
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            View on map
+            View on Google Maps ↗
           </a>
         )}
       </header>
@@ -117,6 +119,38 @@ export default async function MasjidPublicPage({
           <p className="text-sm text-muted-foreground">No prayer times published yet.</p>
         )}
       </section>
+
+      {timetable && timetable.length > 1 && (
+        <section className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-bold">Coming days</h2>
+          <div className="overflow-x-auto">
+            <table className="tabular w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
+                  <th className="py-2 pr-3">Date</th>
+                  {PRAYERS.map(({ label }) => (
+                    <th key={label} className="py-2 pr-3">
+                      {label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {timetable.slice(1, 8).map((entry) => (
+                  <tr key={entry.date} className="border-b border-border/60 last:border-0">
+                    <td className="py-1.5 pr-3 font-medium">{entry.date}</td>
+                    {PRAYERS.map(({ key, label }) => (
+                      <td key={label} className="py-1.5 pr-3">
+                        {String(entry[key])}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <div className="mt-8 grid gap-8 md:grid-cols-2">
         <section>
