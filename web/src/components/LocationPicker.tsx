@@ -131,7 +131,7 @@ export function LocationPicker({
   }, []);
 
   // Create or reposition the pin on the map (no side effects / no emit).
-  const moveMarker = (lat: number, lon: number, fly = false) => {
+  const moveMarker = (lat: number, lon: number, fly = false, zoom = 12) => {
     const L = leafletRef.current;
     const map = mapRef.current;
     if (!L || !map) return;
@@ -150,7 +150,7 @@ export function LocationPicker({
     } else {
       markerRef.current.setLatLng([lat, lon]);
     }
-    if (fly) map.flyTo([lat, lon], 12);
+    if (fly) map.flyTo([lat, lon], zoom);
   };
 
   // Drop or move the pin AND emit coordinates, optionally reverse-geocoding.
@@ -189,9 +189,15 @@ export function LocationPicker({
       const L = (await import('leaflet')).default;
       if (cancelled || !mapElRef.current || mapRef.current) return;
       leafletRef.current = L;
-      const map = L.map(mapElRef.current, { attributionControl: true }).setView([20, 0], 2);
+      const map = L.map(mapElRef.current, { attributionControl: true, maxZoom: 19 }).setView(
+        [20, 0],
+        2,
+      );
+      // detectRetina requests double-resolution tiles on high-DPI (phone)
+      // screens, so zoomed-in streets stay sharp instead of blurry.
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
+        detectRetina: true,
         attribution: '© OpenStreetMap',
       }).addTo(map);
       map.on('click', (e: { latlng: { lat: number; lng: number } }) => {
@@ -220,7 +226,8 @@ export function LocationPicker({
       Number.isFinite(initialLat) &&
       Number.isFinite(initialLng)
     ) {
-      moveMarker(initialLat, initialLng, true);
+      // A saved location is an exact spot — land at street level, not city level.
+      moveMarker(initialLat, initialLng, true, 16);
     }
   }, [mapReady, initialLat, initialLng]);
 
@@ -268,9 +275,11 @@ export function LocationPicker({
           </ul>
         )}
       </div>
+      {/* isolate + z-0 cap Leaflet's internal z-indexes (400–1000) inside this
+          box, so drawers/dialogs (z-50, in portals) always paint above the map. */}
       <div
         ref={mapElRef}
-        className="h-56 w-full overflow-hidden rounded-lg border border-border bg-muted"
+        className="isolate z-0 h-56 w-full overflow-hidden rounded-lg border border-border bg-muted"
       />
       <p className="text-xs text-muted-foreground">
         Can&apos;t find it? Click the map to drop a pin, then drag it to the exact spot.
