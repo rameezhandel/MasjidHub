@@ -98,12 +98,14 @@ function StaffOverview({ masjidId, firstName }: { masjidId: string; firstName: s
             </h2>
             <p className="mt-2 text-sm opacity-80">{metaLine}</p>
             {masjid && (
-              <Link
+              <a
                 href={`/m/${masjid.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="mt-3 inline-block rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-sm font-medium hover:bg-primary-foreground/20"
               >
-                View public page →
-              </Link>
+                View public page ↗
+              </a>
             )}
           </div>
           {today && (
