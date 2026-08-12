@@ -93,7 +93,7 @@ function StaffOverview({ masjidId, firstName }: { masjidId: string; firstName: s
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="min-w-0">
             <p className="text-sm opacity-80">Assalamu alaikum, {firstName}</p>
-            <h2 className="font-display mt-1 truncate text-3xl font-extrabold tracking-tight">
+            <h2 className="font-display mt-1 break-words text-2xl font-extrabold tracking-tight sm:text-3xl">
               {masjid?.name ?? '…'}
             </h2>
             <p className="mt-2 text-sm opacity-80">{metaLine}</p>

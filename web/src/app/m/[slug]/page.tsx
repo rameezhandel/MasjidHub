@@ -66,7 +66,9 @@ export default async function MasjidPublicPage({
       </div>
 
       <header className="mb-6">
-        <h1 className="text-3xl font-extrabold tracking-tight">{masjid.name}</h1>
+        <h1 className="break-words text-2xl font-extrabold tracking-tight sm:text-3xl">
+          {masjid.name}
+        </h1>
         {address && <p className="mt-1 text-muted-foreground">{address}</p>}
         <p className="mt-1 text-sm text-muted-foreground">
           {[masjid.phone, masjid.email, masjid.website].filter(Boolean).join(' · ')}
