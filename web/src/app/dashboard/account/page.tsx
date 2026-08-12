@@ -2,7 +2,17 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Button, Card, ErrorText, Input, Label, Loading } from '@/components/ui';
+import {
+  Button,
+  Card,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  ErrorText,
+  Input,
+  Label,
+  Loading,
+} from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { SafeUser } from '@/lib/types';
@@ -12,6 +22,8 @@ const MIN_PASSWORD = 12;
 export default function AccountPage() {
   const { user, setUser, logout } = useAuth();
   const router = useRouter();
+
+  const [dialog, setDialog] = useState<'edit' | 'password' | null>(null);
 
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
   const [lastName, setLastName] = useState(user?.lastName ?? '');
@@ -26,6 +38,21 @@ export default function AccountPage() {
   const [pwError, setPwError] = useState('');
 
   if (!user) return <Loading />;
+
+  const openEdit = () => {
+    setFirstName(user.firstName);
+    setLastName(user.lastName);
+    setProfileError('');
+    setDialog('edit');
+  };
+
+  const openPassword = () => {
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setPwError('');
+    setDialog('password');
+  };
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +77,7 @@ export default function AccountPage() {
         updatedAt: updated.updatedAt,
       });
       setProfileNotice('Name updated.');
+      setDialog(null);
     } catch (err) {
       setProfileError(err instanceof Error ? err.message : 'Could not update your name');
     } finally {
@@ -95,47 +123,79 @@ export default function AccountPage() {
     <div className="max-w-2xl space-y-6">
       <h1 className="text-2xl font-bold">Account</h1>
 
-      <Card title="Your profile">
-        <form onSubmit={saveProfile} className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <Label>First name</Label>
-              <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
-            </div>
-            <div>
-              <Label>Last name</Label>
-              <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
-            </div>
+      {profileNotice && !dialog && <p className="text-sm text-primary">{profileNotice}</p>}
+
+      <Card
+        title="Your profile"
+        actions={
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={openEdit}>
+              Edit
+            </Button>
+            <Button variant="secondary" onClick={openPassword}>
+              Change password
+            </Button>
           </div>
-          <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
-            <p>
-              <span className="text-muted-foreground">Email:</span> {user.email}
-            </p>
-            <p>
-              <span className="text-muted-foreground">Role:</span> {roleLabel}
-            </p>
-          </div>
-          <ErrorText>{profileError}</ErrorText>
-          {profileNotice && <p className="text-sm text-primary">{profileNotice}</p>}
-          <Button type="submit" disabled={profileBusy}>
-            {profileBusy ? 'Saving…' : 'Save name'}
-          </Button>
-        </form>
+        }
+      >
+        <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+          {(
+            [
+              ['First name', user.firstName],
+              ['Last name', user.lastName],
+              ['Email', user.email],
+              ['Role', roleLabel],
+            ] as const
+          ).map(([label, value]) => (
+            <div key={label}>
+              <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
+              <dd className="text-sm font-medium">{value}</dd>
+            </div>
+          ))}
+        </dl>
       </Card>
 
-      <Card title="Change password">
-        <form onSubmit={changePassword} className="space-y-4">
-          <div>
-            <Label>Current password</Label>
-            <Input
-              type="password"
-              autoComplete="current-password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              required
-            />
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+      {/* Edit name: centered popup */}
+      <Dialog open={dialog === 'edit'} onOpenChange={(open) => setDialog(open ? 'edit' : null)}>
+        <DialogContent className="max-w-md">
+          <DialogTitle>Edit your name</DialogTitle>
+          <form onSubmit={saveProfile} className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label>First name</Label>
+                <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+              </div>
+              <div>
+                <Label>Last name</Label>
+                <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+              </div>
+            </div>
+            <ErrorText>{profileError}</ErrorText>
+            <Button type="submit" disabled={profileBusy}>
+              {profileBusy ? 'Saving…' : 'Save name'}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change password: centered popup */}
+      <Dialog
+        open={dialog === 'password'}
+        onOpenChange={(open) => setDialog(open ? 'password' : null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogTitle>Change password</DialogTitle>
+          <form onSubmit={changePassword} className="space-y-4">
+            <div>
+              <Label>Current password</Label>
+              <Input
+                type="password"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+              />
+            </div>
             <div>
               <Label>New password</Label>
               <Input
@@ -156,17 +216,17 @@ export default function AccountPage() {
                 required
               />
             </div>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            At least {MIN_PASSWORD} characters. Changing your password signs you out of all
-            sessions — you&apos;ll log back in with the new one.
-          </p>
-          <ErrorText>{pwError}</ErrorText>
-          <Button type="submit" disabled={pwBusy}>
-            {pwBusy ? 'Updating…' : 'Change password'}
-          </Button>
-        </form>
-      </Card>
+            <p className="text-xs text-muted-foreground">
+              At least {MIN_PASSWORD} characters. Changing your password signs you out of all
+              sessions — you&apos;ll log back in with the new one.
+            </p>
+            <ErrorText>{pwError}</ErrorText>
+            <Button type="submit" disabled={pwBusy}>
+              {pwBusy ? 'Updating…' : 'Change password'}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
