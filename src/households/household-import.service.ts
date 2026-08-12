@@ -155,15 +155,16 @@ export class HouseholdImportService {
     const sheet = workbook.addWorksheet('Households');
     sheet.columns = TEMPLATE_HEADERS.map(([, header]) => ({ header, width: 20 }));
     sheet.getRow(1).font = { bold: true };
-    // One household with two members = two rows sharing the same family + head.
-    // Household fields (incl. fee) go on the first row only.
+    // A single worked example row: the head of one household. Additional
+    // members go on the rows below it with Family Name/Head Name left blank
+    // (explained in the Instructions sheet).
     sheet.addRow([
       'Handel Family',
       'Rameez Handel',
-      '+1-416-555-0100',
+      '+91-98450-00001',
       'rameez@example.com',
-      '12 Example Street',
-      'Toronto',
+      'Karkala Road, Alangar',
+      'Moodabidri',
       'ACTIVE',
       '350',
       'Monthly',
@@ -173,25 +174,6 @@ export class HouseholdImportService {
       'Head',
       'Male',
       '1985-04-12',
-    ]);
-    // Additional members: leave Family Name/Head Name blank — the row attaches
-    // to the family above it.
-    sheet.addRow([
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      'Aisha',
-      'Handel',
-      'Spouse',
-      'Female',
-      '1988-09-30',
     ]);
 
     // Dropdowns keep Status/Frequency/Relationship/Gender typo-free.
