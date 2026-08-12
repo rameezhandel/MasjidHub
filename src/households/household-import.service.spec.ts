@@ -120,6 +120,23 @@ describe('HouseholdImportService', () => {
     expect(header.getCell(11).value).toBe('Member First Name');
   });
 
+  it('offers dropdowns for status, frequency, relationship and gender', async () => {
+    const buffer = await service.buildTemplate(actor, 'masjid-a');
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buffer as unknown as ExcelJS.Buffer);
+    const sheet = wb.getWorksheet('Households')!;
+    const listOf = (addr: string) => sheet.getCell(addr).dataValidation?.formulae?.[0] ?? '';
+    expect(listOf('I2')).toContain('Monthly');
+    expect(listOf('I2')).toContain('Yearly');
+    expect(listOf('M2')).toContain('Uncle');
+    expect(listOf('M2')).toContain('Grandfather');
+    expect(listOf('M2')).toContain('Head');
+    expect(listOf('N2')).toContain('Male');
+    expect(listOf('G2')).toContain('ACTIVE');
+    // ...and far down the sheet, not just the example rows.
+    expect(listOf('M500')).toContain('Aunt');
+  });
+
   it('groups rows into households and previews on dry-run', async () => {
     const buffer = await buildXlsx([
       row({

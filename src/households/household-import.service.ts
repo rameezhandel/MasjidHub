@@ -118,6 +118,32 @@ interface DerivedEdge {
   type: RelationshipType;
 }
 
+/** Dropdown (data-validation) lists offered in the template, by column letter. */
+const TEMPLATE_DROPDOWNS: Array<[column: string, values: string[]]> = [
+  ['G', ['ACTIVE', 'INACTIVE', 'MOVED_OUT']], // Status
+  ['I', ['Monthly', 'Yearly']], // Fee Frequency
+  [
+    'M', // Relationship (to the head)
+    [
+      'Head',
+      'Wife',
+      'Husband',
+      'Son',
+      'Daughter',
+      'Father',
+      'Mother',
+      'Grandfather',
+      'Grandmother',
+      'Brother',
+      'Sister',
+      'Uncle',
+      'Aunt',
+      'Other',
+    ],
+  ],
+  ['N', ['Male', 'Female']], // Gender
+];
+
 @Injectable()
 export class HouseholdImportService {
   constructor(private readonly prisma: PrismaService) {}
@@ -167,6 +193,17 @@ export class HouseholdImportService {
       'Female',
       '1988-09-30',
     ]);
+
+    // Dropdowns keep Status/Frequency/Relationship/Gender typo-free.
+    for (const [column, values] of TEMPLATE_DROPDOWNS) {
+      for (let r = 2; r <= MAX_ROWS + 1; r += 1) {
+        sheet.getCell(`${column}${r}`).dataValidation = {
+          type: 'list',
+          allowBlank: true,
+          formulae: [`"${values.join(',')}"`],
+        };
+      }
+    }
 
     const notes = workbook.addWorksheet('Instructions');
     notes.getColumn(1).width = 100;
