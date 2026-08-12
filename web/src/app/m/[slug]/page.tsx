@@ -12,10 +12,10 @@ import type {
   PublicMasjid,
 } from '@/lib/types';
 
-export const revalidate = 300;
+export const revalidate = 60;
 
 async function fetchPublic<T>(path: string): Promise<T | null> {
-  const res = await fetch(`${API_BASE}/public${path}`, { next: { revalidate: 300 } });
+  const res = await fetch(`${API_BASE}/public${path}`, { next: { revalidate: 60 } });
   if (!res.ok) return null;
   return (await res.json()) as T;
 }
@@ -66,7 +66,9 @@ export default async function MasjidPublicPage({
       </div>
 
       <header className="mb-6">
-        <h1 className="text-3xl font-extrabold tracking-tight">{masjid.name}</h1>
+        <h1 className="break-words text-2xl font-extrabold tracking-tight sm:text-3xl">
+          {masjid.name}
+        </h1>
         {address && <p className="mt-1 text-muted-foreground">{address}</p>}
         <p className="mt-1 text-sm text-muted-foreground">
           {[masjid.phone, masjid.email, masjid.website].filter(Boolean).join(' · ')}

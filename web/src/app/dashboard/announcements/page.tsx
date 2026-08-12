@@ -14,7 +14,7 @@ import {
   Label,
   Textarea,
 } from '@/components/ui';
-import { api } from '@/lib/api';
+import { api, refreshPublicPages } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Announcement, Paginated } from '@/lib/types';
 
@@ -52,6 +52,7 @@ export default function AnnouncementsPage() {
       setTitle('');
       setBody('');
       setOpen(false);
+      refreshPublicPages();
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create');
@@ -62,11 +63,13 @@ export default function AnnouncementsPage() {
 
   const setStatus = async (id: string, status: string) => {
     await api(`/masjids/${masjidId}/announcements/${id}`, { method: 'PATCH', body: { status } });
+    refreshPublicPages();
     await load();
   };
 
   const remove = async (id: string) => {
     await api(`/masjids/${masjidId}/announcements/${id}`, { method: 'DELETE' });
+    refreshPublicPages();
     await load();
   };
 
