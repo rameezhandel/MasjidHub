@@ -173,6 +173,18 @@ export async function apiDownload(path: string, filename: string): Promise<void>
   URL.revokeObjectURL(url);
 }
 
+/**
+ * Fire-and-forget: drop the cached public masjid pages after a dashboard edit
+ * (publish, generate, save) so the change is visible on the next visit.
+ */
+export function refreshPublicPages(): void {
+  try {
+    void fetch('/api/revalidate', { method: 'POST' }).catch(() => {});
+  } catch {
+    // never let cache-busting break the edit itself
+  }
+}
+
 /** Unauthenticated fetch (login, public flows). */
 export async function apiPublic<T>(
   path: string,

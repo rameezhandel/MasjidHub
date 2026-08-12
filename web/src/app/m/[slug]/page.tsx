@@ -12,10 +12,10 @@ import type {
   PublicMasjid,
 } from '@/lib/types';
 
-export const revalidate = 300;
+export const revalidate = 60;
 
 async function fetchPublic<T>(path: string): Promise<T | null> {
-  const res = await fetch(`${API_BASE}/public${path}`, { next: { revalidate: 300 } });
+  const res = await fetch(`${API_BASE}/public${path}`, { next: { revalidate: 60 } });
   if (!res.ok) return null;
   return (await res.json()) as T;
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { LocationPicker, type Place } from '@/components/LocationPicker';
 import { Button, Card, Empty, ErrorText, Input, Label, Select } from '@/components/ui';
-import { api } from '@/lib/api';
+import { api, refreshPublicPages } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { CURRENCIES } from '@/lib/currencies';
 import { timezoneList } from '@/lib/timezones';
@@ -116,6 +116,7 @@ export default function SettingsPage() {
       if (latitude !== '') body.latitude = Number(latitude);
       if (longitude !== '') body.longitude = Number(longitude);
       await api(`/masjids/${masjidId}`, { method: 'PATCH', body });
+      refreshPublicPages();
       setNotice('Saved.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');

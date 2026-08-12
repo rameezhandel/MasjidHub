@@ -12,7 +12,7 @@ import {
   Input,
   Label,
 } from '@/components/ui';
-import { api } from '@/lib/api';
+import { api, refreshPublicPages } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { PrayerTimetableEntry } from '@/lib/types';
 
@@ -93,6 +93,7 @@ export default function PrayerTimesPage() {
       );
       setNotice(`Generated ${result.generated} day(s), kept ${result.skipped} existing.`);
       setOpen(false);
+      refreshPublicPages();
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Generation failed');
@@ -240,6 +241,7 @@ export default function PrayerTimesPage() {
                           await api(`/masjids/${masjidId}/prayer-times/${entry.date}`, {
                             method: 'DELETE',
                           });
+                          refreshPublicPages();
                           await load();
                         }}
                       >
