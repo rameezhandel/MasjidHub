@@ -107,6 +107,15 @@ export class CreateHouseholdDto {
   @Matches(DATE_PATTERN, { message: 'feeStartOn must be a date in YYYY-MM-DD format' })
   feeStartOn?: string;
 
+  @ApiPropertyOptional({
+    example: '2026-06-30',
+    description: 'Date the fee stops accruing; set automatically when a household leaves ACTIVE',
+    nullable: true,
+  })
+  @IsOptional()
+  @Matches(DATE_PATTERN, { message: 'feeEndOn must be a date in YYYY-MM-DD format' })
+  feeEndOn?: string | null;
+
   @ApiPropertyOptional({ type: [CreateHouseholdMemberDto], description: 'Initial family members' })
   @IsOptional()
   @IsArray()

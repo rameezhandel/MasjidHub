@@ -6,6 +6,7 @@ process.env.DATABASE_URL =
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { UserRole } from '@prisma/client';
+import ExcelJS from 'exceljs';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
@@ -164,6 +165,99 @@ describe('Household dues (e2e)', () => {
       .post(`/api/v1/masjids/${masjidAId}/households/${householdId}/payments`)
       .set('Authorization', `Bearer ${adminBToken}`)
       .send({ amountCents: 100, paidOn: '2026-01-01' })
+      .expect(403);
+  });
+
+  it('lists dues for the whole masjid with totals', async () => {
+    const res = await request(http)
+      .get(`/api/v1/masjids/${masjidAId}/dues`)
+      .set('Authorization', `Bearer ${adminAToken}`)
+      .expect(200);
+    expect(res.body.data.length).toBeGreaterThan(0);
+    const row = res.body.data.find((r: { id: string }) => r.id === householdId);
+    expect(row.balanceCents).toBe(row.expectedCents - row.paidCents);
+    expect(res.body.totals.households).toBe(res.body.meta.total);
+    expect(res.body.totals.currency).toBeDefined();
+  });
+
+  it('filters the dues list down to households that owe', async () => {
+    const res = await request(http)
+      .get(`/api/v1/masjids/${masjidAId}/dues?filter=owing`)
+      .set('Authorization', `Bearer ${adminAToken}`)
+      .expect(200);
+    for (const row of res.body.data) {
+      expect(row.balanceCents).toBeGreaterThan(0);
+    }
+  });
+
+  it('applies one fee across every active household', async () => {
+    const res = await request(http)
+      .post(`/api/v1/masjids/${masjidAId}/dues/fee`)
+      .set('Authorization', `Bearer ${adminAToken}`)
+      .send({ feeAmountCents: 25000, feeFrequency: 'MONTHLY', feeStartOn: '2026-01-01' })
+      .expect(201);
+    expect(res.body.updated).toBeGreaterThan(0);
+
+    const list = await request(http)
+      .get(`/api/v1/masjids/${masjidAId}/dues`)
+      .set('Authorization', `Bearer ${adminAToken}`)
+      .expect(200);
+    for (const row of list.body.data.filter((r: { status: string }) => r.status === 'ACTIVE')) {
+      expect(row.feeAmountCents).toBe(25000);
+    }
+  });
+
+  it('stops accrual once a household is no longer active', async () => {
+    const before = await request(http)
+      .get(`/api/v1/masjids/${masjidAId}/households/${householdId}/dues`)
+      .set('Authorization', `Bearer ${adminAToken}`)
+      .expect(200);
+    expect(before.body.feeEndOn).toBeNull();
+
+    await request(http)
+      .patch(`/api/v1/masjids/${masjidAId}/households/${householdId}`)
+      .set('Authorization', `Bearer ${adminAToken}`)
+      .send({ status: 'MOVED_OUT' })
+      .expect(200);
+
+    const after = await request(http)
+      .get(`/api/v1/masjids/${masjidAId}/households/${householdId}/dues`)
+      .set('Authorization', `Bearer ${adminAToken}`)
+      .expect(200);
+    expect(after.body.feeEndOn).not.toBeNull();
+    expect(after.body.expectedCents).toBeLessThanOrEqual(before.body.expectedCents);
+  });
+
+  it('exports the collection sheet as a spreadsheet', async () => {
+    const res = await request(http)
+      .get(`/api/v1/masjids/${masjidAId}/dues/export`)
+      .set('Authorization', `Bearer ${adminAToken}`)
+      .buffer(true)
+      .parse((r, cb) => {
+        const chunks: Buffer[] = [];
+        r.on('data', (c: Buffer) => chunks.push(c));
+        r.on('end', () => cb(null, Buffer.concat(chunks)));
+      })
+      .expect(200);
+    expect(res.headers['content-type']).toContain('spreadsheetml');
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(res.body as unknown as ExcelJS.Buffer);
+    const sheet = wb.getWorksheet('Dues');
+    expect(sheet).toBeDefined();
+    // Header, at least one household, and the totals row.
+    expect(sheet!.rowCount).toBeGreaterThanOrEqual(3);
+    expect(sheet!.getRow(1).getCell(1).value).toBe('Family');
+  });
+
+  it('blocks cross-tenant access to the masjid-wide dues list', async () => {
+    await request(http)
+      .get(`/api/v1/masjids/${masjidAId}/dues`)
+      .set('Authorization', `Bearer ${adminBToken}`)
+      .expect(403);
+    await request(http)
+      .post(`/api/v1/masjids/${masjidAId}/dues/fee`)
+      .set('Authorization', `Bearer ${adminBToken}`)
+      .send({ feeAmountCents: 100, feeFrequency: 'MONTHLY', feeStartOn: '2026-01-01' })
       .expect(403);
   });
 });
