@@ -33,7 +33,9 @@ Both services are defined in [`render.yaml`](./render.yaml) — Render reads it 
    - `JWT_SECRET` is generated for you; every other variable (CORS, API/app URLs) is already wired in the blueprint.
 4. Click **Apply**. First deploy takes a few minutes:
    - API: build → `prisma migrate deploy` → start.
-   - Web: `npm ci && npm run build` in `web/` → `next start`.
+   - Web: `npm ci --include=dev && npm run build` in `web/` → `next start`.
+     (`--include=dev` matters: Render sets `NODE_ENV=production`, and Tailwind
+     and TypeScript are dev deps that Next needs to build.)
 5. Verify each service:
    - API health: `https://masjidhub-api.onrender.com/api/v1/health` → `{"status":"ok",…"database":{"status":"up"}}`.
    - Web: `https://masjidhub-web.onrender.com` → the landing page loads.

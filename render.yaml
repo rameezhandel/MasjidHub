@@ -55,7 +55,11 @@ services:
     branch: main
     autoDeploy: true
     rootDir: web # build/run the Next.js app from web/
-    buildCommand: npm ci && npm run build
+    # Tailwind, its PostCSS plugin and TypeScript are dev deps that Next needs
+    # at BUILD time. Render sets NODE_ENV=production, which makes plain
+    # `npm ci` skip them and the build fail on `@tailwindcss/postcss`, so ask
+    # for them explicitly — same reason as the API service above.
+    buildCommand: npm ci --include=dev && npm run build
     # The package.json "start" pins port 3001; Render injects its own $PORT,
     # so start Next on that instead.
     startCommand: npx next start -p $PORT
