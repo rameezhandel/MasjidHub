@@ -292,9 +292,9 @@ describe('MasjidsService', () => {
     });
 
     it('blocks a masjid admin resetting another masjid', async () => {
-      await expect(
-        service.reset('masjid-b', masjidAAdmin, { households: true }),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.reset('masjid-b', masjidAAdmin, { households: true })).rejects.toThrow(
+        ForbiddenException,
+      );
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 

@@ -3,7 +3,9 @@ import { IsBoolean, IsOptional } from 'class-validator';
 
 /** Selects which of a masjid's data sets to wipe. Omitted flags default to false. */
 export class ResetMasjidDto {
-  @ApiPropertyOptional({ description: 'Delete all households (and their members, dues, tree links)' })
+  @ApiPropertyOptional({
+    description: 'Delete all households (and their members, dues, tree links)',
+  })
   @IsOptional()
   @IsBoolean()
   households?: boolean;
