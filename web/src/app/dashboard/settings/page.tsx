@@ -1,8 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { LocationPicker, type Place } from '@/components/LocationPicker';
-import { Button, Card, Empty, ErrorText, Input, Label, Loading, Select } from '@/components/ui';
+import {
+  Button,
+  Card,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Empty,
+  ErrorText,
+  Input,
+  Label,
+  Loading,
+  Select,
+} from '@/components/ui';
 import { api, refreshPublicPages } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { CURRENCIES } from '@/lib/currencies';
@@ -22,18 +34,31 @@ const FIELDS = [
   ['country', 'Country'],
 ] as const;
 
+function Detail({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div>
+      <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dd className="text-sm font-medium">
+        {value || <span className="text-muted-foreground">—</span>}
+      </dd>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { user } = useAuth();
   const masjidId = user?.masjidId;
   const canEdit = user?.role === 'MASJID_ADMIN' || user?.role === 'PLATFORM_ADMIN';
+
+  const [masjid, setMasjid] = useState<Masjid | null>(null);
+  const [dialog, setDialog] = useState<'profile' | 'prayer' | null>(null);
+
   const [form, setForm] = useState<Record<string, string>>({});
   const [calculationMethod, setCalculationMethod] = useState('MUSLIM_WORLD_LEAGUE');
   const [asrMethod, setAsrMethod] = useState('STANDARD');
   const [currency, setCurrency] = useState('INR');
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
-  // Captured once on load so the map's initial pin doesn't jump as fields are edited.
-  const [initialCoords, setInitialCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -44,28 +69,35 @@ export default function SettingsPage() {
   const [dangerBusy, setDangerBusy] = useState('');
   const [dangerNotice, setDangerNotice] = useState('');
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!masjidId) return;
-    api<Masjid>(`/masjids/${masjidId}`)
-      .then((masjid) => {
-        const next: Record<string, string> = {};
-        for (const [key] of FIELDS) next[key] = (masjid[key] as string | null) ?? '';
-        next.timezone = masjid.timezone || 'UTC';
-        setForm(next);
-        setCalculationMethod(masjid.calculationMethod);
-        setAsrMethod(masjid.asrMethod);
-        setCurrency(masjid.currency);
-        setLatitude(masjid.latitude?.toString() ?? '');
-        setLongitude(masjid.longitude?.toString() ?? '');
-        if (masjid.latitude != null && masjid.longitude != null) {
-          setInitialCoords({ lat: masjid.latitude, lng: masjid.longitude });
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoaded(true));
+    setMasjid(await api<Masjid>(`/masjids/${masjidId}`));
   }, [masjidId]);
 
+  useEffect(() => {
+    void load()
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, [load]);
+
   if (!masjidId) return <Empty>Settings are managed per masjid.</Empty>;
+
+  // Copy the saved values into the form state whenever a dialog opens, so
+  // edits abandoned by closing the popup never leak into the next one.
+  const openDialog = (which: 'profile' | 'prayer') => {
+    if (!masjid) return;
+    const next: Record<string, string> = {};
+    for (const [key] of FIELDS) next[key] = (masjid[key] as string | null) ?? '';
+    next.timezone = masjid.timezone || 'UTC';
+    setForm(next);
+    setCalculationMethod(masjid.calculationMethod);
+    setAsrMethod(masjid.asrMethod);
+    setCurrency(masjid.currency);
+    setLatitude(masjid.latitude?.toString() ?? '');
+    setLongitude(masjid.longitude?.toString() ?? '');
+    setError('');
+    setDialog(which);
+  };
 
   const onPlace = (place: Place) => {
     setLatitude(place.latitude.toString());
@@ -119,7 +151,9 @@ export default function SettingsPage() {
       if (longitude !== '') body.longitude = Number(longitude);
       await api(`/masjids/${masjidId}`, { method: 'PATCH', body });
       refreshPublicPages();
+      await load();
       setNotice('Saved.');
+      setDialog(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');
     } finally {
@@ -127,14 +161,19 @@ export default function SettingsPage() {
     }
   };
 
-  if (!loaded) {
+  if (!loaded || !masjid) {
     return (
       <div className="max-w-3xl space-y-6">
         <h1 className="text-2xl font-bold">Masjid settings</h1>
-        <Loading label="Loading settings…" />
+        {loaded ? <Empty>Could not load the masjid.</Empty> : <Loading label="Loading settings…" />}
       </div>
     );
   }
+
+  const coordsLabel =
+    masjid.latitude != null && masjid.longitude != null
+      ? `${masjid.latitude.toFixed(4)}, ${masjid.longitude.toFixed(4)}`
+      : '';
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -144,137 +183,189 @@ export default function SettingsPage() {
           Only masjid admins can change settings — shown read-only.
         </p>
       )}
-      <form onSubmit={save} className="space-y-6">
-        <Card title="Profile">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {FIELDS.map(([key, label]) => (
-              <div key={key}>
-                <Label>{label}</Label>
-                <Input
-                  value={form[key] ?? ''}
-                  disabled={!canEdit}
-                  onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
-                />
-              </div>
-            ))}
-            <div>
-              <Label>Timezone</Label>
-              <Select
-                value={form.timezone ?? 'UTC'}
-                disabled={!canEdit}
-                onChange={(e) => setForm((prev) => ({ ...prev, timezone: e.target.value }))}
-              >
-                {timezoneList([form.timezone]).map((tz) => (
-                  <option key={tz} value={tz}>
-                    {tz}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <Label>Currency (for dues)</Label>
-              <Select
-                value={currency}
-                disabled={!canEdit}
-                onChange={(e) => setCurrency(e.target.value)}
-              >
-                {CURRENCIES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.code} — {c.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
-          </div>
-        </Card>
+      {notice && !dialog && <p className="text-sm text-primary">{notice}</p>}
 
-        <Card title="Prayer time calculation">
-          {canEdit && (
-            <div className="mb-4">
+      <Card
+        title="Profile"
+        actions={
+          canEdit && (
+            <Button variant="secondary" onClick={() => openDialog('profile')}>
+              Edit
+            </Button>
+          )
+        }
+      >
+        <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+          {FIELDS.map(([key, label]) => (
+            <Detail key={key} label={label} value={masjid[key] as string | null} />
+          ))}
+          <Detail label="Timezone" value={masjid.timezone} />
+          <Detail
+            label="Currency (for dues)"
+            value={
+              CURRENCIES.find((c) => c.code === masjid.currency)
+                ? `${masjid.currency} — ${CURRENCIES.find((c) => c.code === masjid.currency)?.name}`
+                : masjid.currency
+            }
+          />
+        </dl>
+      </Card>
+
+      <Card
+        title="Prayer time calculation"
+        actions={
+          canEdit && (
+            <Button variant="secondary" onClick={() => openDialog('prayer')}>
+              Edit
+            </Button>
+          )
+        }
+      >
+        <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+          <Detail
+            label="Calculation method"
+            value={masjid.calculationMethod.replaceAll('_', ' ')}
+          />
+          <Detail
+            label="Asr method"
+            value={masjid.asrMethod === 'HANAFI' ? 'Hanafi' : "Standard (Shafi'i/Maliki/Hanbali)"}
+          />
+          <Detail label="Coordinates" value={coordsLabel} />
+        </dl>
+        {!coordsLabel && (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Set the masjid&apos;s location to enable prayer-time auto-calculation.
+          </p>
+        )}
+      </Card>
+
+      {/* Edit profile: centered popup */}
+      <Dialog
+        open={dialog === 'profile'}
+        onOpenChange={(open) => setDialog(open ? 'profile' : null)}
+      >
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+          <DialogTitle>Edit profile</DialogTitle>
+          <form onSubmit={save} className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {FIELDS.map(([key, label]) => (
+                <div key={key}>
+                  <Label>{label}</Label>
+                  <Input
+                    value={form[key] ?? ''}
+                    onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
+                  />
+                </div>
+              ))}
+              <div>
+                <Label>Timezone</Label>
+                <Select
+                  value={form.timezone ?? 'UTC'}
+                  onChange={(e) => setForm((prev) => ({ ...prev, timezone: e.target.value }))}
+                >
+                  {timezoneList([form.timezone]).map((tz) => (
+                    <option key={tz} value={tz}>
+                      {tz}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div>
+                <Label>Currency (for dues)</Label>
+                <Select value={currency} onChange={(e) => setCurrency(e.target.value)}>
+                  {CURRENCIES.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.code} — {c.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+            <ErrorText>{error}</ErrorText>
+            <Button type="submit" disabled={busy}>
+              {busy ? 'Saving…' : 'Save profile'}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit prayer calculation: centered popup */}
+      <Dialog open={dialog === 'prayer'} onOpenChange={(open) => setDialog(open ? 'prayer' : null)}>
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+          <DialogTitle>Edit prayer time calculation</DialogTitle>
+          <form onSubmit={save} className="space-y-4">
+            <div>
               <Label>Location (drives prayer-time auto-calculation)</Label>
               <LocationPicker
                 city={form.city ?? ''}
                 onCityChange={(c) => setForm((prev) => ({ ...prev, city: c }))}
                 onSelect={onPlace}
-                initialLat={initialCoords?.lat}
-                initialLng={initialCoords?.lng}
+                initialLat={masjid.latitude ?? undefined}
+                initialLng={masjid.longitude ?? undefined}
               />
             </div>
-          )}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <Label>Latitude</Label>
-              <Input
-                type="number"
-                step="any"
-                value={latitude}
-                disabled={!canEdit}
-                onChange={(e) => setLatitude(e.target.value)}
-              />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label>Latitude</Label>
+                <Input
+                  type="number"
+                  step="any"
+                  value={latitude}
+                  onChange={(e) => setLatitude(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Longitude</Label>
+                <Input
+                  type="number"
+                  step="any"
+                  value={longitude}
+                  onChange={(e) => setLongitude(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Calculation method</Label>
+                <Select
+                  value={calculationMethod}
+                  onChange={(e) => setCalculationMethod(e.target.value)}
+                >
+                  {CALCULATION_METHODS.map((method) => (
+                    <option key={method} value={method}>
+                      {method.replaceAll('_', ' ')}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div>
+                <Label>Asr method</Label>
+                <Select value={asrMethod} onChange={(e) => setAsrMethod(e.target.value)}>
+                  <option value="STANDARD">Standard (Shafi&apos;i/Maliki/Hanbali)</option>
+                  <option value="HANAFI">Hanafi</option>
+                </Select>
+              </div>
             </div>
-            <div>
-              <Label>Longitude</Label>
-              <Input
-                type="number"
-                step="any"
-                value={longitude}
-                disabled={!canEdit}
-                onChange={(e) => setLongitude(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Calculation method</Label>
-              <Select
-                value={calculationMethod}
-                disabled={!canEdit}
-                onChange={(e) => setCalculationMethod(e.target.value)}
-              >
-                {CALCULATION_METHODS.map((method) => (
-                  <option key={method} value={method}>
-                    {method.replaceAll('_', ' ')}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <Label>Asr method</Label>
-              <Select
-                value={asrMethod}
-                disabled={!canEdit}
-                onChange={(e) => setAsrMethod(e.target.value)}
-              >
-                <option value="STANDARD">Standard (Shafi&apos;i/Maliki/Hanbali)</option>
-                <option value="HANAFI">Hanafi</option>
-              </Select>
-            </div>
-          </div>
-        </Card>
-
-        {canEdit && (
-          <div>
             <ErrorText>{error}</ErrorText>
-            {notice && <p className="mb-2 text-sm text-primary">{notice}</p>}
             <Button type="submit" disabled={busy}>
-              {busy ? 'Saving…' : 'Save settings'}
+              {busy ? 'Saving…' : 'Save calculation settings'}
             </Button>
-          </div>
-        )}
-      </form>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {canEdit && (
         <Card title="Danger zone">
           <div className="space-y-4 rounded-lg border border-destructive/40 p-4">
             <p className="text-sm text-muted-foreground">
-              These permanently delete data for <strong>{form.name || 'this masjid'}</strong> and
-              cannot be undone. Type the masjid name below to enable them.
+              These permanently delete data for <strong>{masjid.name}</strong> and cannot be
+              undone. Type the masjid name below to enable them.
             </p>
             <Input
-              placeholder={`Type "${form.name}" to confirm`}
+              placeholder={`Type "${masjid.name}" to confirm`}
               value={dangerConfirm}
               onChange={(e) => setDangerConfirm(e.target.value)}
             />
             {(() => {
-              const armed = !!form.name && dangerConfirm.trim() === form.name.trim();
+              const armed = dangerConfirm.trim() === masjid.name.trim();
               return (
                 <div className="flex flex-wrap gap-2">
                   <Button

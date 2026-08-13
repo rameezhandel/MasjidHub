@@ -600,7 +600,8 @@ export function deriveHouseholdRelationships(
   }
   for (const c of children) {
     edges.push({ fromIndex: headIdx, toIndex: c, type: RelationshipType.PARENT });
-    for (const s of spouses) edges.push({ fromIndex: s, toIndex: c, type: RelationshipType.PARENT });
+    for (const s of spouses)
+      edges.push({ fromIndex: s, toIndex: c, type: RelationshipType.PARENT });
   }
   for (const p of parents) {
     edges.push({ fromIndex: p, toIndex: headIdx, type: RelationshipType.PARENT });

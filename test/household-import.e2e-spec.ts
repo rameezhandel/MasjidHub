@@ -242,8 +242,32 @@ describe('Household Excel import (e2e)', () => {
       'Male',
       '1990-06-18',
     ]);
-    ws.addRow(['Ansari Family', 'Rehan Ansari', '', '', '', '', 'Nadia', 'Ansari', 'Spouse', 'Female', '1992-10-08']);
-    ws.addRow(['Ansari Family', 'Rehan Ansari', '', '', '', '', 'Ibrahim', 'Ansari', 'Son', 'Male', '2019-03-25']);
+    ws.addRow([
+      'Ansari Family',
+      'Rehan Ansari',
+      '',
+      '',
+      '',
+      '',
+      'Nadia',
+      'Ansari',
+      'Spouse',
+      'Female',
+      '1992-10-08',
+    ]);
+    ws.addRow([
+      'Ansari Family',
+      'Rehan Ansari',
+      '',
+      '',
+      '',
+      '',
+      'Ibrahim',
+      'Ansari',
+      'Son',
+      'Male',
+      '2019-03-25',
+    ]);
     const buffer = Buffer.from(await wb.xlsx.writeBuffer());
 
     await request(http)
