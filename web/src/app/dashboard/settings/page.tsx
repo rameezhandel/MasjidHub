@@ -353,26 +353,27 @@ export default function SettingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Staff belongs with the masjid's own configuration, so inviting is
-          offered here as well as on the Staff page. */}
-      {canEdit && (
-        <Card
-          title={t('nav.staff')}
-          actions={
-            <Link href="/dashboard/staff" className="text-sm font-medium text-primary hover:underline">
-              {t('common.viewManage')}
-            </Link>
-          }
-        >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-muted-foreground">{t('staff.inviteHint')}</p>
+      {/* Staff belongs with the masjid's own configuration, and this card is
+          the only way in now that Staff has no nav entry — so it renders for
+          maintainers too, with only the invite button gated on canEdit. */}
+      <Card
+        title={t('nav.staff')}
+        actions={
+          <Link href="/dashboard/staff" className="text-sm font-medium text-primary hover:underline">
+            {t('common.viewManage')}
+          </Link>
+        }
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">{t('staff.inviteHint')}</p>
+          {canEdit && (
             <Button variant="secondary" onClick={() => setInviteOpen(true)}>
               {t('staff.invite')}
             </Button>
-          </div>
-          {inviteNotice && <p className="mt-3 text-sm text-primary">{inviteNotice}</p>}
-        </Card>
-      )}
+          )}
+        </div>
+        {inviteNotice && <p className="mt-3 text-sm text-primary">{inviteNotice}</p>}
+      </Card>
 
       <StaffInviteDialog
         masjidId={masjidId}
