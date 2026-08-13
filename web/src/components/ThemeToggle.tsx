@@ -2,6 +2,7 @@
 
 import { MoonIcon, SunIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 type Theme = 'light' | 'dark';
@@ -14,6 +15,7 @@ function currentTheme(): Theme {
 /** Small light/dark switch. The pre-hydration script in the root layout sets
  *  the initial class; this persists and applies changes to `localStorage`. */
 export function ThemeToggle({ className }: { className?: string }) {
+  const t = useT();
   const [theme, setTheme] = useState<Theme>('light');
 
   // Sync to the class the no-flash script already applied.
@@ -36,14 +38,14 @@ export function ThemeToggle({ className }: { className?: string }) {
     <button
       type="button"
       onClick={toggle}
-      aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      aria-label={theme === 'dark' ? t('acc.switchToLight') : t('acc.switchToDark')}
       className={cn(
         'inline-flex items-center gap-2 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground',
         className,
       )}
     >
       {theme === 'dark' ? <SunIcon className="size-4" /> : <MoonIcon className="size-4" />}
-      {theme === 'dark' ? 'Light' : 'Dark'}
+      {theme === 'dark' ? t('acc.themeLight') : t('acc.themeDark')}
     </button>
   );
 }

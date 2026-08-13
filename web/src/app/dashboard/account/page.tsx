@@ -13,6 +13,8 @@ import {
   Label,
   Loading,
 } from '@/components/ui';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useT } from '@/lib/i18n';
@@ -156,6 +158,24 @@ export default function AccountPage() {
               <dd className="text-sm font-medium">{value}</dd>
             </div>
           ))}
+        </dl>
+      </Card>
+
+      {/* Device preferences — stored locally, not on the account. */}
+      <Card title={t('acc.preferences')}>
+        <dl className="space-y-3">
+          <div className="flex items-center justify-between gap-4">
+            <dt className="text-sm font-medium">{t('nav.language')}</dt>
+            <dd>
+              <LanguageSwitcher className="rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm text-foreground" />
+            </dd>
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <dt className="text-sm font-medium">{t('acc.theme')}</dt>
+            <dd>
+              <ThemeToggle className="text-sm" />
+            </dd>
+          </div>
         </dl>
       </Card>
 
