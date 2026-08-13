@@ -1,4 +1,5 @@
 import { toast } from '@/components/ui/toast';
+import { t } from './i18n';
 import { progress } from './progress';
 import type { AuthTokens, SafeUser } from './types';
 
@@ -20,14 +21,12 @@ async function fetchSafe(input: string, init: RequestInit = {}): Promise<Respons
   try {
     const res = await fetch(input, { ...init, signal: controller.signal });
     if (res.status >= 500) {
-      toast.error('The server hit an error. Please try again.');
+      toast.error(t('toast.serverError'));
     }
     return res;
   } catch (err) {
     const timedOut = err instanceof DOMException && err.name === 'AbortError';
-    const message = timedOut
-      ? 'The server is taking too long to respond — it may be waking up. Please try again.'
-      : 'Cannot reach the server. Check your connection and try again.';
+    const message = timedOut ? t('toast.timeout') : t('toast.connection');
     toast.error(message);
     throw new ApiError(0, message);
   } finally {
@@ -128,7 +127,7 @@ export async function api<T>(
     res = await doFetch();
   }
   if (res.status === 401) {
-    toast.error('Your session has expired. Please sign in again.');
+    toast.error(t('toast.sessionExpired'));
     session.clear();
     if (typeof window !== 'undefined') window.location.href = '/login';
   }

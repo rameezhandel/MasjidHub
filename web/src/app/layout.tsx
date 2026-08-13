@@ -21,9 +21,9 @@ export const metadata: Metadata = {
   description: 'One platform for many masjids — prayer times, announcements, and events.',
 };
 
-// Applies the persisted (or system) theme before first paint, so there is no
-// light-to-dark flash on load.
-const themeScript = `(function(){try{var e=localStorage.getItem('mh.theme');var m=window.matchMedia('(prefers-color-scheme: dark)').matches;var d=e?e==='dark':m;var c=document.documentElement.classList;d?c.add('dark'):c.remove('dark');}catch(_){}})();`;
+// Applies the persisted (or system) theme and the persisted language before
+// first paint, so there is no light-to-dark (or lang) flash on load.
+const themeScript = `(function(){try{var e=localStorage.getItem('mh.theme');var m=window.matchMedia('(prefers-color-scheme: dark)').matches;var d=e?e==='dark':m;var c=document.documentElement.classList;d?c.add('dark'):c.remove('dark');var l=localStorage.getItem('mh.lang');if(l==='hi'||l==='kn')document.documentElement.lang=l;}catch(_){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

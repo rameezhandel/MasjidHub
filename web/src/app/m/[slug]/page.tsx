@@ -2,8 +2,15 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Logo } from '@/components/Logo';
-import { NextPrayerHero } from '@/components/NextPrayerHero';
+import { NextPrayerHero, type PrayerKey } from '@/components/NextPrayerHero';
 import { API_BASE } from '@/lib/api';
+import {
+  LOCALES,
+  LOCALE_NAMES,
+  isLocale,
+  translate,
+  type Locale,
+} from '@/lib/i18n/dictionaries';
 import type {
   Announcement,
   MasjidEvent,
@@ -30,20 +37,27 @@ export async function generateMetadata({
   return { title: masjid?.name ?? 'Masjid not found' };
 }
 
-const PRAYERS: Array<{ key: keyof PrayerTimetableEntry; iqamah: keyof PrayerTimetableEntry; label: string }> = [
-  { key: 'fajr', iqamah: 'fajrIqamah', label: 'Fajr' },
-  { key: 'dhuhr', iqamah: 'dhuhrIqamah', label: 'Dhuhr' },
-  { key: 'asr', iqamah: 'asrIqamah', label: 'Asr' },
-  { key: 'maghrib', iqamah: 'maghribIqamah', label: 'Maghrib' },
-  { key: 'isha', iqamah: 'ishaIqamah', label: 'Isha' },
+const PRAYERS: Array<{ key: PrayerKey; iqamah: keyof PrayerTimetableEntry }> = [
+  { key: 'fajr', iqamah: 'fajrIqamah' },
+  { key: 'dhuhr', iqamah: 'dhuhrIqamah' },
+  { key: 'asr', iqamah: 'asrIqamah' },
+  { key: 'maghrib', iqamah: 'maghribIqamah' },
+  { key: 'isha', iqamah: 'ishaIqamah' },
 ];
 
 export default async function MasjidPublicPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { slug } = await params;
+  const { lang } = await searchParams;
+  const locale: Locale = isLocale(lang) ? lang : 'en';
+  const t = (key: Parameters<typeof translate>[1], vars?: Record<string, string | number>) =>
+    translate(locale, key, vars);
+
   const masjid = await fetchPublic<PublicMasjid>(`/masjids/${slug}`);
   if (!masjid) notFound();
 
@@ -56,13 +70,32 @@ export default async function MasjidPublicPage({
   const address = [masjid.addressLine1, masjid.addressLine2, masjid.city, masjid.state, masjid.country]
     .filter(Boolean)
     .join(', ');
+  const prayerLabels = Object.fromEntries(
+    PRAYERS.map(({ key }) => [key, t(`prayer.${key}`)]),
+  ) as Record<PrayerKey, string>;
+  const dateLocale = locale === 'en' ? 'en-GB' : `${locale}-IN`;
 
   return (
-    <main className="mx-auto max-w-4xl px-6 pb-10">
-      <div className="sticky top-0 z-10 -mx-6 mb-6 border-b border-border bg-background/90 px-6 py-3 backdrop-blur">
+    <main className="mx-auto max-w-4xl px-6 pb-10" lang={locale}>
+      <div className="sticky top-0 z-10 -mx-6 mb-6 flex items-center justify-between border-b border-border bg-background/90 px-6 py-3 backdrop-blur">
         <Link href="/">
           <Logo markClassName="size-6" className="[&>span]:text-base" />
         </Link>
+        <nav className="flex gap-1 text-xs">
+          {LOCALES.map((l) => (
+            <a
+              key={l}
+              href={l === 'en' ? `/m/${slug}` : `/m/${slug}?lang=${l}`}
+              className={
+                l === locale
+                  ? 'rounded-full bg-primary px-2.5 py-1 font-semibold text-primary-foreground'
+                  : 'rounded-full px-2.5 py-1 text-muted-foreground hover:bg-accent'
+              }
+            >
+              {LOCALE_NAMES[l]}
+            </a>
+          ))}
+        </nav>
       </div>
 
       <header className="mb-6">
@@ -80,32 +113,38 @@ export default async function MasjidPublicPage({
             target="_blank"
             rel="noopener noreferrer"
           >
-            View on Google Maps ↗
+            {t('pub.maps')}
           </a>
         )}
       </header>
 
-      {today && <NextPrayerHero today={today} timezone={masjid.timezone} />}
+      {today && (
+        <NextPrayerHero
+          today={today}
+          timezone={masjid.timezone}
+          labels={{ nextPrayer: t('prayer.next'), at: t('prayer.at'), prayers: prayerLabels }}
+        />
+      )}
 
       <section className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
         <div className="mb-4 flex items-baseline justify-between">
-          <h2 className="text-lg font-bold">Today&apos;s times</h2>
+          <h2 className="text-lg font-bold">{t('pub.today')}</h2>
           {today && <span className="text-sm text-muted-foreground">{today.date}</span>}
         </div>
         {today ? (
           <>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-              {PRAYERS.map(({ key, iqamah, label }) => (
-                <div key={label} className="rounded-lg bg-accent p-3 text-center">
+              {PRAYERS.map(({ key, iqamah }) => (
+                <div key={key} className="rounded-lg bg-accent p-3 text-center">
                   <p className="text-xs font-medium uppercase tracking-wide text-primary">
-                    {label}
+                    {prayerLabels[key]}
                   </p>
                   <p className="tabular mt-1 text-xl font-bold text-foreground">
                     {String(today[key])}
                   </p>
                   {today[iqamah] && (
                     <p className="tabular text-xs text-muted-foreground">
-                      Iqamah {String(today[iqamah])}
+                      {t('prayer.iqamah')} {String(today[iqamah])}
                     </p>
                   )}
                 </div>
@@ -113,26 +152,26 @@ export default async function MasjidPublicPage({
             </div>
             {(today.jumuah1 || today.jumuah2) && (
               <p className="mt-3 rounded-lg border border-gold/40 bg-gold/10 px-3 py-2 text-sm font-medium text-foreground">
-                Jumu&apos;ah · {[today.jumuah1, today.jumuah2].filter(Boolean).join(' & ')}
+                {t('prayer.jumuah')} · {[today.jumuah1, today.jumuah2].filter(Boolean).join(' & ')}
               </p>
             )}
           </>
         ) : (
-          <p className="text-sm text-muted-foreground">No prayer times published yet.</p>
+          <p className="text-sm text-muted-foreground">{t('pub.noTimes')}</p>
         )}
       </section>
 
       {timetable && timetable.length > 1 && (
         <section className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-bold">Coming days</h2>
+          <h2 className="mb-4 text-lg font-bold">{t('pub.comingDays')}</h2>
           <div className="overflow-x-auto">
             <table className="tabular w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
-                  <th className="py-2 pr-3">Date</th>
-                  {PRAYERS.map(({ label }) => (
-                    <th key={label} className="py-2 pr-3">
-                      {label}
+                  <th className="py-2 pr-3">{t('pub.date')}</th>
+                  {PRAYERS.map(({ key }) => (
+                    <th key={key} className="py-2 pr-3">
+                      {prayerLabels[key]}
                     </th>
                   ))}
                 </tr>
@@ -141,8 +180,8 @@ export default async function MasjidPublicPage({
                 {timetable.slice(1, 8).map((entry) => (
                   <tr key={entry.date} className="border-b border-border/60 last:border-0">
                     <td className="py-1.5 pr-3 font-medium">{entry.date}</td>
-                    {PRAYERS.map(({ key, label }) => (
-                      <td key={label} className="py-1.5 pr-3">
+                    {PRAYERS.map(({ key }) => (
+                      <td key={key} className="py-1.5 pr-3">
                         {String(entry[key])}
                       </td>
                     ))}
@@ -156,7 +195,7 @@ export default async function MasjidPublicPage({
 
       <div className="mt-8 grid gap-8 md:grid-cols-2">
         <section>
-          <h2 className="mb-3 text-lg font-semibold">Announcements</h2>
+          <h2 className="mb-3 text-lg font-semibold">{t('pub.announcements')}</h2>
           {announcements?.data.length ? (
             <ul className="space-y-3">
               {announcements.data.map((a) => (
@@ -165,26 +204,27 @@ export default async function MasjidPublicPage({
                   <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">{a.body}</p>
                   {a.publishedAt && (
                     <p className="mt-2 text-xs text-muted-foreground">
-                      {new Date(a.publishedAt).toLocaleDateString()}
+                      {new Date(a.publishedAt).toLocaleDateString(dateLocale)}
                     </p>
                   )}
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted-foreground">No announcements right now.</p>
+            <p className="text-sm text-muted-foreground">{t('pub.noAnnouncements')}</p>
           )}
         </section>
 
         <section>
-          <h2 className="mb-3 text-lg font-semibold">Upcoming events</h2>
+          <h2 className="mb-3 text-lg font-semibold">{t('pub.upcomingEvents')}</h2>
           {events?.data.length ? (
             <ul className="space-y-3">
               {events.data.map((e) => (
                 <li key={e.id} className="rounded-lg border border-border bg-card p-4">
                   <p className="font-medium">{e.title}</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {new Date(e.startsAt).toLocaleString()} {e.location ? `· ${e.location}` : ''}
+                    {new Date(e.startsAt).toLocaleString(dateLocale)}{' '}
+                    {e.location ? `· ${e.location}` : ''}
                   </p>
                   {e.description && (
                     <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
@@ -195,13 +235,13 @@ export default async function MasjidPublicPage({
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted-foreground">No upcoming events.</p>
+            <p className="text-sm text-muted-foreground">{t('pub.noEvents')}</p>
           )}
         </section>
       </div>
 
       <footer className="mt-12 border-t border-border pt-4 text-center text-xs text-muted-foreground">
-        Powered by MasjidHub · timezone {masjid.timezone}
+        {t('pub.footer', { tz: masjid.timezone })}
       </footer>
     </main>
   );
