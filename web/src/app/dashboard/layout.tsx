@@ -28,7 +28,7 @@ const PLATFORM_LINKS: Array<{ href: string; label: DictKey }> = [
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading, logout } = useAuth();
+  const { user, loading } = useAuth();
   const t = useT();
   const router = useRouter();
   const pathname = usePathname();
@@ -48,11 +48,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   const links = user.role === 'PLATFORM_ADMIN' ? PLATFORM_LINKS : STAFF_LINKS;
-
-  const signOut = async () => {
-    await logout();
-    router.replace('/login');
-  };
 
   const navLinks = (
     <nav className="flex flex-col gap-1">
@@ -74,7 +69,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   );
 
   // The signed-in user's name doubles as the way into Account, which is why
-  // Account has no nav entry of its own.
+  // Account has no nav entry of its own — and why signing out lives there.
   const accountFooter = (
     <div className="border-t border-border pt-3 text-xs">
       <Link
@@ -90,9 +85,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </p>
         <p className="truncate text-muted-foreground">{user.email}</p>
       </Link>
-      <button onClick={signOut} className="mt-2 px-2 text-destructive underline">
-        {t('nav.signOut')}
-      </button>
     </div>
   );
 

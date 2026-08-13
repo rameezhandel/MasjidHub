@@ -43,6 +43,11 @@ export default function AccountPage() {
 
   if (!user) return <Loading />;
 
+  const signOut = async () => {
+    await logout();
+    router.replace('/login');
+  };
+
   const openEdit = () => {
     setFirstName(user.firstName);
     setLastName(user.lastName);
@@ -178,6 +183,12 @@ export default function AccountPage() {
           </div>
         </dl>
       </Card>
+
+      <div>
+        <Button variant="danger" onClick={signOut}>
+          {t('nav.signOut')}
+        </Button>
+      </div>
 
       {/* Edit name: centered popup */}
       <Dialog open={dialog === 'edit'} onOpenChange={(open) => setDialog(open ? 'edit' : null)}>
