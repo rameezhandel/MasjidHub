@@ -17,8 +17,8 @@ const STAFF_LINKS: Array<{ href: string; label: DictKey }> = [
   { href: '/dashboard/events', label: 'nav.events' },
   { href: '/dashboard/households', label: 'nav.households' },
   { href: '/dashboard/members', label: 'nav.members' },
-  { href: '/dashboard/staff', label: 'nav.staff' },
-  { href: '/dashboard/settings', label: 'nav.settings' },
+  // Staff and Masjid settings are reached from the overview's settings gear
+  // (and, for Staff, the card inside settings) rather than the nav.
 ];
 
 const PLATFORM_LINKS: Array<{ href: string; label: DictKey }> = [
