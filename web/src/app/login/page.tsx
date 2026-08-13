@@ -44,10 +44,10 @@ export default function LoginPage() {
         <ThemeToggle />
       </div>
       <div className="flex justify-center"><Logo /></div>
-      <p className="mb-6 mt-1 text-center text-sm text-muted-foreground">Staff sign in</p>
+      <p className="mb-6 mt-1 text-center text-sm text-muted-foreground">{t('login.tagline')}</p>
       {passwordChanged && (
         <p className="mb-4 rounded-lg border border-border bg-accent p-3 text-center text-sm text-primary">
-          Password changed. Please sign in with your new password.
+          {t('login.passwordChanged')}
         </p>
       )}
       <form onSubmit={submit} className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">

@@ -55,7 +55,7 @@ export default function MembersPage() {
     return () => clearTimeout(timer);
   }, [load]);
 
-  if (!masjidId) return <Empty>Members are managed per masjid.</Empty>;
+  if (!masjidId) return <Empty>{t('common.perMasjid')}</Empty>;
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -63,9 +63,7 @@ export default function MembersPage() {
     <div className="max-w-4xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">{t('mem.title')}</h1>
-        <p className="text-sm text-muted-foreground">
-          Search everyone across your registered households by name, phone or email.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('mem.subtitle')}</p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -81,9 +79,9 @@ export default function MembersPage() {
           onChange={(e) => setGender(e.target.value as '' | Gender)}
           className="w-36"
         >
-          <option value="">Any gender</option>
-          <option value="MALE">Male</option>
-          <option value="FEMALE">Female</option>
+          <option value="">{t('mem.anyGender')}</option>
+          <option value="MALE">{t('hhd.male')}</option>
+          <option value="FEMALE">{t('hhd.female')}</option>
         </Select>
         <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
           {loading ? (
@@ -132,7 +130,7 @@ export default function MembersPage() {
                   href={`/dashboard/households/${member.household.id}`}
                   className="shrink-0 text-sm font-medium text-primary hover:underline"
                 >
-                  Open →
+                  {t('hh.open')}
                 </Link>
               </li>
             ))}
@@ -146,17 +144,17 @@ export default function MembersPage() {
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
-              ← Previous
+              {t('mem.prev')}
             </button>
             <span className="text-muted-foreground">
-              Page {page} of {totalPages}
+              {t('mem.page', { x: page, y: totalPages })}
             </span>
             <button
               className="text-primary disabled:text-muted-foreground"
               disabled={page >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             >
-              Next →
+              {t('mem.next')}
             </button>
           </div>
         )}

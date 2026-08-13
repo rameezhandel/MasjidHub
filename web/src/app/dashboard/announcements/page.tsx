@@ -47,7 +47,7 @@ export default function AnnouncementsPage() {
       .finally(() => setLoaded(true));
   }, [load]);
 
-  if (!masjidId) return <Empty>Announcements are managed per masjid.</Empty>;
+  if (!masjidId) return <Empty>{t('common.perMasjid')}</Empty>;
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();

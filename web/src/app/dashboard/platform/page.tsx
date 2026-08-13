@@ -7,9 +7,11 @@ import { api } from '@/lib/api';
 import { CURRENCIES } from '@/lib/currencies';
 import { timezoneList } from '@/lib/timezones';
 import { useAuth } from '@/lib/auth';
+import { useT } from '@/lib/i18n';
 import type { Masjid, Paginated } from '@/lib/types';
 
 export default function PlatformMasjidsPage() {
+  const t = useT();
   const { user } = useAuth();
   const [masjids, setMasjids] = useState<Masjid[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -138,9 +140,9 @@ export default function PlatformMasjidsPage() {
   return (
     <div className="max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Masjids</h1>
+        <h1 className="text-2xl font-bold">{t('plat.title')}</h1>
         <Button onClick={() => setShowForm((v) => !v)}>
-          {showForm ? 'Close' : '+ Add masjid'}
+          {showForm ? t('plat.close') : t('plat.add')}
         </Button>
       </div>
 
@@ -151,15 +153,15 @@ export default function PlatformMasjidsPage() {
       )}
 
       {showForm && (
-        <Card title="Onboard a new masjid">
+        <Card title={t('plat.onboard')}>
           <form onSubmit={create} className="space-y-5">
             <section className="space-y-3">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Masjid details
+                {t('plat.details')}
               </h3>
               <div className="grid gap-3 sm:grid-cols-3">
                 <div>
-                  <Label>Name</Label>
+                  <Label>{t('set.name')}</Label>
                   <Input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -168,7 +170,7 @@ export default function PlatformMasjidsPage() {
                   />
                 </div>
                 <div>
-                  <Label>Timezone</Label>
+                  <Label>{t('set.timezone')}</Label>
                   <Select value={timezone} onChange={(e) => setTimezone(e.target.value)} required>
                     {timezoneList([timezone]).map((tz) => (
                       <option key={tz} value={tz}>
@@ -178,7 +180,7 @@ export default function PlatformMasjidsPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label>Currency (for dues)</Label>
+                  <Label>{t('set.currency')}</Label>
                   <Select value={currency} onChange={(e) => setCurrency(e.target.value)} required>
                     {CURRENCIES.map((c) => (
                       <option key={c.code} value={c.code}>
@@ -189,7 +191,7 @@ export default function PlatformMasjidsPage() {
                 </div>
               </div>
               <div>
-                <Label>Location</Label>
+                <Label>{t('plat.location')}</Label>
                 <LocationPicker city={city} onCityChange={setCity} onSelect={onPlace} />
               </div>
               {coords && (
@@ -203,11 +205,11 @@ export default function PlatformMasjidsPage() {
 
             <section className="space-y-3">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Masjid Admin
+                {t('plat.adminSection')}
               </h3>
               <div className="grid gap-3 sm:grid-cols-3">
                 <div>
-                  <Label>Email</Label>
+                  <Label>{t('acc.email')}</Label>
                   <Input
                     type="email"
                     value={adminEmail}
@@ -216,7 +218,7 @@ export default function PlatformMasjidsPage() {
                   />
                 </div>
                 <div>
-                  <Label>First name</Label>
+                  <Label>{t('acc.firstName')}</Label>
                   <Input
                     value={adminFirst}
                     onChange={(e) => setAdminFirst(e.target.value)}
@@ -224,7 +226,7 @@ export default function PlatformMasjidsPage() {
                   />
                 </div>
                 <div>
-                  <Label>Last name</Label>
+                  <Label>{t('acc.lastName')}</Label>
                   <Input
                     value={adminLast}
                     onChange={(e) => setAdminLast(e.target.value)}
@@ -232,7 +234,7 @@ export default function PlatformMasjidsPage() {
                   />
                 </div>
                 <div className="sm:col-span-3">
-                  <Label>Initial password (12+ chars — they can change it later)</Label>
+                  <Label>{t('plat.password')}</Label>
                   <Input
                     type="password"
                     minLength={12}
@@ -246,7 +248,7 @@ export default function PlatformMasjidsPage() {
 
             <div>
               <Button type="submit" disabled={busy}>
-                {busy ? 'Creating…' : 'Create masjid'}
+                {busy ? t('plat.creating') : t('plat.create')}
               </Button>
               <ErrorText>{error}</ErrorText>
               {notice && <p className="mt-2 text-sm text-primary">{notice}</p>}
@@ -259,7 +261,7 @@ export default function PlatformMasjidsPage() {
         title="All masjids"
         actions={
           <Input
-            placeholder="Search…"
+            placeholder={t('common.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-48"
@@ -267,9 +269,9 @@ export default function PlatformMasjidsPage() {
         }
       >
         {!loaded ? (
-          <Loading label="Loading masjids…" />
+          <Loading label={t('plat.loading')} />
         ) : masjids.length === 0 ? (
-          <Empty>No masjids found.</Empty>
+          <Empty>{t('plat.empty')}</Empty>
         ) : (
           <ul className="divide-y divide-border">
             {masjids.map((masjid) => (
@@ -295,11 +297,11 @@ export default function PlatformMasjidsPage() {
                   <div className="flex shrink-0 gap-2">
                     {masjid.status === 'ACTIVE' ? (
                       <Button variant="secondary" onClick={() => setStatus(masjid.id, 'SUSPENDED')}>
-                        Suspend
+                        {t('plat.suspend')}
                       </Button>
                     ) : (
                       <Button variant="secondary" onClick={() => setStatus(masjid.id, 'ACTIVE')}>
-                        Activate
+                        {t('plat.activate')}
                       </Button>
                     )}
                     <Button
@@ -310,7 +312,7 @@ export default function PlatformMasjidsPage() {
                         setError('');
                       }}
                     >
-                      Delete
+                      {t('common.delete')}
                     </Button>
                   </div>
                 </div>
@@ -341,7 +343,7 @@ export default function PlatformMasjidsPage() {
                         {deleteBusy ? 'Deleting…' : 'Permanently delete'}
                       </Button>
                       <Button variant="secondary" onClick={() => setDeleteTarget(null)}>
-                        Cancel
+                        {t('common.cancel')}
                       </Button>
                     </div>
                   </div>

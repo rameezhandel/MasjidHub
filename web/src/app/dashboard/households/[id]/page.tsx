@@ -80,7 +80,7 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
     void load().catch((err) => setError(err instanceof Error ? err.message : 'Failed to load'));
   }, [load]);
 
-  if (!masjidId) return <Empty>Households are managed per masjid.</Empty>;
+  if (!masjidId) return <Empty>{t('common.perMasjid')}</Empty>;
   if (!household) return <Loading label={t('hhd.loading')} />;
 
   const members = household.members ?? [];

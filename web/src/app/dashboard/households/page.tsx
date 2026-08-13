@@ -80,7 +80,7 @@ export default function HouseholdsPage() {
       .finally(() => setLoaded(true));
   }, [load]);
 
-  if (!masjidId) return <Empty>Households are managed per masjid.</Empty>;
+  if (!masjidId) return <Empty>{t('common.perMasjid')}</Empty>;
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();

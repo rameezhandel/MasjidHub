@@ -55,7 +55,7 @@ export default function StaffPage() {
       .finally(() => setLoaded(true));
   }, [load]);
 
-  if (!masjidId) return <Empty>Staff are managed per masjid.</Empty>;
+  if (!masjidId) return <Empty>{t('common.perMasjid')}</Empty>;
 
   const invite = async (e: React.FormEvent) => {
     e.preventDefault();

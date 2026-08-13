@@ -64,7 +64,7 @@ export default function PrayerTimesPage() {
     void load().finally(() => setLoaded(true));
   }, [load]);
 
-  if (!masjidId) return <Empty>Prayer times are managed per masjid.</Empty>;
+  if (!masjidId) return <Empty>{t('common.perMasjid')}</Empty>;
 
   const generate = async (e: React.FormEvent) => {
     e.preventDefault();

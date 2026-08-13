@@ -55,6 +55,7 @@ const en = {
   'common.archive': 'Archive',
   'common.cancel': 'Cancel',
   'common.close': 'Close',
+  'common.perMasjid': 'This section is managed per masjid.',
 
   // Toasts
   'toast.serverError': 'The server hit an error. Please try again.',
@@ -223,6 +224,11 @@ const en = {
   'mem.noMatch': 'No members match your search.',
   'mem.none': 'No members yet.',
   'mem.searchPlaceholder': 'Search by name or phone…',
+  'mem.subtitle': 'Search everyone across your registered households by name, phone or email.',
+  'mem.anyGender': 'Any gender',
+  'mem.prev': '← Previous',
+  'mem.next': 'Next →',
+  'mem.page': 'Page {x} of {y}',
 
   // Staff
   'staff.title': 'Staff',
@@ -349,6 +355,7 @@ const en = {
   'audit.action': 'Action',
   'audit.actor': 'Actor',
   'audit.details': 'Details',
+  'audit.onlyAdmin': 'Only the platform admin can view the audit log.',
 
   // Login
   'login.title': 'Sign in',
@@ -357,6 +364,8 @@ const en = {
   'login.signIn': 'Sign in',
   'login.signingIn': 'Signing in…',
   'login.forgot': 'Forgot password?',
+  'login.tagline': 'Staff sign in',
+  'login.passwordChanged': 'Password changed. Please sign in with your new password.',
 
   // Public masjid page
   'pub.today': "Today's times",
@@ -414,6 +423,7 @@ const hi: Dict = {
   'common.archive': 'संग्रहित करें',
   'common.cancel': 'रद्द करें',
   'common.close': 'बंद करें',
+  'common.perMasjid': 'यह अनुभाग प्रति मस्जिद प्रबंधित होता है।',
 
   'toast.serverError': 'सर्वर में त्रुटि हुई। कृपया फिर से प्रयास करें।',
   'toast.timeout': 'सर्वर को जवाब देने में देर हो रही है — वह शुरू हो रहा हो सकता है। कृपया फिर से प्रयास करें।',
@@ -572,6 +582,11 @@ const hi: Dict = {
   'mem.noMatch': 'आपकी खोज से कोई सदस्य मेल नहीं खाता।',
   'mem.none': 'अभी कोई सदस्य नहीं।',
   'mem.searchPlaceholder': 'नाम या फ़ोन से खोजें…',
+  'mem.subtitle': 'नाम, फ़ोन या ईमेल से अपने सभी पंजीकृत परिवारों के लोगों को खोजें।',
+  'mem.anyGender': 'कोई भी लिंग',
+  'mem.prev': '← पिछला',
+  'mem.next': 'अगला →',
+  'mem.page': 'पृष्ठ {x} / {y}',
 
   'staff.title': 'स्टाफ़',
   'staff.invite': '+ स्टाफ़ आमंत्रित करें',
@@ -692,6 +707,7 @@ const hi: Dict = {
   'audit.action': 'कार्रवाई',
   'audit.actor': 'कर्ता',
   'audit.details': 'विवरण',
+  'audit.onlyAdmin': 'केवल प्लेटफ़ॉर्म व्यवस्थापक ऑडिट लॉग देख सकते हैं।',
 
   'login.title': 'साइन इन',
   'login.email': 'ईमेल',
@@ -699,6 +715,8 @@ const hi: Dict = {
   'login.signIn': 'साइन इन',
   'login.signingIn': 'साइन इन हो रहा है…',
   'login.forgot': 'पासवर्ड भूल गए?',
+  'login.tagline': 'स्टाफ़ साइन इन',
+  'login.passwordChanged': 'पासवर्ड बदल गया। कृपया नए पासवर्ड से साइन इन करें।',
 
   'pub.today': 'आज के समय',
   'pub.comingDays': 'आने वाले दिन',
@@ -752,6 +770,7 @@ const kn: Dict = {
   'common.archive': 'ಆರ್ಕೈವ್ ಮಾಡಿ',
   'common.cancel': 'ರದ್ದುಮಾಡಿ',
   'common.close': 'ಮುಚ್ಚಿ',
+  'common.perMasjid': 'ಈ ವಿಭಾಗವನ್ನು ಪ್ರತಿ ಮಸೀದಿಗೆ ನಿರ್ವಹಿಸಲಾಗುತ್ತದೆ.',
 
   'toast.serverError': 'ಸರ್ವರ್‌ನಲ್ಲಿ ದೋಷ ಸಂಭವಿಸಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
   'toast.timeout': 'ಸರ್ವರ್ ಪ್ರತಿಕ್ರಿಯಿಸಲು ತಡವಾಗುತ್ತಿದೆ — ಅದು ಪ್ರಾರಂಭವಾಗುತ್ತಿರಬಹುದು. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
@@ -910,6 +929,11 @@ const kn: Dict = {
   'mem.noMatch': 'ನಿಮ್ಮ ಹುಡುಕಾಟಕ್ಕೆ ಯಾವ ಸದಸ್ಯರೂ ಹೊಂದುತ್ತಿಲ್ಲ.',
   'mem.none': 'ಇನ್ನೂ ಸದಸ್ಯರಿಲ್ಲ.',
   'mem.searchPlaceholder': 'ಹೆಸರು ಅಥವಾ ಫೋನ್ ಮೂಲಕ ಹುಡುಕಿ…',
+  'mem.subtitle': 'ಹೆಸರು, ಫೋನ್ ಅಥವಾ ಇಮೇಲ್ ಮೂಲಕ ನೋಂದಾಯಿತ ಕುಟುಂಬಗಳ ಎಲ್ಲರನ್ನೂ ಹುಡುಕಿ.',
+  'mem.anyGender': 'ಯಾವುದೇ ಲಿಂಗ',
+  'mem.prev': '← ಹಿಂದಿನದು',
+  'mem.next': 'ಮುಂದಿನದು →',
+  'mem.page': 'ಪುಟ {x} / {y}',
 
   'staff.title': 'ಸಿಬ್ಬಂದಿ',
   'staff.invite': '+ ಸಿಬ್ಬಂದಿ ಆಹ್ವಾನಿಸಿ',
@@ -1030,6 +1054,7 @@ const kn: Dict = {
   'audit.action': 'ಕ್ರಿಯೆ',
   'audit.actor': 'ಮಾಡಿದವರು',
   'audit.details': 'ವಿವರಗಳು',
+  'audit.onlyAdmin': 'ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ನಿರ್ವಾಹಕರು ಮಾತ್ರ ಆಡಿಟ್ ಲಾಗ್ ನೋಡಬಹುದು.',
 
   'login.title': 'ಸೈನ್ ಇನ್',
   'login.email': 'ಇಮೇಲ್',
@@ -1037,6 +1062,8 @@ const kn: Dict = {
   'login.signIn': 'ಸೈನ್ ಇನ್',
   'login.signingIn': 'ಸೈನ್ ಇನ್ ಆಗುತ್ತಿದೆ…',
   'login.forgot': 'ಪಾಸ್‌ವರ್ಡ್ ಮರೆತಿರಾ?',
+  'login.tagline': 'ಸಿಬ್ಬಂದಿ ಸೈನ್ ಇನ್',
+  'login.passwordChanged': 'ಪಾಸ್‌ವರ್ಡ್ ಬದಲಾಗಿದೆ. ದಯವಿಟ್ಟು ಹೊಸ ಪಾಸ್‌ವರ್ಡ್‌ನಿಂದ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
 
   'pub.today': 'ಇಂದಿನ ಸಮಯಗಳು',
   'pub.comingDays': 'ಮುಂಬರುವ ದಿನಗಳು',

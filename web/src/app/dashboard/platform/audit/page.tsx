@@ -41,7 +41,7 @@ export default function AuditLogPage() {
   }, [load]);
 
   if (user && user.role !== 'PLATFORM_ADMIN') {
-    return <Empty>Only the platform admin can view the audit log.</Empty>;
+    return <Empty>{t('audit.onlyAdmin')}</Empty>;
   }
 
   return (
