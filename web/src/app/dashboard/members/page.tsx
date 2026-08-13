@@ -5,12 +5,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { Badge, Card, Empty, ErrorText, Input, Loading, Select, Spinner } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useT } from '@/lib/i18n';
 import type { Gender, MemberSearchResult, Paginated } from '@/lib/types';
 
 const PAGE_SIZE = 25;
 
 export default function MembersPage() {
   const { user } = useAuth();
+  const t = useT();
   const masjidId = user?.masjidId;
 
   const [search, setSearch] = useState('');
@@ -49,26 +51,24 @@ export default function MembersPage() {
 
   // Debounce so we don't hit the API on every keystroke.
   useEffect(() => {
-    const t = setTimeout(() => void load(), 250);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => void load(), 250);
+    return () => clearTimeout(timer);
   }, [load]);
 
-  if (!masjidId) return <Empty>Members are managed per masjid.</Empty>;
+  if (!masjidId) return <Empty>{t('common.perMasjid')}</Empty>;
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div className="max-w-4xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Members</h1>
-        <p className="text-sm text-muted-foreground">
-          Search everyone across your registered households by name, phone or email.
-        </p>
+        <h1 className="text-2xl font-bold">{t('mem.title')}</h1>
+        <p className="text-sm text-muted-foreground">{t('mem.subtitle')}</p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <Input
-          placeholder="Search by name, phone or email…"
+          placeholder={t('mem.searchPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-72"
@@ -79,28 +79,28 @@ export default function MembersPage() {
           onChange={(e) => setGender(e.target.value as '' | Gender)}
           className="w-36"
         >
-          <option value="">Any gender</option>
-          <option value="MALE">Male</option>
-          <option value="FEMALE">Female</option>
+          <option value="">{t('mem.anyGender')}</option>
+          <option value="MALE">{t('hhd.male')}</option>
+          <option value="FEMALE">{t('hhd.female')}</option>
         </Select>
         <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
           {loading ? (
             <>
-              <Spinner className="size-3.5" /> Searching…
+              <Spinner className="size-3.5" /> {t('mem.searching')}
             </>
           ) : (
-            `${total} ${total === 1 ? 'person' : 'people'}`
+            `${total} ${total === 1 ? t('mem.person') : t('mem.people')}`
           )}
         </span>
       </div>
 
       <ErrorText>{error}</ErrorText>
 
-      <Card title="Results">
+      <Card title={t('mem.results')}>
         {loading && results.length === 0 ? (
-          <Loading label="Searching members…" />
+          <Loading label={t('mem.searchingLong')} />
         ) : results.length === 0 ? (
-          <Empty>{search.trim() ? 'No members match your search.' : 'No members yet.'}</Empty>
+          <Empty>{search.trim() ? t('mem.noMatch') : t('mem.none')}</Empty>
         ) : (
           <ul className="divide-y divide-border">
             {results.map((member) => (
@@ -130,7 +130,7 @@ export default function MembersPage() {
                   href={`/dashboard/households/${member.household.id}`}
                   className="shrink-0 text-sm font-medium text-primary hover:underline"
                 >
-                  Open →
+                  {t('hh.open')}
                 </Link>
               </li>
             ))}
@@ -144,17 +144,17 @@ export default function MembersPage() {
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
-              ← Previous
+              {t('mem.prev')}
             </button>
             <span className="text-muted-foreground">
-              Page {page} of {totalPages}
+              {t('mem.page', { x: page, y: totalPages })}
             </span>
             <button
               className="text-primary disabled:text-muted-foreground"
               disabled={page >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             >
-              Next →
+              {t('mem.next')}
             </button>
           </div>
         )}

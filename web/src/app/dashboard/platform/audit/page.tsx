@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Card, Empty, Loading, Select } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useT } from '@/lib/i18n';
 import type { AuditLog, Paginated } from '@/lib/types';
 
 const ACTIONS = [
@@ -21,6 +22,7 @@ const ACTIONS = [
 
 export default function AuditLogPage() {
   const { user } = useAuth();
+  const t = useT();
   const [entries, setEntries] = useState<AuditLog[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [action, setAction] = useState('');
@@ -39,37 +41,37 @@ export default function AuditLogPage() {
   }, [load]);
 
   if (user && user.role !== 'PLATFORM_ADMIN') {
-    return <Empty>Only the platform admin can view the audit log.</Empty>;
+    return <Empty>{t('audit.onlyAdmin')}</Empty>;
   }
 
   return (
     <div className="max-w-5xl space-y-6">
-      <h1 className="text-2xl font-bold">Audit log</h1>
+      <h1 className="text-2xl font-bold">{t('audit.title')}</h1>
       <Card
-        title="Sensitive actions"
+        title={t('audit.card')}
         actions={
           <Select value={action} onChange={(e) => setAction(e.target.value)} className="w-56">
             {ACTIONS.map((value) => (
               <option key={value} value={value}>
-                {value === '' ? 'All actions' : value.replaceAll('_', ' ')}
+                {value === '' ? t('audit.all') : value.replaceAll('_', ' ')}
               </option>
             ))}
           </Select>
         }
       >
         {!loaded ? (
-          <Loading label="Loading audit log…" />
+          <Loading label={t('audit.loading')} />
         ) : entries.length === 0 ? (
-          <Empty>No audit entries.</Empty>
+          <Empty>{t('audit.empty')}</Empty>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
-                  <th className="py-2 pr-3">When</th>
-                  <th className="py-2 pr-3">Action</th>
-                  <th className="py-2 pr-3">Actor</th>
-                  <th className="py-2">Details</th>
+                  <th className="py-2 pr-3">{t('audit.when')}</th>
+                  <th className="py-2 pr-3">{t('audit.action')}</th>
+                  <th className="py-2 pr-3">{t('audit.actor')}</th>
+                  <th className="py-2">{t('audit.details')}</th>
                 </tr>
               </thead>
               <tbody>

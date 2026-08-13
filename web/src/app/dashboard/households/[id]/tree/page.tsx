@@ -6,6 +6,7 @@ import { FamilyTreeGraph } from '@/components/FamilyTreeGraph';
 import { Button, Card, Empty, ErrorText, Label, Loading, Select } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useT } from '@/lib/i18n';
 import type { FamilyTree, Household, Paginated, RelationshipType } from '@/lib/types';
 
 interface MemberOption {
@@ -16,6 +17,7 @@ interface MemberOption {
 export default function HouseholdTreePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user } = useAuth();
+  const t = useT();
   const masjidId = user?.masjidId;
 
   const [tree, setTree] = useState<FamilyTree | null>(null);
@@ -30,11 +32,11 @@ export default function HouseholdTreePage({ params }: { params: Promise<{ id: st
 
   const loadTree = useCallback(async () => {
     if (!masjidId) return;
-    const [t, hh] = await Promise.all([
+    const [treeData, hh] = await Promise.all([
       api<FamilyTree>(`/masjids/${masjidId}/households/${id}/tree`),
       api<Household>(`/masjids/${masjidId}/households/${id}`),
     ]);
-    setTree(t);
+    setTree(treeData);
     setHousehold(hh);
   }, [masjidId, id]);
 
@@ -68,7 +70,7 @@ export default function HouseholdTreePage({ params }: { params: Promise<{ id: st
     return (memberId: string) => map.get(memberId) ?? 'Unknown';
   }, [tree]);
 
-  if (!masjidId) return <Empty>Households are managed per masjid.</Empty>;
+  if (!masjidId) return <Empty>{t('common.perMasjid')}</Empty>;
 
   const link = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,59 +111,55 @@ export default function HouseholdTreePage({ params }: { params: Promise<{ id: st
         >
           ← {household?.familyName ?? 'Household'}
         </Link>
-        <h1 className="text-2xl font-bold">Family tree</h1>
-        <p className="text-sm text-slate-500">
-          Relatives in other households are pulled in automatically wherever they are linked.
-        </p>
+        <h1 className="text-2xl font-bold">{t('tree.title')}</h1>
+        <p className="text-sm text-slate-500">{t('tree.note')}</p>
       </div>
 
       <ErrorText>{error}</ErrorText>
 
       {tree === null ? (
-        <Loading label="Loading family tree…" />
+        <Loading label={t('tree.loading')} />
       ) : tree.nodes.length > 0 ? (
         <>
           <FamilyTreeGraph tree={tree} />
           <div className="flex flex-wrap gap-4 text-xs text-slate-500">
             <span>
               <span className="mr-1 inline-block h-3 w-3 rounded border border-emerald-500 bg-emerald-50 align-middle" />
-              This household
+              {t('tree.thisHousehold')}
             </span>
             <span>
               <span className="mr-1 inline-block h-3 w-3 rounded border border-sky-300 bg-sky-50 align-middle" />
-              Male
+              {t('hhd.male')}
             </span>
             <span>
               <span className="mr-1 inline-block h-3 w-3 rounded border border-pink-300 bg-pink-50 align-middle" />
-              Female
+              {t('hhd.female')}
             </span>
-            <span>— parent → child · - - spouses</span>
+            <span>{t('tree.legendEdges')}</span>
           </div>
           {tree.truncated && (
             <p className="text-xs text-amber-600">
-              This family is large; only the closest {tree.nodes.length} relatives are shown.
+              {t('tree.truncated', { n: tree.nodes.length })}
             </p>
           )}
         </>
       ) : (
-        <Empty>
-          No relationships yet. Link two people below to start building the family tree.
-        </Empty>
+        <Empty>{t('tree.empty')}</Empty>
       )}
 
-      <Card title="Link two people">
+      <Card title={t('tree.link')}>
         <form onSubmit={link} className="grid gap-3 sm:grid-cols-4">
           <div>
-            <Label>Relationship</Label>
+            <Label>{t('tree.relationship')}</Label>
             <Select value={type} onChange={(e) => setType(e.target.value as RelationshipType)}>
-              <option value="PARENT">Parent → child</option>
-              <option value="SPOUSE">Spouses</option>
+              <option value="PARENT">{t('tree.parentChild')}</option>
+              <option value="SPOUSE">{t('tree.spouses')}</option>
             </Select>
           </div>
           <div>
-            <Label>{type === 'PARENT' ? 'Parent' : 'Person A'}</Label>
+            <Label>{type === 'PARENT' ? t('tree.parent') : t('tree.personA')}</Label>
             <Select value={fromId} onChange={(e) => setFromId(e.target.value)} required>
-              <option value="">Select…</option>
+              <option value="">{t('tree.select')}</option>
               {members.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.label}
@@ -170,9 +168,9 @@ export default function HouseholdTreePage({ params }: { params: Promise<{ id: st
             </Select>
           </div>
           <div>
-            <Label>{type === 'PARENT' ? 'Child' : 'Person B'}</Label>
+            <Label>{type === 'PARENT' ? t('tree.child') : t('tree.personB')}</Label>
             <Select value={toId} onChange={(e) => setToId(e.target.value)} required>
-              <option value="">Select…</option>
+              <option value="">{t('tree.select')}</option>
               {members.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.label}
@@ -182,35 +180,33 @@ export default function HouseholdTreePage({ params }: { params: Promise<{ id: st
           </div>
           <div className="flex items-end">
             <Button type="submit" disabled={busy || !fromId || !toId}>
-              {busy ? 'Linking…' : 'Add link'}
+              {busy ? t('tree.linking') : t('tree.addLink')}
             </Button>
           </div>
         </form>
       </Card>
 
       {tree && tree.edges.length > 0 && (
-        <Card title={`Relationships (${tree.edges.length})`}>
+        <Card title={t('tree.relationships', { n: tree.edges.length })}>
           <ul className="divide-y divide-slate-100">
             {tree.edges.map((edge) => (
               <li key={edge.id} className="flex items-center justify-between py-2 text-sm">
                 <span>
-                  {edge.type === 'PARENT' ? (
-                    <>
-                      <strong>{nameOf(edge.fromMemberId)}</strong> is a parent of{' '}
-                      <strong>{nameOf(edge.toMemberId)}</strong>
-                    </>
-                  ) : (
-                    <>
-                      <strong>{nameOf(edge.fromMemberId)}</strong> &amp;{' '}
-                      <strong>{nameOf(edge.toMemberId)}</strong> are spouses
-                    </>
-                  )}
+                  {edge.type === 'PARENT'
+                    ? t('tree.isParentOf', {
+                        a: nameOf(edge.fromMemberId),
+                        b: nameOf(edge.toMemberId),
+                      })
+                    : t('tree.areSpouses', {
+                        a: nameOf(edge.fromMemberId),
+                        b: nameOf(edge.toMemberId),
+                      })}
                 </span>
                 <button
                   className="text-xs text-red-500 hover:underline"
                   onClick={() => unlink(edge.id)}
                 >
-                  remove
+                  {t('common.remove')}
                 </button>
               </li>
             ))}

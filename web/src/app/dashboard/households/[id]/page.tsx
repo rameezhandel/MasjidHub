@@ -21,31 +21,33 @@ import {
 import { HouseholdDues } from '@/components/HouseholdDues';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useT, type DictKey } from '@/lib/i18n';
 import type { Gender, Household } from '@/lib/types';
 
 const HOUSEHOLD_FIELDS = [
-  ['familyName', 'Family name'],
-  ['headName', 'Head of household'],
-  ['phone', 'Phone'],
-  ['email', 'Email'],
-  ['addressLine1', 'Address line 1'],
-  ['addressLine2', 'Address line 2'],
-  ['city', 'City'],
-  ['state', 'State/Province'],
-  ['postalCode', 'Postal code'],
-  ['country', 'Country'],
+  ['familyName', 'hh.familyName'],
+  ['headName', 'hh.headName'],
+  ['phone', 'hh.phone'],
+  ['email', 'hhd.email'],
+  ['addressLine1', 'hhd.addressLine1'],
+  ['addressLine2', 'hhd.addressLine2'],
+  ['city', 'hh.city'],
+  ['state', 'hhd.state'],
+  ['postalCode', 'hhd.postalCode'],
+  ['country', 'hhd.country'],
 ] as const;
 
-const STATUS_LABELS: Record<string, string> = {
-  ACTIVE: 'Active',
-  INACTIVE: 'Inactive',
-  MOVED_OUT: 'Moved out',
+const STATUS_LABELS: Record<string, DictKey> = {
+  ACTIVE: 'common.active',
+  INACTIVE: 'common.inactive',
+  MOVED_OUT: 'common.movedOut',
 };
 
 export default function HouseholdDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user } = useAuth();
   const router = useRouter();
+  const t = useT();
   const masjidId = user?.masjidId;
   const isAdmin = user?.role === 'MASJID_ADMIN' || user?.role === 'PLATFORM_ADMIN';
 
@@ -78,8 +80,8 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
     void load().catch((err) => setError(err instanceof Error ? err.message : 'Failed to load'));
   }, [load]);
 
-  if (!masjidId) return <Empty>Households are managed per masjid.</Empty>;
-  if (!household) return <Loading label="Loading household…" />;
+  if (!masjidId) return <Empty>{t('common.perMasjid')}</Empty>;
+  if (!household) return <Loading label={t('hhd.loading')} />;
 
   const members = household.members ?? [];
 
@@ -143,7 +145,7 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <Link className="text-sm text-muted-foreground hover:underline" href="/dashboard/households">
-            ← Households
+            {t('hhd.back')}
           </Link>
           <h1 className="break-words text-2xl font-bold">
             {household.familyName} <Badge value={household.status} />
@@ -151,11 +153,11 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/dashboard/households/${id}/tree`}>
-            <Button variant="secondary">Family tree</Button>
+            <Button variant="secondary">{t('hhd.familyTree')}</Button>
           </Link>
           {isAdmin && (
             <Button variant="danger" onClick={deleteHousehold}>
-              Delete household
+              {t('hhd.deleteHousehold')}
             </Button>
           )}
         </div>
@@ -167,40 +169,42 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
       <HouseholdDues masjidId={masjidId} householdId={id} />
 
       <Card
-        title="Household details"
+        title={t('hhd.details')}
         actions={
           <Button variant="secondary" onClick={() => setDialog('edit')}>
-            Edit
+            {t('common.edit')}
           </Button>
         }
       >
         <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
           {HOUSEHOLD_FIELDS.map(([key, label]) => (
             <div key={key}>
-              <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
+              <dt className="text-xs uppercase tracking-wide text-muted-foreground">{t(label)}</dt>
               <dd className="text-sm font-medium">
                 {(household[key] as string | null) || <span className="text-muted-foreground">—</span>}
               </dd>
             </div>
           ))}
           <div>
-            <dt className="text-xs uppercase tracking-wide text-muted-foreground">Status</dt>
-            <dd className="text-sm font-medium">{STATUS_LABELS[household.status] ?? household.status}</dd>
+            <dt className="text-xs uppercase tracking-wide text-muted-foreground">{t('common.status')}</dt>
+            <dd className="text-sm font-medium">
+              {STATUS_LABELS[household.status] ? t(STATUS_LABELS[household.status]) : household.status}
+            </dd>
           </div>
         </dl>
         {household.notes && (
           <div className="mt-4 border-t border-border pt-3">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Notes</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">{t('common.notes')}</p>
             <p className="mt-1 whitespace-pre-line text-sm">{household.notes}</p>
           </div>
         )}
       </Card>
 
       <Card
-        title="Members"
+        title={t('hhd.membersTitle')}
         actions={
           <Button variant="secondary" onClick={() => setDialog('members')}>
-            View &amp; manage
+            {t('common.viewManage')}
           </Button>
         }
       >
@@ -211,7 +215,7 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
         >
           <span className="tabular text-3xl font-bold">{members.length}</span>
           <span className="text-sm text-muted-foreground">
-            {members.length === 1 ? 'person' : 'people'} in this household
+            {members.length === 1 ? t('hhd.personIn') : t('hhd.peopleIn')}
           </span>
         </button>
       </Card>
@@ -219,12 +223,12 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
       {/* Edit details: centered popup */}
       <Dialog open={dialog === 'edit'} onOpenChange={(open) => setDialog(open ? 'edit' : null)}>
         <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
-          <DialogTitle>Edit household details</DialogTitle>
+          <DialogTitle>{t('hhd.editDialog')}</DialogTitle>
           <form onSubmit={saveHousehold} className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
               {HOUSEHOLD_FIELDS.map(([key, label]) => (
                 <div key={key}>
-                  <Label>{label}</Label>
+                  <Label>{t(label)}</Label>
                   <Input
                     value={form[key] ?? ''}
                     onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
@@ -232,21 +236,21 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
                 </div>
               ))}
               <div>
-                <Label>Status</Label>
+                <Label>{t('common.status')}</Label>
                 <Select value={status} onChange={(e) => setStatus(e.target.value)}>
-                  <option value="ACTIVE">Active</option>
-                  <option value="INACTIVE">Inactive</option>
-                  <option value="MOVED_OUT">Moved out</option>
+                  <option value="ACTIVE">{t('common.active')}</option>
+                  <option value="INACTIVE">{t('common.inactive')}</option>
+                  <option value="MOVED_OUT">{t('common.movedOut')}</option>
                 </Select>
               </div>
             </div>
             <div>
-              <Label>Notes</Label>
+              <Label>{t('common.notes')}</Label>
               <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
             </div>
             <ErrorText>{error}</ErrorText>
             <Button type="submit" disabled={busy}>
-              {busy ? 'Saving…' : 'Save details'}
+              {busy ? t('common.saving') : t('hhd.saveDetails')}
             </Button>
           </form>
         </DialogContent>
@@ -255,7 +259,7 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
       {/* Members list + add: centered popup */}
       <Dialog open={dialog === 'members'} onOpenChange={(open) => setDialog(open ? 'members' : null)}>
         <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
-          <DialogTitle>Members ({members.length})</DialogTitle>
+          <DialogTitle>{t('hhd.membersTitle')} ({members.length})</DialogTitle>
           {members.length > 0 ? (
             <ul className="divide-y divide-border">
               {members.map((member) => (
@@ -278,40 +282,40 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
                     className="text-xs text-destructive hover:underline"
                     onClick={() => removeMember(member.id)}
                   >
-                    remove
+                    {t('common.remove')}
                   </button>
                 </li>
               ))}
             </ul>
           ) : (
-            <Empty>No members recorded yet.</Empty>
+            <Empty>{t('hhd.noMembers')}</Empty>
           )}
 
           <div className="border-t border-border pt-4">
-            <p className="mb-2 text-sm font-medium">Add a member</p>
+            <p className="mb-2 text-sm font-medium">{t('hhd.addMember')}</p>
             <form onSubmit={addMember} className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               <Input
-                placeholder="First name"
+                placeholder={t('hhd.firstName')}
                 value={mFirst}
                 onChange={(e) => setMFirst(e.target.value)}
                 required
               />
               <Input
-                placeholder="Last name"
+                placeholder={t('hhd.lastName')}
                 value={mLast}
                 onChange={(e) => setMLast(e.target.value)}
                 required
               />
               <Input
-                placeholder="Relationship"
+                placeholder={t('hhd.relationship')}
                 list="member-relationships"
                 value={mRel}
                 onChange={(e) => setMRel(e.target.value)}
               />
               <Select value={mGender} onChange={(e) => setMGender(e.target.value as '' | Gender)}>
-                <option value="">Gender…</option>
-                <option value="MALE">Male</option>
-                <option value="FEMALE">Female</option>
+                <option value="">{t('hhd.gender')}</option>
+                <option value="MALE">{t('hhd.male')}</option>
+                <option value="FEMALE">{t('hhd.female')}</option>
               </Select>
               <Input type="date" value={mDob} onChange={(e) => setMDob(e.target.value)} />
               <datalist id="member-relationships">
@@ -320,7 +324,7 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
                 ))}
               </datalist>
               <Button type="submit" disabled={busy}>
-                {busy ? 'Adding…' : 'Add'}
+                {busy ? t('common.adding') : t('common.add')}
               </Button>
             </form>
             <ErrorText>{error}</ErrorText>

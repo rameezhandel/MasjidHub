@@ -15,11 +15,13 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useT } from '@/lib/i18n';
 import type { SafeUser } from '@/lib/types';
 
 const MIN_PASSWORD = 12;
 
 export default function AccountPage() {
+  const t = useT();
   const { user, setUser, logout } = useAuth();
   const router = useRouter();
 
@@ -76,7 +78,7 @@ export default function AccountPage() {
         createdAt: updated.createdAt,
         updatedAt: updated.updatedAt,
       });
-      setProfileNotice('Name updated.');
+      setProfileNotice(t('acc.nameUpdated'));
       setDialog(null);
     } catch (err) {
       setProfileError(err instanceof Error ? err.message : 'Could not update your name');
@@ -114,26 +116,28 @@ export default function AccountPage() {
     }
   };
 
-  const roleLabel = user.role
-    .replace('PLATFORM_ADMIN', 'Platform admin')
-    .replace('MASJID_ADMIN', 'Masjid admin')
-    .replace('MASJID_MAINTAINER', 'Masjid maintainer');
+  const roleLabel =
+    user.role === 'PLATFORM_ADMIN'
+      ? t('acc.platformAdmin')
+      : user.role === 'MASJID_ADMIN'
+        ? t('acc.masjidAdmin')
+        : t('acc.masjidMaintainer');
 
   return (
     <div className="max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold">Account</h1>
+      <h1 className="text-2xl font-bold">{t('acc.title')}</h1>
 
       {profileNotice && !dialog && <p className="text-sm text-primary">{profileNotice}</p>}
 
       <Card
-        title="Your profile"
+        title={t('acc.profile')}
         actions={
           <div className="flex gap-2">
             <Button variant="secondary" onClick={openEdit}>
-              Edit
+              {t('common.edit')}
             </Button>
             <Button variant="secondary" onClick={openPassword}>
-              Change password
+              {t('acc.changePassword')}
             </Button>
           </div>
         }
@@ -141,10 +145,10 @@ export default function AccountPage() {
         <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
           {(
             [
-              ['First name', user.firstName],
-              ['Last name', user.lastName],
-              ['Email', user.email],
-              ['Role', roleLabel],
+              [t('acc.firstName'), user.firstName],
+              [t('acc.lastName'), user.lastName],
+              [t('acc.email'), user.email],
+              [t('acc.role'), roleLabel],
             ] as const
           ).map(([label, value]) => (
             <div key={label}>
@@ -158,21 +162,21 @@ export default function AccountPage() {
       {/* Edit name: centered popup */}
       <Dialog open={dialog === 'edit'} onOpenChange={(open) => setDialog(open ? 'edit' : null)}>
         <DialogContent className="max-w-md">
-          <DialogTitle>Edit your name</DialogTitle>
+          <DialogTitle>{t('acc.editName')}</DialogTitle>
           <form onSubmit={saveProfile} className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <Label>First name</Label>
+                <Label>{t('acc.firstName')}</Label>
                 <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
               </div>
               <div>
-                <Label>Last name</Label>
+                <Label>{t('acc.lastName')}</Label>
                 <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
               </div>
             </div>
             <ErrorText>{profileError}</ErrorText>
             <Button type="submit" disabled={profileBusy}>
-              {profileBusy ? 'Saving…' : 'Save name'}
+              {profileBusy ? t('common.saving') : t('acc.saveName')}
             </Button>
           </form>
         </DialogContent>
@@ -184,10 +188,10 @@ export default function AccountPage() {
         onOpenChange={(open) => setDialog(open ? 'password' : null)}
       >
         <DialogContent className="max-w-md">
-          <DialogTitle>Change password</DialogTitle>
+          <DialogTitle>{t('acc.changePassword')}</DialogTitle>
           <form onSubmit={changePassword} className="space-y-4">
             <div>
-              <Label>Current password</Label>
+              <Label>{t('acc.currentPassword')}</Label>
               <Input
                 type="password"
                 autoComplete="current-password"
@@ -197,7 +201,7 @@ export default function AccountPage() {
               />
             </div>
             <div>
-              <Label>New password</Label>
+              <Label>{t('acc.newPassword')}</Label>
               <Input
                 type="password"
                 autoComplete="new-password"
@@ -207,7 +211,7 @@ export default function AccountPage() {
               />
             </div>
             <div>
-              <Label>Confirm new password</Label>
+              <Label>{t('acc.confirmPassword')}</Label>
               <Input
                 type="password"
                 autoComplete="new-password"
@@ -217,12 +221,11 @@ export default function AccountPage() {
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              At least {MIN_PASSWORD} characters. Changing your password signs you out of all
-              sessions — you&apos;ll log back in with the new one.
+              {t('acc.passwordHint', { n: MIN_PASSWORD })}
             </p>
             <ErrorText>{pwError}</ErrorText>
             <Button type="submit" disabled={pwBusy}>
-              {pwBusy ? 'Updating…' : 'Change password'}
+              {pwBusy ? t('acc.updating') : t('acc.changePassword')}
             </Button>
           </form>
         </DialogContent>

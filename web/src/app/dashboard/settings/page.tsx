@@ -18,20 +18,21 @@ import {
 import { api, refreshPublicPages } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { CURRENCIES } from '@/lib/currencies';
+import { useT, type DictKey } from '@/lib/i18n';
 import { timezoneList } from '@/lib/timezones';
 import { CALCULATION_METHODS, type Masjid } from '@/lib/types';
 
 const FIELDS = [
-  ['name', 'Name'],
-  ['email', 'Contact email'],
-  ['phone', 'Phone'],
-  ['website', 'Website'],
-  ['addressLine1', 'Address line 1'],
-  ['addressLine2', 'Address line 2'],
-  ['city', 'City'],
-  ['state', 'State/Province'],
-  ['postalCode', 'Postal code'],
-  ['country', 'Country'],
+  ['name', 'set.name'],
+  ['email', 'set.contactEmail'],
+  ['phone', 'hh.phone'],
+  ['website', 'set.website'],
+  ['addressLine1', 'hhd.addressLine1'],
+  ['addressLine2', 'hhd.addressLine2'],
+  ['city', 'hh.city'],
+  ['state', 'hhd.state'],
+  ['postalCode', 'hhd.postalCode'],
+  ['country', 'hhd.country'],
 ] as const;
 
 function Detail({ label, value }: { label: string; value?: string | null }) {
@@ -46,6 +47,7 @@ function Detail({ label, value }: { label: string; value?: string | null }) {
 }
 
 export default function SettingsPage() {
+  const t = useT();
   const { user } = useAuth();
   const masjidId = user?.masjidId;
   const canEdit = user?.role === 'MASJID_ADMIN' || user?.role === 'PLATFORM_ADMIN';
@@ -80,7 +82,7 @@ export default function SettingsPage() {
       .finally(() => setLoaded(true));
   }, [load]);
 
-  if (!masjidId) return <Empty>Settings are managed per masjid.</Empty>;
+  if (!masjidId) return <Empty>{t('common.perMasjid')}</Empty>;
 
   // Copy the saved values into the form state whenever a dialog opens, so
   // edits abandoned by closing the popup never leak into the next one.
@@ -152,7 +154,7 @@ export default function SettingsPage() {
       await api(`/masjids/${masjidId}`, { method: 'PATCH', body });
       refreshPublicPages();
       await load();
-      setNotice('Saved.');
+      setNotice(t('common.saved'));
       setDialog(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');
@@ -164,8 +166,8 @@ export default function SettingsPage() {
   if (!loaded || !masjid) {
     return (
       <div className="max-w-3xl space-y-6">
-        <h1 className="text-2xl font-bold">Masjid settings</h1>
-        {loaded ? <Empty>Could not load the masjid.</Empty> : <Loading label="Loading settings…" />}
+        <h1 className="text-2xl font-bold">{t('set.title')}</h1>
+        {loaded ? <Empty>{t('set.loadFailed')}</Empty> : <Loading label={t('set.loading')} />}
       </div>
     );
   }
@@ -177,31 +179,27 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <h1 className="text-2xl font-bold">Masjid settings</h1>
-      {!canEdit && (
-        <p className="text-sm text-muted-foreground">
-          Only masjid admins can change settings — shown read-only.
-        </p>
-      )}
+      <h1 className="text-2xl font-bold">{t('set.title')}</h1>
+      {!canEdit && <p className="text-sm text-muted-foreground">{t('set.readOnly')}</p>}
       {notice && !dialog && <p className="text-sm text-primary">{notice}</p>}
 
       <Card
-        title="Profile"
+        title={t('set.profile')}
         actions={
           canEdit && (
             <Button variant="secondary" onClick={() => openDialog('profile')}>
-              Edit
+              {t('common.edit')}
             </Button>
           )
         }
       >
         <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
           {FIELDS.map(([key, label]) => (
-            <Detail key={key} label={label} value={masjid[key] as string | null} />
+            <Detail key={key} label={t(label as DictKey)} value={masjid[key] as string | null} />
           ))}
-          <Detail label="Timezone" value={masjid.timezone} />
+          <Detail label={t('set.timezone')} value={masjid.timezone} />
           <Detail
-            label="Currency (for dues)"
+            label={t('set.currency')}
             value={
               CURRENCIES.find((c) => c.code === masjid.currency)
                 ? `${masjid.currency} — ${CURRENCIES.find((c) => c.code === masjid.currency)?.name}`
@@ -212,30 +210,28 @@ export default function SettingsPage() {
       </Card>
 
       <Card
-        title="Prayer time calculation"
+        title={t('set.prayerCalc')}
         actions={
           canEdit && (
             <Button variant="secondary" onClick={() => openDialog('prayer')}>
-              Edit
+              {t('common.edit')}
             </Button>
           )
         }
       >
         <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
           <Detail
-            label="Calculation method"
+            label={t('set.calcMethod')}
             value={masjid.calculationMethod.replaceAll('_', ' ')}
           />
           <Detail
-            label="Asr method"
-            value={masjid.asrMethod === 'HANAFI' ? 'Hanafi' : "Standard (Shafi'i/Maliki/Hanbali)"}
+            label={t('set.asrMethod')}
+            value={masjid.asrMethod === 'HANAFI' ? t('set.asrHanafi') : t('set.asrStandard')}
           />
-          <Detail label="Coordinates" value={coordsLabel} />
+          <Detail label={t('set.coordinates')} value={coordsLabel} />
         </dl>
         {!coordsLabel && (
-          <p className="mt-3 text-xs text-muted-foreground">
-            Set the masjid&apos;s location to enable prayer-time auto-calculation.
-          </p>
+          <p className="mt-3 text-xs text-muted-foreground">{t('set.setLocationHint')}</p>
         )}
       </Card>
 
@@ -245,12 +241,12 @@ export default function SettingsPage() {
         onOpenChange={(open) => setDialog(open ? 'profile' : null)}
       >
         <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
-          <DialogTitle>Edit profile</DialogTitle>
+          <DialogTitle>{t('set.editProfile')}</DialogTitle>
           <form onSubmit={save} className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
               {FIELDS.map(([key, label]) => (
                 <div key={key}>
-                  <Label>{label}</Label>
+                  <Label>{t(label as DictKey)}</Label>
                   <Input
                     value={form[key] ?? ''}
                     onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
@@ -258,7 +254,7 @@ export default function SettingsPage() {
                 </div>
               ))}
               <div>
-                <Label>Timezone</Label>
+                <Label>{t('set.timezone')}</Label>
                 <Select
                   value={form.timezone ?? 'UTC'}
                   onChange={(e) => setForm((prev) => ({ ...prev, timezone: e.target.value }))}
@@ -271,7 +267,7 @@ export default function SettingsPage() {
                 </Select>
               </div>
               <div>
-                <Label>Currency (for dues)</Label>
+                <Label>{t('set.currency')}</Label>
                 <Select value={currency} onChange={(e) => setCurrency(e.target.value)}>
                   {CURRENCIES.map((c) => (
                     <option key={c.code} value={c.code}>
@@ -283,7 +279,7 @@ export default function SettingsPage() {
             </div>
             <ErrorText>{error}</ErrorText>
             <Button type="submit" disabled={busy}>
-              {busy ? 'Saving…' : 'Save profile'}
+              {busy ? t('common.saving') : t('set.saveProfile')}
             </Button>
           </form>
         </DialogContent>
@@ -292,10 +288,10 @@ export default function SettingsPage() {
       {/* Edit prayer calculation: centered popup */}
       <Dialog open={dialog === 'prayer'} onOpenChange={(open) => setDialog(open ? 'prayer' : null)}>
         <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
-          <DialogTitle>Edit prayer time calculation</DialogTitle>
+          <DialogTitle>{t('set.editPrayerCalc')}</DialogTitle>
           <form onSubmit={save} className="space-y-4">
             <div>
-              <Label>Location (drives prayer-time auto-calculation)</Label>
+              <Label>{t('set.locationLabel')}</Label>
               <LocationPicker
                 city={form.city ?? ''}
                 onCityChange={(c) => setForm((prev) => ({ ...prev, city: c }))}
@@ -306,7 +302,7 @@ export default function SettingsPage() {
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <Label>Latitude</Label>
+                <Label>{t('set.latitude')}</Label>
                 <Input
                   type="number"
                   step="any"
@@ -315,7 +311,7 @@ export default function SettingsPage() {
                 />
               </div>
               <div>
-                <Label>Longitude</Label>
+                <Label>{t('set.longitude')}</Label>
                 <Input
                   type="number"
                   step="any"
@@ -324,7 +320,7 @@ export default function SettingsPage() {
                 />
               </div>
               <div>
-                <Label>Calculation method</Label>
+                <Label>{t('set.calcMethod')}</Label>
                 <Select
                   value={calculationMethod}
                   onChange={(e) => setCalculationMethod(e.target.value)}
@@ -337,30 +333,29 @@ export default function SettingsPage() {
                 </Select>
               </div>
               <div>
-                <Label>Asr method</Label>
+                <Label>{t('set.asrMethod')}</Label>
                 <Select value={asrMethod} onChange={(e) => setAsrMethod(e.target.value)}>
-                  <option value="STANDARD">Standard (Shafi&apos;i/Maliki/Hanbali)</option>
-                  <option value="HANAFI">Hanafi</option>
+                  <option value="STANDARD">{t('set.asrStandard')}</option>
+                  <option value="HANAFI">{t('set.asrHanafi')}</option>
                 </Select>
               </div>
             </div>
             <ErrorText>{error}</ErrorText>
             <Button type="submit" disabled={busy}>
-              {busy ? 'Saving…' : 'Save calculation settings'}
+              {busy ? t('common.saving') : t('set.saveCalc')}
             </Button>
           </form>
         </DialogContent>
       </Dialog>
 
       {canEdit && (
-        <Card title="Danger zone">
+        <Card title={t('set.danger')}>
           <div className="space-y-4 rounded-lg border border-destructive/40 p-4">
             <p className="text-sm text-muted-foreground">
-              These permanently delete data for <strong>{masjid.name}</strong> and cannot be
-              undone. Type the masjid name below to enable them.
+              {t('set.dangerExplain', { name: masjid.name })}
             </p>
             <Input
-              placeholder={`Type "${masjid.name}" to confirm`}
+              placeholder={t('set.typeToConfirm', { name: masjid.name })}
               value={dangerConfirm}
               onChange={(e) => setDangerConfirm(e.target.value)}
             />
@@ -374,7 +369,7 @@ export default function SettingsPage() {
                     disabled={!armed || dangerBusy !== ''}
                     onClick={() => runReset({ households: true }, 'households')}
                   >
-                    {dangerBusy === 'households' ? 'Deleting…' : 'Delete all households'}
+                    {dangerBusy === 'households' ? t('set.deleting') : t('set.deleteHouseholds')}
                   </Button>
                   <Button
                     type="button"
@@ -382,7 +377,7 @@ export default function SettingsPage() {
                     disabled={!armed || dangerBusy !== ''}
                     onClick={() => runReset({ prayerTimes: true }, 'prayerTimes')}
                   >
-                    {dangerBusy === 'prayerTimes' ? 'Clearing…' : 'Clear prayer times'}
+                    {dangerBusy === 'prayerTimes' ? t('set.clearing') : t('set.clearPrayerTimes')}
                   </Button>
                   <Button
                     type="button"
@@ -393,15 +388,13 @@ export default function SettingsPage() {
                     }
                   >
                     {dangerBusy === 'announcements & events'
-                      ? 'Clearing…'
-                      : 'Clear announcements & events'}
+                      ? t('set.clearing')
+                      : t('set.clearAnnEvents')}
                   </Button>
                 </div>
               );
             })()}
-            <p className="text-xs text-muted-foreground">
-              Deleting households also removes their members, dues history, and family-tree links.
-            </p>
+            <p className="text-xs text-muted-foreground">{t('set.dangerFootnote')}</p>
             {dangerNotice && <p className="text-sm text-primary">{dangerNotice}</p>}
           </div>
         </Card>
