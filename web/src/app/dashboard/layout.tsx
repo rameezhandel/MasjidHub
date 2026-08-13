@@ -5,9 +5,7 @@ import { MenuIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Logo } from '@/components/Logo';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { Loading, Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { useT, type DictKey } from '@/lib/i18n';
@@ -21,14 +19,12 @@ const STAFF_LINKS: Array<{ href: string; label: DictKey }> = [
   { href: '/dashboard/members', label: 'nav.members' },
   { href: '/dashboard/staff', label: 'nav.staff' },
   { href: '/dashboard/settings', label: 'nav.settings' },
-  { href: '/dashboard/account', label: 'nav.account' },
 ];
 
 const PLATFORM_LINKS: Array<{ href: string; label: DictKey }> = [
   { href: '/dashboard', label: 'nav.overview' },
   { href: '/dashboard/platform', label: 'nav.masjids' },
   { href: '/dashboard/platform/audit', label: 'nav.auditLog' },
-  { href: '/dashboard/account', label: 'nav.account' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -77,21 +73,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </nav>
   );
 
+  // The signed-in user's name doubles as the way into Account, which is why
+  // Account has no nav entry of its own.
   const accountFooter = (
-    <div className="border-t border-border pt-3 text-xs text-muted-foreground">
-      <p className="truncate font-medium text-foreground">
-        {user.firstName} {user.lastName}
-      </p>
-      <p className="truncate">{user.email}</p>
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <button onClick={signOut} className="text-destructive underline">
-          {t('nav.signOut')}
-        </button>
-        <div className="flex items-center gap-1.5">
-          <LanguageSwitcher />
-          <ThemeToggle />
-        </div>
-      </div>
+    <div className="border-t border-border pt-3 text-xs">
+      <Link
+        href="/dashboard/account"
+        aria-label={t('nav.account')}
+        className={clsx(
+          'block rounded-lg px-2 py-1.5 transition-colors',
+          pathname === '/dashboard/account' ? 'bg-accent' : 'hover:bg-secondary',
+        )}
+      >
+        <p className="truncate font-medium text-foreground">
+          {user.firstName} {user.lastName}
+        </p>
+        <p className="truncate text-muted-foreground">{user.email}</p>
+      </Link>
+      <button onClick={signOut} className="mt-2 px-2 text-destructive underline">
+        {t('nav.signOut')}
+      </button>
     </div>
   );
 
