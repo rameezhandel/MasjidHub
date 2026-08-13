@@ -20,6 +20,7 @@ import {
 import { HouseholdImport } from '@/components/HouseholdImport';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useT } from '@/lib/i18n';
 import type { Gender, Household, HouseholdSummary, Paginated } from '@/lib/types';
 
 interface MemberDraft {
@@ -40,6 +41,7 @@ const emptyMember = (): MemberDraft => ({
 
 export default function HouseholdsPage() {
   const { user } = useAuth();
+  const t = useT();
   const masjidId = user?.masjidId;
   const [items, setItems] = useState<Household[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -128,19 +130,19 @@ export default function HouseholdsPage() {
   return (
     <div className="max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Households</h1>
+        <h1 className="text-2xl font-bold">{t('hh.title')}</h1>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => setDialog('import')}>
-            Import Excel
+            {t('hh.import')}
           </Button>
-          <Button onClick={() => setDialog('add')}>+ Register household</Button>
+          <Button onClick={() => setDialog('add')}>{t('hh.register')}</Button>
         </div>
       </div>
 
       {/* Import: centered popup */}
       <Dialog open={dialog === 'import'} onOpenChange={(open) => setDialog(open ? 'import' : null)}>
         <DialogContent className="max-w-xl">
-          <DialogTitle>Import households from Excel</DialogTitle>
+          <DialogTitle>{t('hh.importDialog')}</DialogTitle>
           <HouseholdImport
             masjidId={masjidId}
             onImported={() => {
@@ -154,11 +156,11 @@ export default function HouseholdsPage() {
       {summary && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           {[
-            ['Households', summary.total],
-            ['Active', summary.active],
-            ['Inactive', summary.inactive],
-            ['Moved out', summary.movedOut],
-            ['People', summary.members],
+            [t('hh.title'), summary.total],
+            [t('common.active'), summary.active],
+            [t('common.inactive'), summary.inactive],
+            [t('common.movedOut'), summary.movedOut],
+            [t('hh.people'), summary.members],
           ].map(([label, value]) => (
             <div key={label as string} className="rounded-xl border border-border bg-card p-4">
               <p className="text-2xl font-bold">{value as number}</p>
@@ -171,52 +173,52 @@ export default function HouseholdsPage() {
       {/* Add household: centered popup */}
       <Dialog open={dialog === 'add'} onOpenChange={(open) => setDialog(open ? 'add' : null)}>
         <DialogContent className="max-w-2xl">
-          <DialogTitle>Register a household</DialogTitle>
+          <DialogTitle>{t('hh.registerDialog')}</DialogTitle>
           <form onSubmit={create} className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <Label>Family name</Label>
+                <Label>{t('hh.familyName')}</Label>
                 <Input value={familyName} onChange={(e) => setFamilyName(e.target.value)} required />
               </div>
               <div>
-                <Label>Head of household</Label>
+                <Label>{t('hh.headName')}</Label>
                 <Input value={headName} onChange={(e) => setHeadName(e.target.value)} required />
               </div>
               <div>
-                <Label>Phone</Label>
+                <Label>{t('hh.phone')}</Label>
                 <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
               </div>
               <div>
-                <Label>City</Label>
+                <Label>{t('hh.city')}</Label>
                 <Input value={city} onChange={(e) => setCity(e.target.value)} />
               </div>
               <div className="sm:col-span-2">
-                <Label>Address</Label>
+                <Label>{t('hh.address')}</Label>
                 <Input value={addressLine1} onChange={(e) => setAddressLine1(e.target.value)} />
               </div>
               <div className="sm:col-span-2">
-                <Label>Notes</Label>
+                <Label>{t('common.notes')}</Label>
                 <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
               </div>
             </div>
 
             <div>
-              <Label>Family members</Label>
+              <Label>{t('hh.familyMembers')}</Label>
               <div className="space-y-2">
                 {members.map((member, index) => (
                   <div key={index} className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                     <Input
-                      placeholder="First name"
+                      placeholder={t('hhd.firstName')}
                       value={member.firstName}
                       onChange={(e) => updateMember(index, { firstName: e.target.value })}
                     />
                     <Input
-                      placeholder="Last name"
+                      placeholder={t('hhd.lastName')}
                       value={member.lastName}
                       onChange={(e) => updateMember(index, { lastName: e.target.value })}
                     />
                     <Input
-                      placeholder="Relationship"
+                      placeholder={t('hhd.relationship')}
                       list="relationships"
                       value={member.relationship}
                       onChange={(e) => updateMember(index, { relationship: e.target.value })}
@@ -227,9 +229,9 @@ export default function HouseholdsPage() {
                         updateMember(index, { gender: e.target.value as '' | Gender })
                       }
                     >
-                      <option value="">Gender…</option>
-                      <option value="MALE">Male</option>
-                      <option value="FEMALE">Female</option>
+                      <option value="">{t('hhd.gender')}</option>
+                      <option value="MALE">{t('hhd.male')}</option>
+                      <option value="FEMALE">{t('hhd.female')}</option>
                     </Select>
                     <Input
                       type="date"
@@ -248,42 +250,42 @@ export default function HouseholdsPage() {
                   variant="ghost"
                   onClick={() => setMembers((prev) => [...prev, emptyMember()])}
                 >
-                  + Add another member
+                  {t('hh.addAnother')}
                 </Button>
               </div>
             </div>
 
             <ErrorText>{error}</ErrorText>
             <Button type="submit" disabled={busy}>
-              {busy ? 'Saving…' : 'Register household'}
+              {busy ? t('common.saving') : t('hh.registerAction')}
             </Button>
           </form>
         </DialogContent>
       </Dialog>
 
       <Card
-        title="Registered households"
+        title={t('hh.registered')}
         actions={
           <div className="flex items-center gap-2">
             <Input
-              placeholder="Search…"
+              placeholder={t('common.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-40"
             />
             <Select value={status} onChange={(e) => setStatus(e.target.value)} className="w-36">
-              <option value="">All statuses</option>
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
-              <option value="MOVED_OUT">Moved out</option>
+              <option value="">{t('common.allStatuses')}</option>
+              <option value="ACTIVE">{t('common.active')}</option>
+              <option value="INACTIVE">{t('common.inactive')}</option>
+              <option value="MOVED_OUT">{t('common.movedOut')}</option>
             </Select>
           </div>
         }
       >
         {!loaded ? (
-          <Loading label="Loading households…" />
+          <Loading label={t('hh.loading')} />
         ) : items.length === 0 ? (
-          <Empty>No households registered yet.</Empty>
+          <Empty>{t('hh.empty')}</Empty>
         ) : (
           <ul className="divide-y divide-border">
             {items.map((household) => (
@@ -298,8 +300,8 @@ export default function HouseholdsPage() {
                   <p className="text-xs text-muted-foreground">
                     {household.headName}
                     {household.city ? ` · ${household.city}` : ''} ·{' '}
-                    {household._count?.members ?? 0} member
-                    {household._count?.members === 1 ? '' : 's'}
+                    {household._count?.members ?? 0}{' '}
+                    {household._count?.members === 1 ? t('hh.member') : t('hh.members')}
                     {household.phone ? ` · ${household.phone}` : ''}
                   </p>
                 </div>
@@ -307,7 +309,7 @@ export default function HouseholdsPage() {
                   href={`/dashboard/households/${household.id}`}
                   className="text-sm font-medium text-primary hover:underline"
                 >
-                  Open →
+                  {t('hh.open')}
                 </Link>
               </li>
             ))}

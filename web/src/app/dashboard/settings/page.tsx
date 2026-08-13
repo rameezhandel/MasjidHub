@@ -18,20 +18,21 @@ import {
 import { api, refreshPublicPages } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { CURRENCIES } from '@/lib/currencies';
+import { useT, type DictKey } from '@/lib/i18n';
 import { timezoneList } from '@/lib/timezones';
 import { CALCULATION_METHODS, type Masjid } from '@/lib/types';
 
 const FIELDS = [
-  ['name', 'Name'],
-  ['email', 'Contact email'],
-  ['phone', 'Phone'],
-  ['website', 'Website'],
-  ['addressLine1', 'Address line 1'],
-  ['addressLine2', 'Address line 2'],
-  ['city', 'City'],
-  ['state', 'State/Province'],
-  ['postalCode', 'Postal code'],
-  ['country', 'Country'],
+  ['name', 'set.name'],
+  ['email', 'set.contactEmail'],
+  ['phone', 'hh.phone'],
+  ['website', 'set.website'],
+  ['addressLine1', 'hhd.addressLine1'],
+  ['addressLine2', 'hhd.addressLine2'],
+  ['city', 'hh.city'],
+  ['state', 'hhd.state'],
+  ['postalCode', 'hhd.postalCode'],
+  ['country', 'hhd.country'],
 ] as const;
 
 function Detail({ label, value }: { label: string; value?: string | null }) {
@@ -46,6 +47,7 @@ function Detail({ label, value }: { label: string; value?: string | null }) {
 }
 
 export default function SettingsPage() {
+  const t = useT();
   const { user } = useAuth();
   const masjidId = user?.masjidId;
   const canEdit = user?.role === 'MASJID_ADMIN' || user?.role === 'PLATFORM_ADMIN';
@@ -152,7 +154,7 @@ export default function SettingsPage() {
       await api(`/masjids/${masjidId}`, { method: 'PATCH', body });
       refreshPublicPages();
       await load();
-      setNotice('Saved.');
+      setNotice(t('common.saved'));
       setDialog(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');
@@ -164,8 +166,8 @@ export default function SettingsPage() {
   if (!loaded || !masjid) {
     return (
       <div className="max-w-3xl space-y-6">
-        <h1 className="text-2xl font-bold">Masjid settings</h1>
-        {loaded ? <Empty>Could not load the masjid.</Empty> : <Loading label="Loading settings…" />}
+        <h1 className="text-2xl font-bold">{t('set.title')}</h1>
+        {loaded ? <Empty>{t('set.loadFailed')}</Empty> : <Loading label={t('set.loading')} />}
       </div>
     );
   }
@@ -177,31 +179,27 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <h1 className="text-2xl font-bold">Masjid settings</h1>
-      {!canEdit && (
-        <p className="text-sm text-muted-foreground">
-          Only masjid admins can change settings — shown read-only.
-        </p>
-      )}
+      <h1 className="text-2xl font-bold">{t('set.title')}</h1>
+      {!canEdit && <p className="text-sm text-muted-foreground">{t('set.readOnly')}</p>}
       {notice && !dialog && <p className="text-sm text-primary">{notice}</p>}
 
       <Card
-        title="Profile"
+        title={t('set.profile')}
         actions={
           canEdit && (
             <Button variant="secondary" onClick={() => openDialog('profile')}>
-              Edit
+              {t('common.edit')}
             </Button>
           )
         }
       >
         <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
           {FIELDS.map(([key, label]) => (
-            <Detail key={key} label={label} value={masjid[key] as string | null} />
+            <Detail key={key} label={t(label as DictKey)} value={masjid[key] as string | null} />
           ))}
-          <Detail label="Timezone" value={masjid.timezone} />
+          <Detail label={t('set.timezone')} value={masjid.timezone} />
           <Detail
-            label="Currency (for dues)"
+            label={t('set.currency')}
             value={
               CURRENCIES.find((c) => c.code === masjid.currency)
                 ? `${masjid.currency} — ${CURRENCIES.find((c) => c.code === masjid.currency)?.name}`

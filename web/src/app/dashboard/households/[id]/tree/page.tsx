@@ -6,6 +6,7 @@ import { FamilyTreeGraph } from '@/components/FamilyTreeGraph';
 import { Button, Card, Empty, ErrorText, Label, Loading, Select } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useT } from '@/lib/i18n';
 import type { FamilyTree, Household, Paginated, RelationshipType } from '@/lib/types';
 
 interface MemberOption {
@@ -16,6 +17,7 @@ interface MemberOption {
 export default function HouseholdTreePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user } = useAuth();
+  const t = useT();
   const masjidId = user?.masjidId;
 
   const [tree, setTree] = useState<FamilyTree | null>(null);

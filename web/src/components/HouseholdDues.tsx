@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Button, Card, Empty, ErrorText, Input, Label, Loading, Select } from '@/components/ui';
 import { api } from '@/lib/api';
 import { formatMoney } from '@/lib/currencies';
+import { useT } from '@/lib/i18n';
 import type { DuesSummary, FeeFrequency } from '@/lib/types';
 
 const toCents = (v: string) => Math.round(parseFloat(v) * 100);
@@ -11,6 +12,7 @@ const centsToInput = (cents: number) => (cents / 100).toFixed(2);
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
 export function HouseholdDues({ masjidId, householdId }: { masjidId: string; householdId: string }) {
+  const t = useT();
   const [dues, setDues] = useState<DuesSummary | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -56,7 +58,7 @@ export function HouseholdDues({ masjidId, householdId }: { masjidId: string; hou
               feeStartOn: feeStartOn || todayStr(),
             },
       });
-      setFeeNotice('Fee saved.');
+      setFeeNotice(t('dues.feeSaved'));
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save the fee');
@@ -105,27 +107,31 @@ export function HouseholdDues({ masjidId, householdId }: { masjidId: string; hou
 
   if (!dues)
     return (
-      <Card title="Dues">
-        {error ? <ErrorText>{error}</ErrorText> : <Loading label="Loading dues…" />}
+      <Card title={t('dues.title')}>
+        {error ? <ErrorText>{error}</ErrorText> : <Loading label={t('dues.loading')} />}
       </Card>
     );
 
   const fmt = (cents: number) => formatMoney(cents, dues.currency);
   const balance = dues.balanceCents;
   const balanceLabel =
-    balance > 0 ? `${fmt(balance)} owing` : balance < 0 ? `${fmt(-balance)} in credit` : 'Paid up';
+    balance > 0
+      ? t('dues.owing', { amount: fmt(balance) })
+      : balance < 0
+        ? t('dues.inCredit', { amount: fmt(-balance) })
+        : t('dues.paidUp');
   const balanceTone =
     balance > 0 ? 'text-gold' : balance < 0 ? 'text-primary' : 'text-muted-foreground';
 
   return (
-    <Card title="Dues">
+    <Card title={t('dues.title')}>
       <div className="space-y-5">
         {/* Balance summary */}
         <div className="grid grid-cols-3 gap-3 text-center">
           {[
-            ['Owed to date', fmt(dues.expectedCents)],
-            ['Paid', fmt(dues.paidCents)],
-            ['Balance', balanceLabel],
+            [t('dues.owedToDate'), fmt(dues.expectedCents)],
+            [t('dues.paid'), fmt(dues.paidCents)],
+            [t('dues.balance'), balanceLabel],
           ].map(([label, value], i) => (
             <div
               key={label}
@@ -141,10 +147,10 @@ export function HouseholdDues({ masjidId, householdId }: { masjidId: string; hou
 
         {/* Set the fee (price) */}
         <form onSubmit={saveFee} className="space-y-3 rounded-lg border border-border p-4">
-          <p className="text-sm font-medium">Fee for this household</p>
+          <p className="text-sm font-medium">{t('dues.feeTitle')}</p>
           <div className="grid gap-3 sm:grid-cols-3">
             <div>
-              <Label>Amount</Label>
+              <Label>{t('dues.amount')}</Label>
               <Input
                 type="number"
                 min={0}
@@ -155,18 +161,18 @@ export function HouseholdDues({ masjidId, householdId }: { masjidId: string; hou
               />
             </div>
             <div>
-              <Label>Frequency</Label>
+              <Label>{t('dues.frequency')}</Label>
               <Select
                 value={feeFrequency}
                 onChange={(e) => setFeeFrequency(e.target.value as '' | FeeFrequency)}
               >
-                <option value="">No fee</option>
-                <option value="MONTHLY">Monthly</option>
-                <option value="YEARLY">Yearly</option>
+                <option value="">{t('dues.noFee')}</option>
+                <option value="MONTHLY">{t('dues.monthly')}</option>
+                <option value="YEARLY">{t('dues.yearly')}</option>
               </Select>
             </div>
             <div>
-              <Label>Starts on</Label>
+              <Label>{t('dues.startsOn')}</Label>
               <Input
                 type="date"
                 value={feeStartOn}
@@ -176,21 +182,20 @@ export function HouseholdDues({ masjidId, householdId }: { masjidId: string; hou
           </div>
           <div className="flex items-center gap-3">
             <Button type="submit" variant="secondary" disabled={busy}>
-              Save fee
+              {t('dues.saveFee')}
             </Button>
             {feeNotice && <span className="text-sm text-primary">{feeNotice}</span>}
           </div>
           <p className="text-xs text-muted-foreground">
-            Balance owed is the fee times the number of {feeFrequency === 'YEARLY' ? 'years' : 'periods'}{' '}
-            since the start date, minus what&apos;s been paid.
+            {feeFrequency === 'YEARLY' ? t('dues.explainYearly') : t('dues.explainMonthly')}
           </p>
         </form>
 
         {/* Payment history */}
         <div>
-          <p className="mb-2 text-sm font-medium">Payment history</p>
+          <p className="mb-2 text-sm font-medium">{t('dues.history')}</p>
           {dues.payments.length === 0 ? (
-            <Empty>No payments recorded yet.</Empty>
+            <Empty>{t('dues.noPayments')}</Empty>
           ) : (
             <ul className="divide-y divide-border">
               {dues.payments.map((p) => (
@@ -221,20 +226,20 @@ export function HouseholdDues({ masjidId, householdId }: { masjidId: string; hou
             type="number"
             min={0}
             step="0.01"
-            placeholder="Amount"
+            placeholder={t('dues.amount')}
             value={payAmount}
             onChange={(e) => setPayAmount(e.target.value)}
             required
           />
           <Input type="date" value={payDate} onChange={(e) => setPayDate(e.target.value)} required />
           <Input
-            placeholder="Method"
+            placeholder={t('dues.method')}
             list="pay-methods"
             value={payMethod}
             onChange={(e) => setPayMethod(e.target.value)}
           />
           <Input
-            placeholder="Period (e.g. Jan 2026)"
+            placeholder={t('dues.period')}
             value={payPeriod}
             onChange={(e) => setPayPeriod(e.target.value)}
           />
@@ -244,7 +249,7 @@ export function HouseholdDues({ masjidId, householdId }: { masjidId: string; hou
             ))}
           </datalist>
           <Button type="submit" variant="gold" disabled={busy}>
-            Record payment
+            {t('dues.record')}
           </Button>
         </form>
 

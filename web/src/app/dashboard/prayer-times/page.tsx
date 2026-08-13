@@ -15,6 +15,7 @@ import {
 } from '@/components/ui';
 import { api, refreshPublicPages } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useT } from '@/lib/i18n';
 import type { PrayerTimetableEntry } from '@/lib/types';
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -22,6 +23,7 @@ const plusDays = (days: number) =>
   new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
 
 export default function PrayerTimesPage() {
+  const t = useT();
   const { user } = useAuth();
   const masjidId = user?.masjidId;
   const [entries, setEntries] = useState<PrayerTimetableEntry[]>([]);
@@ -93,7 +95,7 @@ export default function PrayerTimesPage() {
           },
         },
       );
-      setNotice(`Generated ${result.generated} day(s), kept ${result.skipped} existing.`);
+      setNotice(t('pt.generated', { n: result.generated, m: result.skipped }));
       setOpen(false);
       refreshPublicPages();
       await load();
@@ -107,8 +109,8 @@ export default function PrayerTimesPage() {
   return (
     <div className="max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Prayer times</h1>
-        <Button onClick={() => setOpen(true)}>Auto-generate</Button>
+        <h1 className="text-2xl font-bold">{t('pt.title')}</h1>
+        <Button onClick={() => setOpen(true)}>{t('pt.autoGenerate')}</Button>
       </div>
 
       {notice && !open && (
@@ -119,22 +121,19 @@ export default function PrayerTimesPage() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-xl">
-          <DialogTitle>Auto-generate timetable</DialogTitle>
-          <p className="text-xs text-muted-foreground">
-            Calculated from your masjid&apos;s coordinates and calculation method — set them under
-            Masjid settings.
-          </p>
+          <DialogTitle>{t('pt.dialogTitle')}</DialogTitle>
+          <p className="text-xs text-muted-foreground">{t('pt.dialogHint')}</p>
           <form onSubmit={generate} className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label>From</Label>
+              <Label>{t('pt.from')}</Label>
               <Input type="date" value={genFrom} onChange={(e) => setGenFrom(e.target.value)} />
             </div>
             <div>
-              <Label>To</Label>
+              <Label>{t('pt.to')}</Label>
               <Input type="date" value={genTo} onChange={(e) => setGenTo(e.target.value)} />
             </div>
             <div>
-              <Label>Jumu&apos;ah time (Fridays)</Label>
+              <Label>{t('pt.jumuahTime')}</Label>
               <Input
                 placeholder="13:30"
                 value={jumuah1}
@@ -149,18 +148,18 @@ export default function PrayerTimesPage() {
                 onChange={(e) => setOverwrite(e.target.checked)}
               />
               <label htmlFor="overwrite" className="text-sm text-muted-foreground">
-                Overwrite existing days
+                {t('pt.overwrite')}
               </label>
             </div>
             <div className="sm:col-span-2">
-              <Label>Iqamah offsets in minutes after adhan (optional)</Label>
+              <Label>{t('pt.offsets')}</Label>
               <div className="grid grid-cols-5 gap-2">
                 {[
-                  ['Fajr', fajrOffset, setFajrOffset],
-                  ['Dhuhr', dhuhrOffset, setDhuhrOffset],
-                  ['Asr', asrOffset, setAsrOffset],
-                  ['Maghrib', maghribOffset, setMaghribOffset],
-                  ['Isha', ishaOffset, setIshaOffset],
+                  [t('prayer.fajr'), fajrOffset, setFajrOffset],
+                  [t('prayer.dhuhr'), dhuhrOffset, setDhuhrOffset],
+                  [t('prayer.asr'), asrOffset, setAsrOffset],
+                  [t('prayer.maghrib'), maghribOffset, setMaghribOffset],
+                  [t('prayer.isha'), ishaOffset, setIshaOffset],
                 ].map(([label, value, setter]) => (
                   <Input
                     key={label as string}
@@ -178,7 +177,7 @@ export default function PrayerTimesPage() {
             </div>
             <div className="sm:col-span-2">
               <Button type="submit" disabled={busy}>
-                {busy ? 'Generating…' : 'Generate timetable'}
+                {busy ? t('pt.generating') : t('pt.generate')}
               </Button>
               <ErrorText>{error}</ErrorText>
             </div>
@@ -187,7 +186,7 @@ export default function PrayerTimesPage() {
       </Dialog>
 
       <Card
-        title="Timetable"
+        title={t('pt.timetable')}
         actions={
           <span className="tabular text-sm text-muted-foreground">
             {from} — {to}
@@ -195,33 +194,31 @@ export default function PrayerTimesPage() {
         }
       >
         {!loaded ? (
-          <Loading label="Loading timetable…" />
+          <Loading label={t('pt.loading')} />
         ) : entries.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-10 text-center">
             <button
               type="button"
-              aria-label="Auto-generate"
+              aria-label={t('pt.autoGenerate')}
               onClick={() => setOpen(true)}
               className="flex size-14 items-center justify-center rounded-full border-2 border-dashed border-border text-3xl leading-none text-muted-foreground transition-colors hover:border-primary hover:text-primary"
             >
               +
             </button>
-            <p className="text-sm text-muted-foreground">
-              No entries in this range yet — auto-generate the timetable.
-            </p>
+            <p className="text-sm text-muted-foreground">{t('pt.empty')}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
-                  <th className="py-2 pr-3">Date</th>
-                  <th className="py-2 pr-3">Fajr</th>
-                  <th className="py-2 pr-3">Dhuhr</th>
-                  <th className="py-2 pr-3">Asr</th>
-                  <th className="py-2 pr-3">Maghrib</th>
-                  <th className="py-2 pr-3">Isha</th>
-                  <th className="py-2 pr-3">Jumu&apos;ah</th>
+                  <th className="py-2 pr-3">{t('pt.date')}</th>
+                  <th className="py-2 pr-3">{t('prayer.fajr')}</th>
+                  <th className="py-2 pr-3">{t('prayer.dhuhr')}</th>
+                  <th className="py-2 pr-3">{t('prayer.asr')}</th>
+                  <th className="py-2 pr-3">{t('prayer.maghrib')}</th>
+                  <th className="py-2 pr-3">{t('prayer.isha')}</th>
+                  <th className="py-2 pr-3">{t('prayer.jumuah')}</th>
                   <th className="py-2" />
                 </tr>
               </thead>
@@ -249,14 +246,14 @@ export default function PrayerTimesPage() {
                           await load();
                         }}
                       >
-                        delete
+                        {t('pt.deleteRow')}
                       </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <p className="mt-2 text-xs text-muted-foreground">Times shown as adhan / iqamah.</p>
+            <p className="mt-2 text-xs text-muted-foreground">{t('pt.legend')}</p>
           </div>
         )}
       </Card>

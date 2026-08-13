@@ -6,6 +6,7 @@ import { useNextPrayer } from '@/components/NextPrayerHero';
 import { Badge, Card, Empty, Loading } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useT, type DictKey } from '@/lib/i18n';
 import type {
   Announcement,
   HouseholdSummary,
@@ -30,6 +31,7 @@ function StatCard({ label, value, href }: { label: string; value: React.ReactNod
 }
 
 function OverviewHeader() {
+  const t = useT();
   const [dateLabel, setDateLabel] = useState('');
   useEffect(() => {
     setDateLabel(
@@ -43,13 +45,14 @@ function OverviewHeader() {
   }, []);
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-2">
-      <h1 className="text-2xl font-bold">Overview</h1>
+      <h1 className="text-2xl font-bold">{t('overview.title')}</h1>
       <p className="text-sm text-muted-foreground">{dateLabel}</p>
     </div>
   );
 }
 
 function StaffOverview({ masjidId, firstName }: { masjidId: string; firstName: string }) {
+  const t = useT();
   const [masjid, setMasjid] = useState<Masjid | null>(null);
   const [summary, setSummary] = useState<HouseholdSummary | null>(null);
   const [announcements, setAnnouncements] = useState<Paginated<Announcement> | null>(null);
@@ -74,6 +77,7 @@ function StaffOverview({ masjidId, firstName }: { masjidId: string; firstName: s
   }, [masjidId]);
 
   const next = useNextPrayer(today, masjid?.timezone ?? 'UTC');
+  const prayerName = next.key ? t(('prayer.' + next.key) as DictKey) : next.label;
   const metaLine = masjid
     ? [
         [masjid.addressLine1, masjid.city].filter(Boolean).join(', '),
@@ -92,7 +96,7 @@ function StaffOverview({ masjidId, firstName }: { masjidId: string; firstName: s
       <section className="texture-rub overflow-hidden rounded-2xl bg-primary p-6 text-primary-foreground sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="min-w-0">
-            <p className="text-sm opacity-80">Assalamu alaikum, {firstName}</p>
+            <p className="text-sm opacity-80">{t('overview.greeting', { name: firstName })}</p>
             <h2 className="font-display mt-1 break-words text-2xl font-extrabold tracking-tight sm:text-3xl">
               {masjid?.name ?? '…'}
             </h2>
@@ -104,17 +108,21 @@ function StaffOverview({ masjidId, firstName }: { masjidId: string; firstName: s
                 rel="noopener noreferrer"
                 className="mt-3 inline-block rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-sm font-medium hover:bg-primary-foreground/20"
               >
-                View public page ↗
+                {t('overview.viewPublicPage')}
               </a>
             )}
           </div>
           {today && (
             <div className="shrink-0 rounded-xl bg-black/15 p-4 text-right">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">
-                Next · {next.label}
+                {t('overview.next', { prayer: prayerName })}
               </p>
               <p className="font-display tabular mt-1 text-3xl font-bold">{next.countdown}</p>
-              {next.time && <p className="tabular mt-0.5 text-xs opacity-80">at {next.time}</p>}
+              {next.time && (
+                <p className="tabular mt-0.5 text-xs opacity-80">
+                  {t('prayer.at')} {next.time}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -123,26 +131,26 @@ function StaffOverview({ masjidId, firstName }: { masjidId: string; firstName: s
       {/* Quick stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard
-          label="Households"
+          label={t('overview.households')}
           value={summary?.total ?? '…'}
           href="/dashboard/households"
         />
-        <StatCard label="People" value={summary?.members ?? '…'} href="/dashboard/members" />
+        <StatCard label={t('overview.people')} value={summary?.members ?? '…'} href="/dashboard/members" />
         <StatCard
-          label="Events"
+          label={t('overview.events')}
           value={events?.meta.total ?? '…'}
           href="/dashboard/events"
         />
-        <StatCard label="Staff" value={masjid?._count?.users ?? '…'} href="/dashboard/staff" />
+        <StatCard label={t('overview.staff')} value={masjid?._count?.users ?? '…'} href="/dashboard/staff" />
       </div>
 
       {/* Recent activity */}
       <div className="grid gap-6 md:grid-cols-2">
         <Card
-          title="Recent announcements"
+          title={t('overview.recentAnnouncements')}
           actions={
             <Link className="text-sm font-medium text-primary hover:underline" href="/dashboard/announcements">
-              All →
+              {t('overview.all')}
             </Link>
           }
         >
@@ -158,15 +166,15 @@ function StaffOverview({ masjidId, firstName }: { masjidId: string; firstName: s
               ))}
             </ul>
           ) : (
-            <Empty>No announcements yet.</Empty>
+            <Empty>{t('overview.noAnnouncements')}</Empty>
           )}
         </Card>
 
         <Card
-          title="Upcoming events"
+          title={t('overview.upcomingEvents')}
           actions={
             <Link className="text-sm font-medium text-primary hover:underline" href="/dashboard/events">
-              All →
+              {t('overview.all')}
             </Link>
           }
         >
@@ -193,7 +201,7 @@ function StaffOverview({ masjidId, firstName }: { masjidId: string; firstName: s
               ))}
             </ul>
           ) : (
-            <Empty>No events yet.</Empty>
+            <Empty>{t('overview.noEvents')}</Empty>
           )}
         </Card>
       </div>
@@ -202,6 +210,7 @@ function StaffOverview({ masjidId, firstName }: { masjidId: string; firstName: s
 }
 
 function PlatformOverview({ firstName }: { firstName: string }) {
+  const t = useT();
   const [total, setTotal] = useState<number | null>(null);
   const [active, setActive] = useState<number | null>(null);
   const [suspended, setSuspended] = useState<number | null>(null);
@@ -223,19 +232,19 @@ function PlatformOverview({ firstName }: { firstName: string }) {
       <OverviewHeader />
 
       <section className="texture-rub overflow-hidden rounded-2xl bg-primary p-6 text-primary-foreground sm:p-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">Platform</p>
-        <h2 className="font-display mt-1 text-3xl font-extrabold tracking-tight">
-          Assalamu alaikum, {firstName}
-        </h2>
-        <p className="mt-2 text-sm opacity-80">
-          One platform, many masjids — onboard, monitor, and support every community from here.
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">
+          {t('nav.platform')}
         </p>
+        <h2 className="font-display mt-1 text-3xl font-extrabold tracking-tight">
+          {t('overview.greeting', { name: firstName })}
+        </h2>
+        <p className="mt-2 text-sm opacity-80">{t('overview.platformLede')}</p>
       </section>
 
       <div className="grid grid-cols-3 gap-3">
-        <StatCard label="Masjids" value={total ?? '…'} href="/dashboard/platform" />
-        <StatCard label="Active" value={active ?? '…'} href="/dashboard/platform" />
-        <StatCard label="Suspended" value={suspended ?? '…'} href="/dashboard/platform" />
+        <StatCard label={t('overview.masjids')} value={total ?? '…'} href="/dashboard/platform" />
+        <StatCard label={t('overview.activeCount')} value={active ?? '…'} href="/dashboard/platform" />
+        <StatCard label={t('overview.suspendedCount')} value={suspended ?? '…'} href="/dashboard/platform" />
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -243,19 +252,15 @@ function PlatformOverview({ firstName }: { firstName: string }) {
           href="/dashboard/platform"
           className="rounded-xl border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/40 hover:bg-accent"
         >
-          <p className="font-semibold">Manage masjids →</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Onboard a new masjid, suspend or delete existing ones.
-          </p>
+          <p className="font-semibold">{t('overview.manageMasjids')}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('overview.manageMasjidsHint')}</p>
         </Link>
         <Link
           href="/dashboard/platform/audit"
           className="rounded-xl border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/40 hover:bg-accent"
         >
-          <p className="font-semibold">Audit log →</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Every sensitive action across the platform, in one place.
-          </p>
+          <p className="font-semibold">{t('nav.auditLog') + ' →'}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('overview.auditLogHint')}</p>
         </Link>
       </div>
     </div>
