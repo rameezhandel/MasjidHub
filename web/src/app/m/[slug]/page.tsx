@@ -208,10 +208,33 @@ export default async function MasjidPublicPage({
         )}
       </section>
 
+      {/*
+        Collapsed by default: today's times are what visitors come for, so the
+        week ahead stays one tap away. A native <details> keeps this a server
+        component — it opens without JavaScript.
+      */}
       {timetable && timetable.length > 1 && (
-        <section className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-bold">{t('pub.comingDays')}</h2>
-          <div className="overflow-x-auto">
+        <details className="group mt-6 rounded-2xl border border-border bg-card shadow-sm">
+          <summary className="flex cursor-pointer list-none items-center justify-between rounded-2xl p-6 transition-colors hover:bg-accent/60 [&::-webkit-details-marker]:hidden">
+            <h2 className="text-lg font-bold">{t('pub.comingDays')}</h2>
+            <span className="flex items-center gap-2 text-sm font-medium text-primary">
+              <span className="group-open:hidden">{t('pub.show')}</span>
+              <span className="hidden group-open:inline">{t('pub.hide')}</span>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                className="size-4 transition-transform group-open:rotate-180"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </span>
+          </summary>
+          <div className="overflow-x-auto px-6 pb-6">
             <table className="tabular w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
@@ -237,7 +260,7 @@ export default async function MasjidPublicPage({
               </tbody>
             </table>
           </div>
-        </section>
+        </details>
       )}
 
       <div className="mt-8 grid gap-8 md:grid-cols-2">
