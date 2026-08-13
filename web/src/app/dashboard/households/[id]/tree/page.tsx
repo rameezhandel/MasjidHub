@@ -148,7 +148,7 @@ export default function HouseholdTreePage({ params }: { params: Promise<{ id: st
       )}
 
       <Card title={t('tree.link')}>
-        <form onSubmit={link} className="grid gap-3 sm:grid-cols-4">
+        <form onSubmit={link} className="grid grid-cols-1 gap-3 sm:grid-cols-4">
           <div>
             <Label>{t('tree.relationship')}</Label>
             <Select value={type} onChange={(e) => setType(e.target.value as RelationshipType)}>

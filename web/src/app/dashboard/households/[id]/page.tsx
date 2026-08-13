@@ -176,7 +176,7 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
           </Button>
         }
       >
-        <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+        <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
           {HOUSEHOLD_FIELDS.map(([key, label]) => (
             <div key={key}>
               <dt className="text-xs uppercase tracking-wide text-muted-foreground">{t(label)}</dt>
@@ -225,7 +225,7 @@ export default function HouseholdDetailPage({ params }: { params: Promise<{ id: 
         <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
           <DialogTitle>{t('hhd.editDialog')}</DialogTitle>
           <form onSubmit={saveHousehold} className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {HOUSEHOLD_FIELDS.map(([key, label]) => (
                 <div key={key}>
                   <Label>{t(label)}</Label>

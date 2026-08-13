@@ -139,7 +139,7 @@ export default function PlatformMasjidsPage() {
 
   return (
     <div className="max-w-5xl space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">{t('plat.title')}</h1>
         <Button onClick={() => setShowForm((v) => !v)}>
           {showForm ? t('plat.close') : t('plat.add')}
@@ -159,7 +159,7 @@ export default function PlatformMasjidsPage() {
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {t('plat.details')}
               </h3>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div>
                   <Label>{t('set.name')}</Label>
                   <Input
@@ -207,7 +207,7 @@ export default function PlatformMasjidsPage() {
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {t('plat.adminSection')}
               </h3>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div>
                   <Label>{t('acc.email')}</Label>
                   <Input
@@ -264,7 +264,7 @@ export default function PlatformMasjidsPage() {
             placeholder={t('common.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-48"
+            className="w-full sm:w-48"
           />
         }
       >

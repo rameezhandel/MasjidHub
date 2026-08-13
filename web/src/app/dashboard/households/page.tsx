@@ -129,7 +129,7 @@ export default function HouseholdsPage() {
 
   return (
     <div className="max-w-5xl space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">{t('hh.title')}</h1>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => setDialog('import')}>
@@ -175,7 +175,7 @@ export default function HouseholdsPage() {
         <DialogContent className="max-w-2xl">
           <DialogTitle>{t('hh.registerDialog')}</DialogTitle>
           <form onSubmit={create} className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label>{t('hh.familyName')}</Label>
                 <Input value={familyName} onChange={(e) => setFamilyName(e.target.value)} required />
@@ -266,14 +266,18 @@ export default function HouseholdsPage() {
       <Card
         title={t('hh.registered')}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2 sm:w-auto">
             <Input
               placeholder={t('common.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-40"
+              className="min-w-0 flex-1 sm:w-40 sm:flex-none"
             />
-            <Select value={status} onChange={(e) => setStatus(e.target.value)} className="w-36">
+            <Select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="min-w-0 flex-1 sm:w-36 sm:flex-none"
+            >
               <option value="">{t('common.allStatuses')}</option>
               <option value="ACTIVE">{t('common.active')}</option>
               <option value="INACTIVE">{t('common.inactive')}</option>
@@ -290,7 +294,7 @@ export default function HouseholdsPage() {
           <ul className="divide-y divide-border">
             {items.map((household) => (
               <li key={household.id} className="flex items-center justify-between gap-4 py-3">
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium">
                     <Link className="hover:underline" href={`/dashboard/households/${household.id}`}>
                       {household.familyName}
@@ -307,7 +311,7 @@ export default function HouseholdsPage() {
                 </div>
                 <Link
                   href={`/dashboard/households/${household.id}`}
-                  className="text-sm font-medium text-primary hover:underline"
+                  className="shrink-0 whitespace-nowrap text-sm font-medium text-primary hover:underline"
                 >
                   {t('hh.open')}
                 </Link>

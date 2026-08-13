@@ -50,7 +50,11 @@ export default function AuditLogPage() {
       <Card
         title={t('audit.card')}
         actions={
-          <Select value={action} onChange={(e) => setAction(e.target.value)} className="w-56">
+          <Select
+            value={action}
+            onChange={(e) => setAction(e.target.value)}
+            className="w-full sm:w-56"
+          >
             {ACTIONS.map((value) => (
               <option key={value} value={value}>
                 {value === '' ? t('audit.all') : value.replaceAll('_', ' ')}
