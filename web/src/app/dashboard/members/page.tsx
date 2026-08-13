@@ -5,12 +5,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { Badge, Card, Empty, ErrorText, Input, Loading, Select, Spinner } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useT } from '@/lib/i18n';
 import type { Gender, MemberSearchResult, Paginated } from '@/lib/types';
 
 const PAGE_SIZE = 25;
 
 export default function MembersPage() {
   const { user } = useAuth();
+  const t = useT();
   const masjidId = user?.masjidId;
 
   const [search, setSearch] = useState('');
@@ -49,8 +51,8 @@ export default function MembersPage() {
 
   // Debounce so we don't hit the API on every keystroke.
   useEffect(() => {
-    const t = setTimeout(() => void load(), 250);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => void load(), 250);
+    return () => clearTimeout(timer);
   }, [load]);
 
   if (!masjidId) return <Empty>Members are managed per masjid.</Empty>;
@@ -60,7 +62,7 @@ export default function MembersPage() {
   return (
     <div className="max-w-4xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Members</h1>
+        <h1 className="text-2xl font-bold">{t('mem.title')}</h1>
         <p className="text-sm text-muted-foreground">
           Search everyone across your registered households by name, phone or email.
         </p>
@@ -68,7 +70,7 @@ export default function MembersPage() {
 
       <div className="flex flex-wrap items-center gap-2">
         <Input
-          placeholder="Search by name, phone or email…"
+          placeholder={t('mem.searchPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-72"
@@ -86,21 +88,21 @@ export default function MembersPage() {
         <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
           {loading ? (
             <>
-              <Spinner className="size-3.5" /> Searching…
+              <Spinner className="size-3.5" /> {t('mem.searching')}
             </>
           ) : (
-            `${total} ${total === 1 ? 'person' : 'people'}`
+            `${total} ${total === 1 ? t('mem.person') : t('mem.people')}`
           )}
         </span>
       </div>
 
       <ErrorText>{error}</ErrorText>
 
-      <Card title="Results">
+      <Card title={t('mem.results')}>
         {loading && results.length === 0 ? (
-          <Loading label="Searching members…" />
+          <Loading label={t('mem.searchingLong')} />
         ) : results.length === 0 ? (
-          <Empty>{search.trim() ? 'No members match your search.' : 'No members yet.'}</Empty>
+          <Empty>{search.trim() ? t('mem.noMatch') : t('mem.none')}</Empty>
         ) : (
           <ul className="divide-y divide-border">
             {results.map((member) => (

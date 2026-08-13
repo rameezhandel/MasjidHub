@@ -17,10 +17,12 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useT } from '@/lib/i18n';
 import type { Invitation, Paginated, SafeUser } from '@/lib/types';
 
 export default function StaffPage() {
   const { user } = useAuth();
+  const t = useT();
   const masjidId = user?.masjidId;
   const isAdmin = user?.role === 'MASJID_ADMIN' || user?.role === 'PLATFORM_ADMIN';
   const [staff, setStaff] = useState<SafeUser[]>([]);
@@ -65,7 +67,7 @@ export default function StaffPage() {
         method: 'POST',
         body: { email, firstName, lastName, role },
       });
-      setNotice(`Invitation sent to ${email}. They'll choose their own password.`);
+      setNotice(t('staff.sent', { email }));
       setEmail('');
       setFirstName('');
       setLastName('');
@@ -94,8 +96,8 @@ export default function StaffPage() {
   return (
     <div className="max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Staff</h1>
-        {isAdmin && <Button onClick={() => setOpen(true)}>+ Invite staff</Button>}
+        <h1 className="text-2xl font-bold">{t('staff.title')}</h1>
+        {isAdmin && <Button onClick={() => setOpen(true)}>{t('staff.invite')}</Button>}
       </div>
 
       {notice && !open && (
@@ -107,13 +109,11 @@ export default function StaffPage() {
       {isAdmin && (
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="max-w-xl">
-            <DialogTitle>Invite a staff member</DialogTitle>
-            <p className="text-xs text-muted-foreground">
-              They&apos;ll get an email invitation and choose their own password.
-            </p>
+            <DialogTitle>{t('staff.inviteDialog')}</DialogTitle>
+            <p className="text-xs text-muted-foreground">{t('staff.inviteHint')}</p>
             <form onSubmit={invite} className="grid gap-3 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <Label>Email</Label>
+                <Label>{t('acc.email')}</Label>
                 <Input
                   type="email"
                   value={email}
@@ -122,23 +122,23 @@ export default function StaffPage() {
                 />
               </div>
               <div>
-                <Label>First name</Label>
+                <Label>{t('acc.firstName')}</Label>
                 <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
               </div>
               <div>
-                <Label>Last name</Label>
+                <Label>{t('acc.lastName')}</Label>
                 <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
               </div>
               <div>
-                <Label>Role</Label>
+                <Label>{t('staff.role')}</Label>
                 <Select value={role} onChange={(e) => setRole(e.target.value)}>
-                  <option value="MASJID_MAINTAINER">Maintainer</option>
-                  <option value="MASJID_ADMIN">Admin</option>
+                  <option value="MASJID_MAINTAINER">{t('staff.maintainer')}</option>
+                  <option value="MASJID_ADMIN">{t('staff.admin')}</option>
                 </Select>
               </div>
               <div className="flex items-end">
                 <Button type="submit" disabled={busy}>
-                  {busy ? 'Sending…' : 'Send invitation'}
+                  {busy ? t('staff.sending') : t('staff.send')}
                 </Button>
               </div>
               <div className="sm:col-span-2">
@@ -149,11 +149,11 @@ export default function StaffPage() {
         </Dialog>
       )}
 
-      <Card title="Team">
+      <Card title={t('staff.team')}>
         {!loaded ? (
-          <Loading label="Loading staff…" />
+          <Loading label={t('staff.loading')} />
         ) : staff.length === 0 ? (
-          <Empty>No staff yet.</Empty>
+          <Empty>{t('staff.none')}</Empty>
         ) : (
           <ul className="divide-y divide-border">
             {staff.map((member) => (
@@ -164,8 +164,10 @@ export default function StaffPage() {
                     <span className="text-xs text-muted-foreground">({member.email})</span>
                   </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {member.role === 'MASJID_ADMIN' ? 'Admin' : 'Maintainer'}
-                    {!member.isActive && <span className="text-red-600"> · deactivated</span>}
+                    {member.role === 'MASJID_ADMIN' ? t('staff.admin') : t('staff.maintainer')}
+                    {!member.isActive && (
+                      <span className="text-red-600"> · {t('staff.deactivated')}</span>
+                    )}
                   </p>
                 </div>
                 {isAdmin && member.id !== user?.id && (
@@ -173,7 +175,7 @@ export default function StaffPage() {
                     variant={member.isActive ? 'danger' : 'secondary'}
                     onClick={() => toggleActive(member)}
                   >
-                    {member.isActive ? 'Deactivate' : 'Reactivate'}
+                    {member.isActive ? t('staff.deactivate') : t('staff.reactivate')}
                   </Button>
                 )}
               </li>
@@ -183,7 +185,7 @@ export default function StaffPage() {
       </Card>
 
       {isAdmin && invitations.length > 0 && (
-        <Card title="Invitations">
+        <Card title={t('staff.invitations')}>
           <ul className="divide-y divide-border">
             {invitations.map((invite) => (
               <li key={invite.id} className="flex items-center justify-between gap-4 py-3">
@@ -193,13 +195,13 @@ export default function StaffPage() {
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {invite.firstName} {invite.lastName} ·{' '}
-                    {invite.role === 'MASJID_ADMIN' ? 'Admin' : 'Maintainer'} · expires{' '}
-                    {new Date(invite.expiresAt).toLocaleDateString()}
+                    {invite.role === 'MASJID_ADMIN' ? t('staff.admin') : t('staff.maintainer')} ·{' '}
+                    {t('staff.expires')} {new Date(invite.expiresAt).toLocaleDateString()}
                   </p>
                 </div>
                 {invite.status === 'PENDING' && (
                   <Button variant="secondary" onClick={() => revokeInvite(invite.id)}>
-                    Revoke
+                    {t('staff.revoke')}
                   </Button>
                 )}
               </li>
