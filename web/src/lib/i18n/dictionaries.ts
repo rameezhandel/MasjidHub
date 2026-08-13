@@ -378,6 +378,11 @@ const en = {
   'pub.noTimes': 'No prayer times published yet.',
   'pub.maps': 'View on Google Maps ↗',
   'pub.footer': 'Powered by MasjidHub · timezone {tz}',
+  'pub.warmingTitle': 'This page is waking up',
+  'pub.warmingBody':
+    'The masjid server was idle and is starting back up. This usually takes less than a minute — the page will retry on its own.',
+  'pub.retry': 'Try again now',
+  'pub.retryingIn': 'Retrying in {n}s…',
 };
 
 export type DictKey = keyof typeof en;
@@ -728,6 +733,11 @@ const hi: Dict = {
   'pub.noTimes': 'अभी नमाज़ के समय प्रकाशित नहीं हुए।',
   'pub.maps': 'गूगल मैप्स पर देखें ↗',
   'pub.footer': 'MasjidHub द्वारा संचालित · समय क्षेत्र {tz}',
+  'pub.warmingTitle': 'यह पेज शुरू हो रहा है',
+  'pub.warmingBody':
+    'मस्जिद सर्वर निष्क्रिय था और अब चालू हो रहा है। आमतौर पर इसमें एक मिनट से कम लगता है — पेज अपने आप फिर कोशिश करेगा।',
+  'pub.retry': 'अभी फिर कोशिश करें',
+  'pub.retryingIn': '{n} सेकंड में फिर कोशिश…',
 };
 
 const kn: Dict = {
@@ -1075,6 +1085,11 @@ const kn: Dict = {
   'pub.noTimes': 'ಇನ್ನೂ ನಮಾಜ್ ಸಮಯಗಳು ಪ್ರಕಟವಾಗಿಲ್ಲ.',
   'pub.maps': 'ಗೂಗಲ್ ಮ್ಯಾಪ್ಸ್‌ನಲ್ಲಿ ನೋಡಿ ↗',
   'pub.footer': 'MasjidHub ನಿಂದ ನಡೆಸಲ್ಪಡುತ್ತದೆ · ಸಮಯ ವಲಯ {tz}',
+  'pub.warmingTitle': 'ಈ ಪುಟ ಪ್ರಾರಂಭವಾಗುತ್ತಿದೆ',
+  'pub.warmingBody':
+    'ಮಸೀದಿ ಸರ್ವರ್ ನಿಷ್ಕ್ರಿಯವಾಗಿತ್ತು, ಈಗ ಪ್ರಾರಂಭವಾಗುತ್ತಿದೆ. ಸಾಮಾನ್ಯವಾಗಿ ಒಂದು ನಿಮಿಷಕ್ಕಿಂತ ಕಡಿಮೆ ಸಮಯ ತೆಗೆದುಕೊಳ್ಳುತ್ತದೆ — ಪುಟ ತಾನಾಗಿಯೇ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸುತ್ತದೆ.',
+  'pub.retry': 'ಈಗಲೇ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
+  'pub.retryingIn': '{n} ಸೆಕೆಂಡಿನಲ್ಲಿ ಮತ್ತೆ ಪ್ರಯತ್ನ…',
 };
 
 const DICTS: Record<Locale, Dict> = { en, hi, kn };

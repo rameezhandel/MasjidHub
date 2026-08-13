@@ -21,10 +21,55 @@ import type {
 
 export const revalidate = 60;
 
+/** A sleeping free-tier API answers 503 for a while, then takes ~30s to boot. */
+const ATTEMPT_TIMEOUT_MS = 10_000;
+const RETRY_DELAYS_MS = [1_000, 3_000, 6_000, 10_000];
+
+class ApiUnavailableError extends Error {
+  constructor(path: string) {
+    super(`The masjid API did not respond for ${path}`);
+    this.name = 'ApiUnavailableError';
+  }
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Tells "this masjid does not exist" (a real 404 from the API) apart from
+ * "the API is asleep or erroring" (503, timeout, refused connection), and
+ * rides out the latter with a few retries.
+ *
+ * The distinction is the whole point: rendering a 404 for an API that is
+ * merely cold-starting told visitors — and search engines — that the masjid
+ * was gone, and the page only recovered once somebody woke the API from the
+ * dashboard. Unavailability throws instead, so the error boundary can say
+ * "warming up" and retry.
+ */
 async function fetchPublic<T>(path: string): Promise<T | null> {
-  const res = await fetch(`${API_BASE}/public${path}`, { next: { revalidate: 60 } });
-  if (!res.ok) return null;
-  return (await res.json()) as T;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const res = await fetch(`${API_BASE}/public${path}`, {
+        next: { revalidate: 60 },
+        signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
+      });
+      if (res.status === 404) return null;
+      if (res.ok) return (await res.json()) as T;
+      // 5xx — Render answers 503 while a suspended service boots. Retry.
+    } catch {
+      // Connection refused or timed out. Retry.
+    }
+    if (attempt >= RETRY_DELAYS_MS.length) throw new ApiUnavailableError(path);
+    await sleep(RETRY_DELAYS_MS[attempt]);
+  }
+}
+
+/** Same, for sections the page is still worth rendering without. */
+async function fetchOptional<T>(path: string): Promise<T | null> {
+  try {
+    return await fetchPublic<T>(path);
+  } catch {
+    return null;
+  }
 }
 
 export async function generateMetadata({
@@ -33,8 +78,8 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const masjid = await fetchPublic<PublicMasjid>(`/masjids/${slug}`);
-  return { title: masjid?.name ?? 'Masjid not found' };
+  const masjid = await fetchOptional<PublicMasjid>(`/masjids/${slug}`);
+  return { title: masjid?.name ?? 'Masjid' };
 }
 
 const PRAYERS: Array<{ key: PrayerKey; iqamah: keyof PrayerTimetableEntry }> = [
@@ -58,13 +103,15 @@ export default async function MasjidPublicPage({
   const t = (key: Parameters<typeof translate>[1], vars?: Record<string, string | number>) =>
     translate(locale, key, vars);
 
+  // Only a genuine 404 from the API means "no such masjid"; anything else
+  // throws and is handled by error.tsx.
   const masjid = await fetchPublic<PublicMasjid>(`/masjids/${slug}`);
   if (!masjid) notFound();
 
   const [timetable, announcements, events] = await Promise.all([
-    fetchPublic<PrayerTimetableEntry[]>(`/masjids/${slug}/prayer-times`),
-    fetchPublic<Paginated<Announcement>>(`/masjids/${slug}/announcements?pageSize=5`),
-    fetchPublic<Paginated<MasjidEvent>>(`/masjids/${slug}/events?pageSize=5`),
+    fetchOptional<PrayerTimetableEntry[]>(`/masjids/${slug}/prayer-times`),
+    fetchOptional<Paginated<Announcement>>(`/masjids/${slug}/announcements?pageSize=5`),
+    fetchOptional<Paginated<MasjidEvent>>(`/masjids/${slug}/events?pageSize=5`),
   ]);
   const today = timetable?.[0];
   const address = [masjid.addressLine1, masjid.addressLine2, masjid.city, masjid.state, masjid.country]
