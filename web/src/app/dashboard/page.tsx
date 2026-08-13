@@ -1,5 +1,6 @@
 'use client';
 
+import { SettingsIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useNextPrayer } from '@/components/NextPrayerHero';
@@ -97,9 +98,21 @@ function StaffOverview({ masjidId, firstName }: { masjidId: string; firstName: s
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="min-w-0">
             <p className="text-sm opacity-80">{t('overview.greeting', { name: firstName })}</p>
-            <h2 className="font-display mt-1 break-words text-2xl font-extrabold tracking-tight sm:text-3xl">
-              {masjid?.name ?? '…'}
-            </h2>
+            <div className="mt-1 flex items-center gap-2">
+              <h2 className="font-display min-w-0 break-words text-2xl font-extrabold tracking-tight sm:text-3xl">
+                {masjid?.name ?? '…'}
+              </h2>
+              {masjid && (
+                <Link
+                  href="/dashboard/settings"
+                  aria-label={t('nav.settings')}
+                  title={t('nav.settings')}
+                  className="shrink-0 rounded-lg p-1.5 text-primary-foreground/70 transition-colors hover:bg-primary-foreground/15 hover:text-primary-foreground"
+                >
+                  <SettingsIcon className="size-5" />
+                </Link>
+              )}
+            </div>
             <p className="mt-2 text-sm opacity-80">{metaLine}</p>
             {masjid && (
               <a
