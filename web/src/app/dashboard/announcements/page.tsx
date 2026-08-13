@@ -81,7 +81,7 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="max-w-4xl space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">{t('ann.title')}</h1>
         {items.length > 0 && <Button onClick={() => setOpen(true)}>{t('ann.new')}</Button>}
       </div>

@@ -17,7 +17,9 @@ function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement
   return (
     <div
       className={cn(
-        'flex items-center justify-between border-b border-border/70 px-5 py-3',
+        // Wraps so a long title and its actions stack instead of colliding
+        // on phones; the filters some cards pass in are wide.
+        'flex flex-wrap items-center justify-between gap-2 border-b border-border/70 px-5 py-3',
         className,
       )}
       {...props}
@@ -26,7 +28,9 @@ function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement
 }
 
 function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h2 className={cn('text-sm font-semibold text-foreground', className)} {...props} />;
+  return (
+    <h2 className={cn('min-w-0 text-sm font-semibold text-foreground', className)} {...props} />
+  );
 }
 
 function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {

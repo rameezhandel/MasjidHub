@@ -108,7 +108,7 @@ export default function PrayerTimesPage() {
 
   return (
     <div className="max-w-5xl space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">{t('pt.title')}</h1>
         <Button onClick={() => setOpen(true)}>{t('pt.autoGenerate')}</Button>
       </div>
@@ -123,7 +123,7 @@ export default function PrayerTimesPage() {
         <DialogContent className="max-w-xl">
           <DialogTitle>{t('pt.dialogTitle')}</DialogTitle>
           <p className="text-xs text-muted-foreground">{t('pt.dialogHint')}</p>
-          <form onSubmit={generate} className="grid gap-4 sm:grid-cols-2">
+          <form onSubmit={generate} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <Label>{t('pt.from')}</Label>
               <Input type="date" value={genFrom} onChange={(e) => setGenFrom(e.target.value)} />
@@ -153,7 +153,7 @@ export default function PrayerTimesPage() {
             </div>
             <div className="sm:col-span-2">
               <Label>{t('pt.offsets')}</Label>
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
                 {[
                   [t('prayer.fajr'), fajrOffset, setFajrOffset],
                   [t('prayer.dhuhr'), dhuhrOffset, setDhuhrOffset],

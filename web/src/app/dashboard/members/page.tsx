@@ -71,13 +71,13 @@ export default function MembersPage() {
           placeholder={t('mem.searchPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-72"
+          className="w-full sm:w-72"
           autoFocus
         />
         <Select
           value={gender}
           onChange={(e) => setGender(e.target.value as '' | Gender)}
-          className="w-36"
+          className="min-w-0 flex-1 sm:w-36 sm:flex-none"
         >
           <option value="">{t('mem.anyGender')}</option>
           <option value="MALE">{t('hhd.male')}</option>

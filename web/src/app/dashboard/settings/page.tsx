@@ -193,7 +193,7 @@ export default function SettingsPage() {
           )
         }
       >
-        <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+        <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
           {FIELDS.map(([key, label]) => (
             <Detail key={key} label={t(label as DictKey)} value={masjid[key] as string | null} />
           ))}
@@ -219,7 +219,7 @@ export default function SettingsPage() {
           )
         }
       >
-        <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+        <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
           <Detail
             label={t('set.calcMethod')}
             value={masjid.calculationMethod.replaceAll('_', ' ')}
@@ -243,7 +243,7 @@ export default function SettingsPage() {
         <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
           <DialogTitle>{t('set.editProfile')}</DialogTitle>
           <form onSubmit={save} className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {FIELDS.map(([key, label]) => (
                 <div key={key}>
                   <Label>{t(label as DictKey)}</Label>
@@ -300,7 +300,7 @@ export default function SettingsPage() {
                 initialLng={masjid.longitude ?? undefined}
               />
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label>{t('set.latitude')}</Label>
                 <Input

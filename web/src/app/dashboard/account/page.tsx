@@ -149,7 +149,7 @@ export default function AccountPage() {
           </div>
         }
       >
-        <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+        <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
           {(
             [
               [t('acc.firstName'), user.firstName],
@@ -195,7 +195,7 @@ export default function AccountPage() {
         <DialogContent className="max-w-md">
           <DialogTitle>{t('acc.editName')}</DialogTitle>
           <form onSubmit={saveProfile} className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label>{t('acc.firstName')}</Label>
                 <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />

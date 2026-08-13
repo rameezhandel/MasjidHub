@@ -296,7 +296,7 @@ export default async function MasjidPublicPage({
         </details>
       )}
 
-      <div className="mt-8 grid gap-8 md:grid-cols-2">
+      <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-2">
         <section>
           <h2 className="mb-3 text-lg font-semibold">{t('pub.announcements')}</h2>
           {announcements?.data.length ? (

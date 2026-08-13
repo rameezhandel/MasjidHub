@@ -148,7 +148,7 @@ export function HouseholdDues({ masjidId, householdId }: { masjidId: string; hou
         {/* Set the fee (price) */}
         <form onSubmit={saveFee} className="space-y-3 rounded-lg border border-border p-4">
           <p className="text-sm font-medium">{t('dues.feeTitle')}</p>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
               <Label>{t('dues.amount')}</Label>
               <Input

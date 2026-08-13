@@ -145,7 +145,7 @@ function StaffOverview({ masjidId, firstName }: { masjidId: string; firstName: s
       </div>
 
       {/* Recent activity */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card
           title={t('overview.recentAnnouncements')}
           actions={
@@ -247,7 +247,7 @@ function PlatformOverview({ firstName }: { firstName: string }) {
         <StatCard label={t('overview.suspendedCount')} value={suspended ?? '…'} href="/dashboard/platform" />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Link
           href="/dashboard/platform"
           className="rounded-xl border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/40 hover:bg-accent"
