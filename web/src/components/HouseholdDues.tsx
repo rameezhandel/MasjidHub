@@ -188,6 +188,7 @@ export function HouseholdDues({ masjidId, householdId }: { masjidId: string; hou
           </div>
           <p className="text-xs text-muted-foreground">
             {feeFrequency === 'YEARLY' ? t('dues.explainYearly') : t('dues.explainMonthly')}
+            {dues.feeEndOn && ` · ${t('duesPage.stopped', { date: dues.feeEndOn })}`}
           </p>
         </form>
 

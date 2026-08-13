@@ -3,7 +3,12 @@ import { Test } from '@nestjs/testing';
 import { FeeFrequency, Gender, HouseholdStatus, MasjidStatus, UserRole } from '@prisma/client';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { PrismaService } from '../prisma/prisma.service';
-import { HouseholdsService, periodsElapsed, toMemberView } from './households.service';
+import {
+  HouseholdsService,
+  expectedToDate,
+  periodsElapsed,
+  toMemberView,
+} from './households.service';
 
 describe('HouseholdsService', () => {
   let service: HouseholdsService;
@@ -287,6 +292,51 @@ describe('HouseholdsService', () => {
       expect(result.expectedCents).toBe(result.balanceCents + 8000);
       expect(result.payments).toHaveLength(2);
       expect(result.payments[0].paidOn).toBe('2026-02-01');
+    });
+
+    it('stops accruing at feeEndOn so a family that moved out stops owing', () => {
+      const fee = {
+        feeAmountCents: 5000,
+        feeFrequency: FeeFrequency.MONTHLY,
+        feeStartOn: new Date('2026-01-01'),
+      };
+      // Open-ended: six months of fees by June.
+      expect(expectedToDate({ ...fee, feeEndOn: null }, new Date('2026-06-15'))).toBe(30000);
+      // Closed in March: still three, however far the calendar runs on.
+      expect(
+        expectedToDate({ ...fee, feeEndOn: new Date('2026-03-31') }, new Date('2026-06-15')),
+      ).toBe(15000);
+      expect(
+        expectedToDate({ ...fee, feeEndOn: new Date('2026-03-31') }, new Date('2027-12-31')),
+      ).toBe(15000);
+    });
+
+    it('closes the fee period when a household stops being active', async () => {
+      prisma.masjid.findUnique.mockResolvedValue({ status: MasjidStatus.ACTIVE });
+      prisma.household.findFirst.mockResolvedValue(
+        household({ status: HouseholdStatus.ACTIVE, feeEndOn: null }),
+      );
+      prisma.household.update.mockImplementation((args: { data: Record<string, unknown> }) =>
+        Promise.resolve(household(args.data)),
+      );
+      await service.update(maintainer, 'masjid-a', 'hh-1', {
+        status: HouseholdStatus.MOVED_OUT,
+      });
+      const data = prisma.household.update.mock.calls[0][0].data as { feeEndOn?: Date };
+      expect(data.feeEndOn).toBeInstanceOf(Date);
+    });
+
+    it('reopens the fee period when a household becomes active again', async () => {
+      prisma.masjid.findUnique.mockResolvedValue({ status: MasjidStatus.ACTIVE });
+      prisma.household.findFirst.mockResolvedValue(
+        household({ status: HouseholdStatus.MOVED_OUT, feeEndOn: new Date('2026-03-31') }),
+      );
+      prisma.household.update.mockImplementation((args: { data: Record<string, unknown> }) =>
+        Promise.resolve(household(args.data)),
+      );
+      await service.update(maintainer, 'masjid-a', 'hh-1', { status: HouseholdStatus.ACTIVE });
+      const data = prisma.household.update.mock.calls[0][0].data as { feeEndOn?: Date | null };
+      expect(data.feeEndOn).toBeNull();
     });
 
     it('reports zero expected when no fee is set', async () => {

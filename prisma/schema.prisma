@@ -160,6 +160,9 @@ model Household {
   feeFrequency FeeFrequency?     @map("fee_frequency")
   /// Date from which the fee starts accruing (used to compute what's owed).
   feeStartOn   DateTime?         @map("fee_start_on") @db.Date
+  /// Date the fee stops accruing — set automatically when a household stops
+  /// being ACTIVE, so a family that moved out does not keep owing forever.
+  feeEndOn     DateTime?         @map("fee_end_on") @db.Date
   members      HouseholdMember[]
   payments     HouseholdPayment[]
   createdBy    User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)

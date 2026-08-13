@@ -147,11 +147,41 @@ export interface DuesSummary {
   feeAmountCents: number | null;
   feeFrequency: FeeFrequency | null;
   feeStartOn: string | null;
+  /** When set, the fee stopped accruing here (household no longer active). */
+  feeEndOn: string | null;
   expectedCents: number;
   paidCents: number;
   balanceCents: number;
   payments: HouseholdPayment[];
 }
+
+/** One household's line on the masjid-wide collection sheet. */
+export interface HouseholdDuesRow {
+  id: string;
+  familyName: string;
+  headName: string;
+  phone: string | null;
+  status: HouseholdStatus;
+  feeAmountCents: number | null;
+  feeFrequency: FeeFrequency | null;
+  feeStartOn: string | null;
+  feeEndOn: string | null;
+  expectedCents: number;
+  paidCents: number;
+  balanceCents: number;
+}
+
+export interface DuesTotals {
+  currency: string;
+  expectedCents: number;
+  paidCents: number;
+  balanceCents: number;
+  households: number;
+  owingHouseholds: number;
+  withoutFee: number;
+}
+
+export type DuesFilter = 'all' | 'owing' | 'settled' | 'no-fee';
 
 export interface HouseholdMember {
   id: string;
