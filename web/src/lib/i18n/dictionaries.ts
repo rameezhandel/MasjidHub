@@ -381,6 +381,8 @@ const en = {
   'pub.warmingTitle': 'This page is waking up',
   'pub.warmingBody':
     'The masjid server was idle and is starting back up. This usually takes less than a minute — the page will retry on its own.',
+  'pub.show': 'Show',
+  'pub.hide': 'Hide',
   'pub.retry': 'Try again now',
   'pub.retryingIn': 'Retrying in {n}s…',
 };
@@ -736,6 +738,8 @@ const hi: Dict = {
   'pub.warmingTitle': 'यह पेज शुरू हो रहा है',
   'pub.warmingBody':
     'मस्जिद सर्वर निष्क्रिय था और अब चालू हो रहा है। आमतौर पर इसमें एक मिनट से कम लगता है — पेज अपने आप फिर कोशिश करेगा।',
+  'pub.show': 'दिखाएँ',
+  'pub.hide': 'छिपाएँ',
   'pub.retry': 'अभी फिर कोशिश करें',
   'pub.retryingIn': '{n} सेकंड में फिर कोशिश…',
 };
@@ -1088,6 +1092,8 @@ const kn: Dict = {
   'pub.warmingTitle': 'ಈ ಪುಟ ಪ್ರಾರಂಭವಾಗುತ್ತಿದೆ',
   'pub.warmingBody':
     'ಮಸೀದಿ ಸರ್ವರ್ ನಿಷ್ಕ್ರಿಯವಾಗಿತ್ತು, ಈಗ ಪ್ರಾರಂಭವಾಗುತ್ತಿದೆ. ಸಾಮಾನ್ಯವಾಗಿ ಒಂದು ನಿಮಿಷಕ್ಕಿಂತ ಕಡಿಮೆ ಸಮಯ ತೆಗೆದುಕೊಳ್ಳುತ್ತದೆ — ಪುಟ ತಾನಾಗಿಯೇ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸುತ್ತದೆ.',
+  'pub.show': 'ತೋರಿಸಿ',
+  'pub.hide': 'ಮರೆಮಾಡಿ',
   'pub.retry': 'ಈಗಲೇ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
   'pub.retryingIn': '{n} ಸೆಕೆಂಡಿನಲ್ಲಿ ಮತ್ತೆ ಪ್ರಯತ್ನ…',
 };
