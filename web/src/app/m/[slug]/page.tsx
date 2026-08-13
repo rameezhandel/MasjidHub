@@ -122,6 +122,39 @@ export default async function MasjidPublicPage({
   ) as Record<PrayerKey, string>;
   const dateLocale = locale === 'en' ? 'en-GB' : `${locale}-IN`;
 
+  // Everything is rendered on the server, so dates must be pinned to the
+  // masjid's timezone — otherwise they'd carry the server's (UTC on Render)
+  // and an evening event could show the wrong weekday.
+  const dayFormat = new Intl.DateTimeFormat(dateLocale, {
+    timeZone: masjid.timezone,
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+  const timeFormat = new Intl.DateTimeFormat(dateLocale, {
+    timeZone: masjid.timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  const postedFormat = new Intl.DateTimeFormat(dateLocale, {
+    timeZone: masjid.timezone,
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+
+  /** "Fri, 15 Aug · 18:30 – 20:00", collapsing to one date when it fits. */
+  const eventWhen = (startsAt: string, endsAt: string | null): string => {
+    const start = new Date(startsAt);
+    const startDay = dayFormat.format(start);
+    if (!endsAt) return `${startDay} · ${timeFormat.format(start)}`;
+    const end = new Date(endsAt);
+    const endDay = dayFormat.format(end);
+    return startDay === endDay
+      ? `${startDay} · ${timeFormat.format(start)} – ${timeFormat.format(end)}`
+      : `${startDay} ${timeFormat.format(start)} – ${endDay} ${timeFormat.format(end)}`;
+  };
+
   return (
     <main className="mx-auto max-w-4xl px-6 pb-10" lang={locale}>
       <div className="sticky top-0 z-10 -mx-6 mb-6 flex items-center justify-between border-b border-border bg-background/90 px-6 py-3 backdrop-blur">
@@ -270,13 +303,18 @@ export default async function MasjidPublicPage({
             <ul className="space-y-3">
               {announcements.data.map((a) => (
                 <li key={a.id} className="rounded-lg border border-border bg-card p-4">
-                  <p className="font-medium">{a.title}</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="min-w-0 font-medium">{a.title}</p>
+                    {a.publishedAt && (
+                      <time
+                        dateTime={a.publishedAt}
+                        className="tabular shrink-0 whitespace-nowrap text-xs text-muted-foreground"
+                      >
+                        {postedFormat.format(new Date(a.publishedAt))}
+                      </time>
+                    )}
+                  </div>
                   <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">{a.body}</p>
-                  {a.publishedAt && (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {new Date(a.publishedAt).toLocaleDateString(dateLocale)}
-                    </p>
-                  )}
                 </li>
               ))}
             </ul>
@@ -292,10 +330,12 @@ export default async function MasjidPublicPage({
               {events.data.map((e) => (
                 <li key={e.id} className="rounded-lg border border-border bg-card p-4">
                   <p className="font-medium">{e.title}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {new Date(e.startsAt).toLocaleString(dateLocale)}{' '}
-                    {e.location ? `· ${e.location}` : ''}
+                  <p className="tabular mt-2 inline-block rounded-lg border border-gold/40 bg-gold/10 px-2.5 py-1 text-sm font-semibold text-foreground">
+                    <time dateTime={e.startsAt}>{eventWhen(e.startsAt, e.endsAt)}</time>
                   </p>
+                  {e.location && (
+                    <p className="mt-1.5 text-sm text-muted-foreground">{e.location}</p>
+                  )}
                   {e.description && (
                     <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
                       {e.description}
