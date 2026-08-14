@@ -1,20 +1,8 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans, Sora } from 'next/font/google';
 import { GlobalProgress } from '@/components/GlobalProgress';
 import { Toaster } from '@/components/ui/toast';
 import { AuthProvider } from '@/lib/auth';
 import './globals.css';
-
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  variable: '--font-jakarta',
-  weight: ['400', '500', '600', '700'],
-});
-const sora = Sora({
-  subsets: ['latin'],
-  variable: '--font-sora',
-  weight: ['600', '700', '800'],
-});
 
 export const metadata: Metadata = {
   title: { default: 'MasjidHub', template: '%s · MasjidHub' },
@@ -29,11 +17,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* The Latin faces are needed for first paint; the -ext files load on
+            demand via their unicode-range. */}
+        <link
+          rel="preload"
+          href="/fonts/plus-jakarta-sans-latin.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/sora-latin.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body
-        className={`${jakarta.variable} ${sora.variable} min-h-screen bg-background text-foreground antialiased`}
-      >
+      <body className="min-h-screen bg-background text-foreground antialiased">
         <GlobalProgress />
         <AuthProvider>{children}</AuthProvider>
         <Toaster />
