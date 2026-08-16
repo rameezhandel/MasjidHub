@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compose paints everything; this only covers the window before the first
+         frame, so it matches the app's warm greige ground. -->
+    <style name="Theme.MasjidHub" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/brand_ground</item>
+        <item name="android:statusBarColor">@color/brand_green</item>
+        <item name="android:navigationBarColor">@color/brand_ground</item>
+    </style>
+</resources>
