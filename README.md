@@ -22,6 +22,7 @@ cd web && npm ci && npm run dev   # web on :3001
 | Observability | pino structured logging with request IDs, Terminus health checks |
 | Docs | Swagger / OpenAPI at `/api/docs` (toggle with `SWAGGER_ENABLED`) |
 | Delivery | Docker (multi-stage, non-root), docker-compose, GitHub Actions CI |
+| iOS staff app | SwiftUI, universal iPhone/iPad, no third-party dependencies ([`ios/`](ios/README.md)) |
 
 ## Roles
 
@@ -177,6 +178,7 @@ src/
   config/          zod-validated environment
   prisma/          PrismaService
 test/              e2e suite
+ios/               native SwiftUI staff app (iPhone + iPad)
 ```
 
 ## Design notes
