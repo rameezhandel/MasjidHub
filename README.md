@@ -23,6 +23,7 @@ cd web && npm ci && npm run dev   # web on :3001
 | Docs | Swagger / OpenAPI at `/api/docs` (toggle with `SWAGGER_ENABLED`) |
 | Delivery | Docker (multi-stage, non-root), docker-compose, GitHub Actions CI |
 | iOS staff app | SwiftUI, universal iPhone/iPad, no third-party dependencies ([`ios/`](ios/README.md)) |
+| Android staff app | Kotlin + Jetpack Compose, phone and tablet, built in CI ([`android/`](android/README.md)) |
 
 ## Roles
 
@@ -179,6 +180,7 @@ src/
   prisma/          PrismaService
 test/              e2e suite
 ios/               native SwiftUI staff app (iPhone + iPad)
+android/           native Compose staff app (phone + tablet)
 ```
 
 ## Design notes
