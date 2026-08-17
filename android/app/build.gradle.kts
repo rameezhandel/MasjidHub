@@ -5,6 +5,13 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+// CI supplies these; a local build gets the defaults. The keystore is only
+// present on release runs, so an ordinary `assembleRelease` still works (it
+// just produces an unsigned APK).
+val keystorePath: String? = System.getenv("KEYSTORE_FILE")
+val ciVersionCode: Int = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+val ciVersionName: String = System.getenv("VERSION_NAME") ?: "1.0"
+
 android {
     namespace = "app.masjidhub.staff"
     compileSdk = 35
@@ -13,11 +20,22 @@ android {
         applicationId = "app.masjidhub.staff"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = ciVersionCode
+        versionName = ciVersionName
 
         // Which API the app talks to. Override for a local API; see README.
         buildConfigField("String", "API_BASE_URL", "\"https://masjidhub-api.onrender.com\"")
+    }
+
+    signingConfigs {
+        if (keystorePath != null) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -28,6 +46,9 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            if (keystorePath != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
