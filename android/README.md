@@ -5,8 +5,9 @@ tablets. It talks to the same API as the web dashboard (`/api/v1`), so nothing
 about the backend changes.
 
 Unlike the iOS app, this one is **built on every push**: the `Android` workflow
-runs `assembleDebug` and `lintDebug` on GitHub Actions and uploads the debug
-APK as a build artifact, so the code is compiled and checked for real.
+compiles the debug and release variants on GitHub Actions and uploads the debug
+APK as a build artifact, so the code is compiled and checked for real. Tagging
+a release publishes a **signed, installable APK** — see [Releasing](#releasing).
 
 ## What's in it
 
@@ -36,6 +37,54 @@ cd android
 ```
 
 Minimum Android 8.0 (API 26), targeting API 35.
+
+## Releasing
+
+Tag a version and GitHub Actions does the rest — builds, signs, and attaches an
+installable APK (and a Play-ready `.aab`) to a GitHub release:
+
+```bash
+git tag android-v1.0.0
+git push origin android-v1.0.0
+```
+
+Staff install it by opening the release page on their phone and tapping the
+`.apk`; Android asks once for permission to install from that browser. The
+`Android release` workflow can also be run by hand from the Actions tab, which
+produces the same signed build as a downloadable artifact without publishing a
+release page.
+
+### One-time signing setup
+
+Android will not install an unsigned APK, and every future update must be
+signed with the **same** key or it will refuse to upgrade. Create the keystore
+once, keep it somewhere safe, and never commit it:
+
+```bash
+keytool -genkeypair -v \
+  -keystore masjidhub-release.jks \
+  -alias masjidhub \
+  -keyalg RSA -keysize 2048 -validity 10000
+base64 -w0 masjidhub-release.jks   # macOS: base64 -i masjidhub-release.jks
+```
+
+Then add four repository secrets under **Settings → Secrets and variables →
+Actions**:
+
+| Secret | Value |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | the base64 output from above |
+| `ANDROID_KEYSTORE_PASSWORD` | the keystore password you chose |
+| `ANDROID_KEY_ALIAS` | `masjidhub` |
+| `ANDROID_KEY_PASSWORD` | the key password (often the same) |
+
+The release workflow stops with a clear error if these are missing, rather than
+publishing an APK nobody can install. The keystore is decoded to the runner's
+temp directory, outside the checkout, so it is never packaged or uploaded.
+
+Version numbers are set by CI: `versionName` comes from the tag
+(`android-v1.0.0` → `1.0.0`) and `versionCode` from the workflow run number, so
+it always increases.
 
 ## Pointing it at a different API
 

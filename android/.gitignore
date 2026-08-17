@@ -5,3 +5,8 @@ local.properties
 *.iml
 captures/
 .cxx/
+
+# Release signing material and CI outputs — never commit these.
+*.jks
+*.keystore
+artifacts/
